@@ -1,0 +1,35 @@
+- name: Copy the cassandra restore script
+  copy: src=cassandra-restore.py dest="{{restore_path}}"  mode="u=rwx,g=rx,o=r"
+  become_user: "{{user}}"
+
+- set_fact:
+    cassandra_restore_gzip_file_path: "{{ restore_path }}/{{ cassandra_restore_file_name }}"
+
+- name: Download backup from azure
+  command: az storage blob download -c {{ cassandra_backup_azure_container_name }} --name {{ cassandra_restore_file_name }} -f {{ cassandra_restore_file_name }}
+  args:
+    chdir: "{{ restore_path }}"
+  become_user: "{{user}}"
+
+- name: unarchieve backup file
+  unarchive: src={{restore_path}}/{{ cassandra_restore_file_name }} dest={{restore_path}}/ copy=no
+  become_user: "{{user}}"
+
+- name: create the keyspaces
+  shell: cqlsh -f {{ backup_dir }}/db_schema.cql
+  become_user: "{{user}}"
+  ignore_errors: yes
+
+- name: restoring the data
+  shell: python {{ restore_path }}/cassandra-restore.py --snapshotdir {{backup_folder_name}}/{{item}}
+  register: output
+  become_user: "{{user}}"
+  with_items: "{{keyspace_names.split(',')|list}}"
+  args:
+   chdir: "/home/{{user}}"
+
+- name: clean up backup dir after restore
+  file: path={{ item }} state=absent
+  with_items:
+     - "{{ backup_dir }}"
+     - "/home/{{user}}/{{ cassandra_restore_file_name }}"

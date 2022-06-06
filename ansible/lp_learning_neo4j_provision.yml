@@ -1,0 +1,49 @@
+- import_playbook: artifacts-download.yml
+  vars:
+    artifact: "{{ neo4j_zip }}"
+    artifact_path: "{{ playbook_dir }}/artifacts/{{ artifact }}"
+  when: download_neo4j
+
+# This is for community/adopters
+- hosts: local
+  gather_facts: false
+  tasks:
+  - name: Download neo4j community
+    uri:
+      url: https://neo4j.com/artifact.php?name={{neo4j_zip}}
+      dest: artifacts/{{neo4j_zip}}
+      method: GET
+      follow_redirects: yes
+      status_code: [200]
+      timeout: 30
+      remote_src: yes
+    when: neo4j_upstream_download
+
+- hosts: learning-neo4j-cluster
+  vars_files:
+    - "{{inventory_dir}}/secrets.yml"
+  pre_tasks:
+    - name: Create learner group
+      become: yes
+      group:
+        state: present
+        name: "{{ learner_group }}"
+        system: yes
+    - name: Create learner user
+      become: yes
+      user:
+        state: present
+        name: "{{ learner_user }}"
+        comment: learner user
+        system: yes
+        createhome: yes
+        group: "{{ learner_group }}"
+    - name: Registering server_id
+      set_fact:
+        server_id: "{% for servername in play_hosts %}{% if inventory_hostname==servername %}{{ loop.index }}{% endif %}{% endfor %}"
+  become: yes
+  roles:
+    - jdk-1.8.0_121
+    - jdk11
+    - neo4j-cluster
+    - logstash

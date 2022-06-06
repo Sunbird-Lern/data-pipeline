@@ -1,0 +1,254 @@
+env: dev
+ingestion_kafka_topics: ""
+ingestion_kafka_overriden_topics: ""
+
+processing_kafka_topics:
+  - name: telemetry.raw
+    num_of_partitions: 4
+    replication_factor: 1
+  - name: telemetry.valid
+    num_of_partitions: 4
+    replication_factor: 1
+  - name: telemetry.unique
+    num_of_partitions: 8
+    replication_factor: 1
+  - name: telemetry.duplicate
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: telemetry.sink
+    num_of_partitions: 8
+    replication_factor: 1
+  - name: telemetry.with_location
+    num_of_partitions: 8
+    replication_factor: 1
+  - name: telemetry.de_normalized
+    num_of_partitions: 4
+    replication_factor: 1
+  - name: telemetry.log
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: analytics.job_queue
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: learning.graph.events
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: pipeline_metrics
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: metrics
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: learning.graph.events.fail
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: analytics_metrics
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: learning.job.request 
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: learning.job.request.fail
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: learning.republish.job.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: telemetry.derived
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: telemetry.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: telemetry.malformed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: telemetry.extractor.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: telemetry.indexer.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: coursebatch.job.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: content.postpublish.request  
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: coursebatch.certificate.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: system.command 
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: learning.events.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: auto.creation.job.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: auto.creation.job.request.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: contentstate.invalid
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: db.query.events
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: certificate.events.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: activity.agg.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: issue.certificate.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: generate.certificate.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: post.certificate.process.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: post.certificate.process.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: generate.certificate.failed
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: assessment.publish.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: batch.enrolment.sync.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: publish.job.request
+    num_of_partitions: 1
+    replication_factor: 1
+  - name: object.import.request
+    num_of_partitions: 1
+    replication_factor: 1
+
+processing_kafka_overriden_topics:
+  - name: telemetry.raw
+    retention_time: 604800000
+    replication_factor: 1
+  - name: telemetry.valid
+    retention_time: 604800000
+    replication_factor: 1
+  - name: telemetry.unique
+    retention_time: 604800000
+    replication_factor: 1
+  - name: telemetry.duplicate
+    retention_time: 86400000
+    replication_factor: 1
+  - name: telemetry.sink
+    retention_time: 259200000
+    replication_factor: 1
+  - name: telemetry.with_location
+    retention_time: 86400000
+    replication_factor: 1
+  - name: telemetry.de_normalized
+    retention_time: 86400000
+    replication_factor: 1
+  - name: telemetry.log
+    retention_time: 86400000
+    replication_factor: 1
+  - name: analytics.job_queue
+    retention_time: 86400000
+    replication_factor: 1
+  - name: learning.graph.events
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: pipeline_metrics
+    retention_time: 259200000
+    replication_factor: 1
+  - name: metrics
+    retention_time: 604800000
+    replication_factor: 1
+  - name: learning.graph.events.fail
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: analytics_metrics
+    retention_time: 86400000
+    replication_factor: 1
+  - name: learning.job.request
+    retention_time: 1209600000 
+    replication_factor: 1
+  - name: learning.job.request.fail
+    retention_time: 1296000000
+    replication_factor: 1
+  - name: telemetry.derived
+    retention_time: 259200000
+    replication_factor: 1
+  - name: issue.certificate.request
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: generate.certificate.request
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: post.certificate.process.request
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: batch.enrolment.sync.request
+    retention_time: 1209600000
+    replication_factor: 1
+  # Error/Failed Topics
+  - name: telemetry.failed
+    retention_time: 604800000
+    replication_factor: 1
+  - name: telemetry.malformed
+    retention_time: 604800000
+    replication_factor: 1
+  - name: telemetry.extractor.failed
+    retention_time: 604800000
+    replication_factor: 1
+  - name: telemetry.indexer.failed
+    retention_time: 604800000
+    replication_factor: 1
+  - name: coursebatch.job.request
+    retention_time: 1209600000 
+    replication_factor: 1
+  - name: content.postpublish.request
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: coursebatch.certificate.request
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: learning.events.failed 
+    retention_time: 604800000
+    replication_factor: 1
+  - name: auto.creation.job.request
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: auto.creation.job.request.failed
+    retention_time: 1296000000
+    replication_factor: 1
+  - name: contentstate.invalid
+    retention_time: 604800000
+    replication_factor: 1
+  - name: db.query.events
+    retention_time: 604800000
+    replication_factor: 1
+  - name: certificate.events.failed
+    retention_time: 1296000000
+    replication_factor: 1
+  - name: activity.agg.failed
+    retention_time: 1296000000
+    replication_factor: 1
+  - name: post.certificate.process.failed
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: generate.certificate.failed
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: assessment.publish.request
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: publish.job.request
+    retention_time: 1209600000
+    replication_factor: 1
+  - name: object.import.request
+    retention_time: 1209600000
+    replication_factor: 1
