@@ -17,8 +17,10 @@ import org.sunbird.job.questionset.publish.util.QuestionPublishUtil
 import org.sunbird.job.questionset.task.QuestionSetPublishConfig
 import org.sunbird.job.util._
 import org.sunbird.job.{BaseProcessFunction, Metrics}
-
 import java.lang.reflect.Type
+
+import org.sunbird.job.cache.{DataCache, RedisConnect}
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
@@ -37,6 +39,7 @@ class QuestionSetPublishFunction(config: QuestionSetPublishConfig, httpUtil: Htt
   val liveStatus = List("Live", "Unlisted")
 
   @transient var ec: ExecutionContext = _
+  @transient var cache: DataCache = _
   private val pkgTypes = List(EcarPackageType.SPINE.toString, EcarPackageType.ONLINE.toString, EcarPackageType.FULL.toString)
 
   override def open(parameters: Configuration): Unit = {
@@ -47,11 +50,14 @@ class QuestionSetPublishFunction(config: QuestionSetPublishConfig, httpUtil: Htt
     ec = ExecutionContexts.global
     definitionCache = new DefinitionCache()
     definitionConfig = DefinitionConfig(config.schemaSupportVersionMap, config.definitionBasePath)
+    cache = new DataCache(config, new RedisConnect(config), config.cacheDbId, List())
+    cache.init()
   }
 
   override def close(): Unit = {
     super.close()
     cassandraUtil.close()
+    cache.close()
   }
 
   override def metricsList(): List[String] = {
@@ -65,11 +71,18 @@ class QuestionSetPublishFunction(config: QuestionSetPublishConfig, httpUtil: Htt
     val readerConfig = ExtDataConfig(config.questionSetKeyspaceName, config.questionSetTableName, definition.getExternalPrimaryKey, definition.getExternalProps)
     val qDef: ObjectDefinition = definitionCache.getDefinition("Question", config.schemaSupportVersionMap.getOrElse("question", "1.0").asInstanceOf[String], config.definitionBasePath)
     val qReaderConfig = ExtDataConfig(config.questionKeyspaceName, qDef.getExternalTable, qDef.getExternalPrimaryKey, qDef.getExternalProps)
-    val obj = getObject(data.identifier, data.pkgVersion, data.mimeType, data.publishType, readerConfig)(neo4JUtil, cassandraUtil)
+    val objData = getObject(data.identifier, data.pkgVersion, data.mimeType, data.publishType, readerConfig)(neo4JUtil, cassandraUtil)
+    val obj = if (StringUtils.isNotBlank(data.lastPublishedBy)) {
+      val newMeta = objData.metadata ++ Map("lastPublishedBy" -> data.lastPublishedBy)
+      new ObjectData(objData.identifier, newMeta, objData.extData, objData.hierarchy)
+    } else objData
     logger.info("processElement ::: obj metadata before publish ::: " + ScalaJsonUtil.serialize(obj.metadata))
     logger.info("processElement ::: obj hierarchy before publish ::: " + ScalaJsonUtil.serialize(obj.hierarchy.getOrElse(Map())))
     val messages: List[String] = validate(obj, obj.identifier, validateQuestionSet)
     if (messages.isEmpty) {
+      val cacheKey = s"""qs_hierarchy_${obj.identifier}"""
+      cache.del(cacheKey)
+      cache.del(obj.identifier)
       // Get all the questions from hierarchy
       val qList: List[ObjectData] = getQuestions(obj, qReaderConfig)(cassandraUtil)
       logger.info("processElement ::: child questions list from hierarchy :::  " + qList)
@@ -78,7 +91,7 @@ class QuestionSetPublishFunction(config: QuestionSetPublishConfig, httpUtil: Htt
       //TODO: Remove below statement
       childQuestions.foreach(ch => logger.info(s"child questions which are going to be published.  identifier : ${ch.identifier} , visibility: ${ch.getString("visibility", "")} , createdBy: ${ch.getString("createdBy", "")}"))
       // Publish Child Questions
-      QuestionPublishUtil.publishQuestions(obj.identifier, childQuestions, data.pkgVersion)(ec, neo4JUtil, cassandraUtil, qReaderConfig, cloudStorageUtil, definitionCache, definitionConfig, config, httpUtil)
+      QuestionPublishUtil.publishQuestions(obj.identifier, childQuestions, data.pkgVersion, data.lastPublishedBy)(ec, neo4JUtil, cassandraUtil, qReaderConfig, cloudStorageUtil, definitionCache, definitionConfig, config, httpUtil)
       val pubMsgs: List[String] = isChildrenPublished(childQuestions, data.publishType, qReaderConfig)
       if (pubMsgs.isEmpty) {
         // Enrich Object as well as hierarchy
