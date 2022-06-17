@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sunbird</groupId>
-        <artifactId>lms-pipeline-jobs</artifactId>
+        <artifactId>lern-pipeline-jobs</artifactId>
         <version>1.0</version>
     </parent>
 
@@ -101,7 +101,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <repository>lms-pipeline-jobs</repository>
+                            <repository>lern-pipeline-jobs</repository>
                             <tag>${release-version}</tag>
                         </configuration>
                     </plugin>
