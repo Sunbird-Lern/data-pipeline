@@ -10,7 +10,7 @@
 	</prerequisites>
 
 	<groupId>org.sunbird</groupId>
-	<artifactId>lms-pipeline-jobs</artifactId>
+	<artifactId>lern-pipeline-jobs</artifactId>
 	<version>1.0</version>
 	<packaging>pom</packaging>
 	<name>LERN Jobs</name>
