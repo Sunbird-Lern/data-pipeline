@@ -25,6 +25,7 @@
 		<module>lms-jobs/activity-aggregate-updater</module>
 		<module>lms-jobs/credential-generator</module>
 		<module>lms-jobs/enrolment-reconciliation</module>
+		<module>lms-jobs/merge-user-courses</module>
 	</modules>
 
 	<properties>
