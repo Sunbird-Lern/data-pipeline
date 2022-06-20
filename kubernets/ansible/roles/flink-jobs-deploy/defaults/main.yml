@@ -88,6 +88,8 @@ collection_certificate_generator_rc_badcharlist: "{{ rc_bad_char_list | default(
 registry_sunbird_keyspace: "sunbird"
 cert_registry_table: "cert_registry"
 
+###  Merge User Course Job related Vars
+merge_user_coursed_course_date_format: "{{ course_date_format }}"
 
 ### to be removed
 job_classname: ""
@@ -124,6 +126,13 @@ flink_job_names:
     cpu_requests: 0.3
   collection-certificate-generator:
     job_class_name: 'org.sunbird.job.certgen.task.CertificateGeneratorStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  merge-user-courses:
+    job_class_name: 'org.sunbird.job.merge.user.courses.task.MergeUserCoursesStreamTask'
     replica: 1
     jobmanager_memory: 1024m
     taskmanager_memory: 1024m
