@@ -17,7 +17,6 @@ class MergeUserCoursesConfig(override val config: Config) extends BaseJobConfig(
 
   // Kafka Topics Configuration
   val kafkaInputTopic: String = config.getString("kafka.input.topic")
-  val kafkaOutputTopic: String = config.getString("kafka.output.topic")
   val kafkaOutputFailedTopic: String = config.getString("kafka.output.failed.topic")
   val courseBatchUpdaterTopic: String = config.getString("kafka.output.course.batch.updater.topic")
 
