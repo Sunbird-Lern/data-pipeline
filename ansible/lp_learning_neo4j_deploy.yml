@@ -1,6 +1,0 @@
-- hosts: learning-neo4j-cluster
-  vars_files:
-    - "{{inventory_dir}}/secrets.yml"
-  roles: 
-    - neo4j-deploy
-  

@@ -1,2 +1,0 @@
-centralised_log_vm: "{{ groups['centralised-logs'][0] }}"
-host_ip: "{{ inventory_hostname }}"
