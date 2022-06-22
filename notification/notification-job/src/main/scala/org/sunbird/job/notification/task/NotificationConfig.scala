@@ -22,14 +22,14 @@ class NotificationConfig(override val config: Config) extends BaseJobConfig(conf
     // Consumers
     val notificationConsumer = "notification-consumer"
     val notificationFailedProducer = "notification-failed-producer"
-    val fcm_account_key : String = "AIzaSyCVHsB07jyEzeb7ZTXsykmKcbG5uopOzS4"
-    val sms_auth_key : String = "244164AeOfN7Y6iBL5bcf1f89"
+    val fcm_account_key : String = config.getString("fcm_account_key")
+    val sms_auth_key : String = config.getString("sms_auth_key")
     val sms_default_sender : String = "DIKAPP"
-    val mail_server_from_email : String = "support@staging.sunbirded.org"
-    val mail_server_username : String = "apikey"
-    val mail_server_password : String = "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"
-    val mail_server_host : String = "smtp.sendgrid.net"
-    val mail_server_port : String = "587"
+    val mail_server_from_email : String = config.getString("mail_server_from_email")
+    val mail_server_username : String = config.getString("mail_server_username")
+    val mail_server_password : String = config.getString("mail_server_password")
+    val mail_server_host : String = config.getString("mail_server_host")
+    val mail_server_port : String = config.getString("mail_server_port")
     val max_iteration_count_samza_job : Int = 2
     
     // Metric List

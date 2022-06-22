@@ -1,8 +1,8 @@
-# sunbird-knowledge-platform-jobs
+# sunbird-lern-pipeline-jobs
 Background and pipeline jobs of Knowledge Platform
 
-## Knowledge-platform-jobs local setup
-This readme file contains the instruction to set up and run the knowledge-platform-jobs in local machine.
+## lern-pipeline-jobs local setup
+This readme file contains the instruction to set up and run the lern-pipeline-jobs in local machine.
 
 ### System Requirements:
 
@@ -170,7 +170,7 @@ kafka-topics.sh --create --zookeeper zookeeper:2181 --replication-factor 1 --par
 mvn clean install -DskipTests
 ``` 
 2. Open the project in IntelliJ.
-3. Navigate to the target job folder (Example: ../knowledge-platform-jobs/publish-pipeline/content-publish) and edit the 'pom.xml' to add below dependency.
+3. Navigate to the target job folder (Example: ../lern-pipeline-jobs/publish-pipeline/content-publish) and edit the 'pom.xml' to add below dependency.
 ```shell
 <dependency>
   <groupId>org.apache.flink</groupId>
@@ -241,7 +241,7 @@ export content_youtube_apikey= #key to fetch metadata of youtube videos
 
 ```
 ### Running job in Flink:
-1. Navigate to the required job folder (Example: ../knowledge-platform-jobs/publish-pipeline/content-publish) and run the below maven command to build the application.
+1. Navigate to the required job folder (Example: ../lern-pipeline-jobs/publish-pipeline/content-publish) and run the below maven command to build the application.
 ```shell
 mvn clean install -DskipTests
 ``` 
@@ -250,7 +250,7 @@ mvn clean install -DskipTests
 ```shell
 cd flink-1.12.7
 ./bin/start-cluster.sh
-./bin/flink run -m localhost:8081 /user/test/workspace/knowledge-platform-jobs/publish-pipeline/content-publish/target/content-publish-1.0.0.jar
+./bin/flink run -m localhost:8081 /user/test/workspace/lern-pipeline-jobs/publish-pipeline/content-publish/target/content-publish-1.0.0.jar
 ```
 4. Open a terminal, connect to kafka docker container and produce the target job topic.
 ```shell
