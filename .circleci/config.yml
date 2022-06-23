@@ -33,11 +33,7 @@ jobs:
             key: lern-jobs-dependency-cache-{{ checksum "pom.xml" }}
       - store_test_results:
           path: ~/test-results
-      - run:
-           name: sonar
-           command: |
-             mvn -X sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.exclusions=**/cert-processor/** -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
-
+      
 workflows:
   version: 2
   build-and-test:
