@@ -10,7 +10,7 @@
 	</prerequisites>
 
 	<groupId>org.sunbird</groupId>
-	<artifactId>lern-pipeline-jobs</artifactId>
+	<artifactId>data-pipeline</artifactId>
 	<version>1.0</version>
 	<packaging>pom</packaging>
 	<name>LERN Jobs</name>
@@ -21,10 +21,7 @@
 
 	<modules>
 		<module>jobs-core</module>
-		<module>lms-jobs/relation-cache-updater</module>
-		<module>lms-jobs/activity-aggregate-updater</module>
-		<module>lms-jobs/credential-generator</module>
-		<module>lms-jobs/enrolment-reconciliation</module>
+		<module>lms-jobs</module>
 	</modules>
 
 	<properties>
