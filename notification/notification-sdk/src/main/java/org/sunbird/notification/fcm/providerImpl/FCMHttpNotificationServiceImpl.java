@@ -24,6 +24,14 @@ import org.sunbird.notification.utils.NotificationConstant;
  */
 public class FCMHttpNotificationServiceImpl implements IFCMNotificationService {
   private static Logger logger = LogManager.getLogger("FCMHttpNotificationServiceImpl");
+  private static IFCMNotificationService iFCMNotificationService =  null;
+  
+  public static IFCMNotificationService getInstance() {
+    if(iFCMNotificationService ==  null) {
+      iFCMNotificationService = new FCMHttpNotificationServiceImpl();
+    }
+    return iFCMNotificationService;
+  }
 
   /** FCM_URL URL of FCM server */
   public static final String FCM_URL = "https://fcm.googleapis.com/fcm/send";

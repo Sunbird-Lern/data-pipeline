@@ -31,6 +31,6 @@ public class NotificationFactory {
   }
 
   private static IFCMNotificationService getHttpInstance() {
-    return new FCMHttpNotificationServiceImpl();
+    return FCMHttpNotificationServiceImpl.getInstance();
   }
 }

@@ -62,7 +62,6 @@ class NotificationFunction(config: NotificationConfig, @transient var ifcmNotifi
         super.open(parameters)
         accountKey = config.fcm_account_key
         FCMHttpNotificationServiceImpl.setAccountKey(accountKey)
-        //ifcmNotificationService.
         val smsConfig = new SMSConfig(config.sms_auth_key, config.sms_default_sender)
         smsProvider = SMSFactory.getInstance("91SMS", smsConfig)
         emailFactory = new IEmailProviderFactory
@@ -132,11 +131,8 @@ class NotificationFunction(config: NotificationConfig, @transient var ifcmNotifi
     
     def sendEmailNotification(notificationMap: scala.collection.immutable.HashMap[String, AnyRef]) = {
         import scala.collection.JavaConverters._
-        logger.info("NotificationService:sendEmailNotification")
         logger.info("NotificationService:sendEmailNotification map: "+ notificationMap)
         val emailIds : util.List[String] = notificationMap.get(IDS).get.asInstanceOf[List[String]].asJava
-        //val emailIds : util.List[String] = notificationMap.ge"dialcodes", new util.ArrayList()).asInstanceOf[util.List[String]]
-        //notificationMap(IDS).asInstanceOf[util.List[String]]
         logger.info("NotificationService:sendEmailNotification emailids: "+ emailIds)
         val templateMap : util.Map[String, AnyRef] = notificationMap.get(TEMPLATE).get.asInstanceOf[scala.collection.immutable.Map[String, AnyRef]].asJava
         val config = notificationMap.get(CONFIG).get.asInstanceOf[scala.collection.immutable.Map[String, AnyRef]].asJava
@@ -148,7 +144,9 @@ class NotificationFunction(config: NotificationConfig, @transient var ifcmNotifi
     
     def sendSmsNotification(notificationMap: scala.collection.immutable.HashMap[String, AnyRef], msgId: String) = {
         import scala.collection.JavaConverters._
+        logger.info("NotificationService:sendSmsNotification map: "+ notificationMap)
         val mobileNumbers :util.List[String] = notificationMap.get(IDS).get.asInstanceOf[List[String]].asJava
+        logger.info("NotificationService:sendEmailNotification emailids: "+ mobileNumbers)
         if (mobileNumbers != null) {
             val templateMap = notificationMap.get(TEMPLATE).get.asInstanceOf[scala.collection.immutable.Map[String, AnyRef]].asJava
             val smsText = templateMap.get(DATA).asInstanceOf[String]
