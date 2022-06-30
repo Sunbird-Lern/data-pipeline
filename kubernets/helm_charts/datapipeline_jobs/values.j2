@@ -349,3 +349,34 @@ collection-certificate-generator:
     parallelism.default: 1
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1
+
+merge-user-courses:
+  merge-user-courses: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = kafka.{{ env_name }}.lms.user.account.merge
+      output.failed.topic = {{ env_name }}.learning.events.failed
+      output.course.batch.updater.topic = {{ env_name }}.coursebatch.job.request
+      groupId =
+    }
+    task {
+      restart-strategy.attempts = {{ restart_attempts }} # max 3 restart attempts
+      restart-strategy.delay = 240000 # in milli-seconds # on max restarts (3) within 4 min the job will fail.
+      consumer.parallelism = {{ merge-user-courses_consumer_parallelism }}
+      parallelism = {{ merge-user-courses_parallelism }}
+    }
+    lms-cassandra {
+      keyspace = "{{ middleware_course_keyspace }}"
+      user_enrolments.table = "{{ middleware_user_enrolments_table }}"
+      consumption.table = "{{ middleware_consumption_table }}"
+      user_activity_agg.table = "{{ middleware_user_activity_agg_table }}"
+    }
+    course.date.format = {{ merge_user_coursed_course_date_format }}
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['merge-user-courses'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['merge-user-courses'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['merge-user-courses'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
