@@ -25,7 +25,6 @@ class MergeOperationsTest extends BaseTestSpec{
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    System.out.print("====starting cs====")
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
     cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort)
     val session = cassandraUtil.session
@@ -48,10 +47,8 @@ class MergeOperationsTest extends BaseTestSpec{
     val event = new Event(JSONUtil.deserialize[java.util.Map[String, Any]](EventFixture.EVENT_1), 0, 0)
     val commons: Commons = new Commons(jobConfig, cassandraUtil)
     val initialDocs = commons.readAsListOfMap(jobConfig.dbKeyspace, jobConfig.userEnrolmentsTable,new util.HashMap[String, AnyRef])
-    System.out.println("initialDocs doc =>"+ScalaJsonUtil.serialize(initialDocs))
     new MergeOperations(jobConfig, cassandraUtil).mergeEnrolments(event.fromAccountId, event.toAccountId)
     val mergedDocs = commons.readAsListOfMap(jobConfig.dbKeyspace, jobConfig.userEnrolmentsTable,new util.HashMap[String, AnyRef])
-    System.out.println("final doc =>"+ScalaJsonUtil.serialize(mergedDocs))
     assert(initialDocs.size() < mergedDocs.size())
   }
 
@@ -61,11 +58,9 @@ class MergeOperationsTest extends BaseTestSpec{
     val key = new util.HashMap[String, AnyRef]
     key.put(jobConfig.userId, event.toAccountId)
     val initialDocs = commons.readAsListOfMap(jobConfig.dbKeyspace, jobConfig.contentConsumptionTable,key)
-    System.out.println("initialDocs doc =>"+ScalaJsonUtil.serialize(initialDocs))
     new MergeOperations(jobConfig, cassandraUtil).mergeContentConsumption(event.fromAccountId, event.toAccountId)
     key.put(jobConfig.userId, event.toAccountId)
     val mergedDocs = commons.readAsListOfMap(jobConfig.dbKeyspace, jobConfig.contentConsumptionTable,key)
-    System.out.println("merged doc =>"+ScalaJsonUtil.serialize(mergedDocs))
 
     assert(mergedDocs.get(0).get("progress").asInstanceOf[Int] > initialDocs.get(0).get("progress").asInstanceOf[Int])
     assert(mergedDocs.get(0).get("viewcount").asInstanceOf[Int] > initialDocs.get(0).get("viewcount").asInstanceOf[Int])
@@ -77,10 +72,8 @@ class MergeOperationsTest extends BaseTestSpec{
     val key = new util.HashMap[String, AnyRef]
     key.put(jobConfig.userId, event.toAccountId)
     val initialDocs = commons.readAsListOfMap(jobConfig.dbKeyspace, jobConfig.contentConsumptionTable,key)
-    System.out.println("initialDocs doc =>"+ScalaJsonUtil.serialize(initialDocs))
     new MergeOperations(jobConfig, cassandraUtil).mergeContentConsumption(event.fromAccountId, event.toAccountId)
     val mergedDocs = commons.readAsListOfMap(jobConfig.dbKeyspace, jobConfig.contentConsumptionTable,key)
-    System.out.println("merged doc =>"+ScalaJsonUtil.serialize(mergedDocs))
     assert(initialDocs.size() < mergedDocs.size())
 
   }
@@ -94,11 +87,9 @@ class MergeOperationsTest extends BaseTestSpec{
     key.put(jobConfig.activity_id, "do_11309999837886054415")
 
     val initialDocs = commons.readAsListOfMap(jobConfig.dbKeyspace, jobConfig.userActivityAggTable,key)
-    System.out.println("initialDocs doc =>"+ScalaJsonUtil.serialize(initialDocs))
     new MergeOperations(jobConfig, cassandraUtil).mergeUserActivityAggregates(event.fromAccountId, event.toAccountId)
 
     val mergedDocs = commons.readAsListOfMap(jobConfig.dbKeyspace, jobConfig.userActivityAggTable,key)
-    System.out.println("merged doc =>"+ScalaJsonUtil.serialize(mergedDocs))
 
     assert(initialDocs.get(0).get("agg_last_updated").asInstanceOf[Map[String, AnyRef]].get("completedCount")==null)
     assert(mergedDocs.get(0).get("agg_last_updated").asInstanceOf[Map[String, AnyRef]].get("completedCount")!=null)

@@ -47,7 +47,6 @@ class MergeOperations(config: MergeUserCoursesConfig, @transient var cassandraUt
     toBatches.forEach(b => toBatchIds.put(b.batchId, b))
 
     val batchIdsToBeMigrated = CollectionUtils.subtract(fromBatchIds.keySet(), toBatchIds.keySet()).asInstanceOf[util.List[String]]
-    System.out.println("batchIdsToBeMigrated =>"+batchIdsToBeMigrated)
     //Migrate batch records in Cassandra
     batchIdsToBeMigrated.forEach(batchId => {
       val courseId = fromBatchIds.get(batchId).courseId
@@ -140,7 +139,6 @@ class MergeOperations(config: MergeUserCoursesConfig, @transient var cassandraUt
     val key = new util.HashMap[String, AnyRef]
     key.put(config.userId, userIdList)
     val documents = commons.readAsListOfMap(config.dbKeyspace, config.userEnrolmentsTable, key)
-    System.out.println("documents  "+documents)
 
     documents.forEach((doc: util.Map[String, AnyRef]) => {
       objects.add(BatchEnrollmentSyncModel(doc.get(config.batchId.toLowerCase()).toString, doc.get(config.userId.toLowerCase()).toString, doc.get(config.courseId.toLowerCase()).toString))

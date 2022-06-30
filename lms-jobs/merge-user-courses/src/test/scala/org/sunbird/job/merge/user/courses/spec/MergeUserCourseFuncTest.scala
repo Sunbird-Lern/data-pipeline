@@ -32,7 +32,6 @@ class MergeUserCourseFuncTest extends BaseTestSpec{
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    System.out.print("====starting res====")
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
     cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort)
     val session = cassandraUtil.session
@@ -43,7 +42,6 @@ class MergeUserCourseFuncTest extends BaseTestSpec{
 
   override protected def afterAll(): Unit = {
     super.afterAll()
-    System.out.print("====Ending res====")
     try {
       EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
     } catch {

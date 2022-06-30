@@ -60,7 +60,6 @@ class MergeUserCourseFunction(config: MergeUserCoursesConfig)
       }
     } catch {
       case e: Exception =>
-        e.printStackTrace()
         metrics.incCounter(config.failedEventCount)
         logger.error("Failed merge user course event for userid "+event.toAccountId+" message:"+e.getMessage, Map("partition" -> event.partition, "offset" -> event.offset))
         generateFailedEvents(event.jobName, e.getMessage, context)

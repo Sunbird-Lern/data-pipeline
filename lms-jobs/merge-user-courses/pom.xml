@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.sunbird</groupId>
-    <artifactId>knowledge-platform-jobs</artifactId>
+    <artifactId>lern-pipeline-jobs</artifactId>
     <version>1.0</version>
   </parent>
   <artifactId>merge-user-courses</artifactId>
