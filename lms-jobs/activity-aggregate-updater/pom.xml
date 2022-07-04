@@ -6,8 +6,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sunbird</groupId>
-        <artifactId>lern-pipeline-jobs</artifactId>
+        <artifactId>data-pipeline</artifactId>
         <version>1.0</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
     <artifactId>activity-aggregate-updater</artifactId>
     <version>1.0.0</version>
