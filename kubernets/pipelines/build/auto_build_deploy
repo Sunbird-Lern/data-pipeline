@@ -13,7 +13,7 @@ node('build-slave') {
                     tag_name = env.JOB_NAME.split("/")[-1]
                     pre_checks()
                     if (!env.hub_org) {
-                        println(ANSI_BOLD + ANSI_RED + "Uh Oh! Please set a Jenkins environment variable named hub_org with value as registery/sunbidrded" + ANSI_NORMAL)
+                        println(ANSI_BOLD + ANSI_RED + "Uh Oh! Please set a Jenkins environment variable named hub_org with value as registry/sunbidrded" + ANSI_NORMAL)
                         error 'Please resolve the errors and rerun..'
                     } else
                         println(ANSI_BOLD + ANSI_GREEN + "Found environment variable named hub_org with value as: " + hub_org + ANSI_NORMAL)
@@ -39,8 +39,8 @@ node('build-slave') {
 
                 //   stage Retagging
                          sh """
-                            docker tag knowledge-platform-jobs:${build_tag} ${hub_org}/knowledge-platform-jobs:${build_tag}
-                  echo {\\"image_name\\" : \\"knowledge-platform-jobs\\", \\"image_tag\\" : \\"${build_tag}\\", \\"node_name\\" : \\"${env.NODE_NAME}\\"} > metadata.json
+                            docker tag knowledge-platform-jobs:${build_tag} ${hub_org}/lern-data-pipeline:${build_tag}
+                  echo {\\"image_name\\" : \\"lern-data-pipeline\\", \\"image_tag\\" : \\"${build_tag}\\", \\"node_name\\" : \\"${env.NODE_NAME}\\"} > metadata.json
                             """
 
                //   stage ArchiveArtifacts
