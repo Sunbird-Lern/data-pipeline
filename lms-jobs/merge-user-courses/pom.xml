@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.sunbird</groupId>
-    <artifactId>credential-generator</artifactId>
+    <artifactId>data-pipeline</artifactId>
     <version>1.0</version>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
-  <artifactId>collection-cert-pre-processor</artifactId>
+  <artifactId>merge-user-courses</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
 
@@ -27,21 +27,21 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-java</artifactId>
+      <version>${flink.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-streaming-java_${scala.version}</artifactId>
+      <version>${flink.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.sunbird</groupId>
       <artifactId>jobs-core</artifactId>
       <version>1.0.0</version>
-    </dependency>
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-      <version>2.10.6</version>
-    </dependency>
-    <dependency>
-      <groupId>org.sunbird</groupId>
-      <artifactId>jobs-core</artifactId>
-      <version>1.0.0</version>
-      <type>test-jar</type>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -57,15 +57,8 @@
       <classifier>tests</classifier>
     </dependency>
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-streaming-java_${scala.version}</artifactId>
-      <version>${flink.version}</version>
-      <scope>test</scope>
-      <classifier>tests</classifier>
-    </dependency>
-    <dependency>
       <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_${scala.version}</artifactId>
+      <artifactId>scalatest_2.12</artifactId>
       <version>3.0.6</version>
       <scope>test</scope>
     </dependency>
@@ -82,9 +75,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>it.ozimov</groupId>
-      <artifactId>embedded-redis</artifactId>
-      <version>0.7.1</version>
+      <groupId>org.sunbird</groupId>
+      <artifactId>jobs-core</artifactId>
+      <version>1.0.0</version>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -133,7 +127,7 @@
               <transformers>
                 <transformer
                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>org.sunbird.job.collectioncert.task.CollectionCertPreProcessorTask</mainClass>
+                  <mainClass>org.sunbird.job.merge.user.courses.task.MergeUserCoursesStreamTask</mainClass>
                 </transformer>
                 <!-- append default configs -->
                 <transformer
@@ -178,9 +172,6 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.2</version>
-        <configuration>
-          <skipTests>false</skipTests>
-        </configuration>
       </plugin>
 
       <plugin>
@@ -190,7 +181,7 @@
         <configuration>
           <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
           <junitxml>.</junitxml>
-          <filereports>collection-complete-post-processor-testsuite.txt</filereports>
+          <filereports>merge-user-courses-testsuite.txt</filereports>
         </configuration>
         <executions>
           <execution>

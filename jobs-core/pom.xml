@@ -184,7 +184,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.20</version>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <skipTests>false</skipTests>
                 </configuration>
             </plugin>
 
@@ -195,7 +195,7 @@
                 <configuration>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
-                    <filereports>kp-core-testsuite.txt</filereports>
+                    <filereports>lern-core-testsuite.txt</filereports>
                 </configuration>
                 <executions>
                     <execution>

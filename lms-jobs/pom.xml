@@ -16,6 +16,7 @@
         <module>activity-aggregate-updater</module>
         <module>credential-generator</module>
         <module>enrolment-reconciliation</module>
+        <module>merge-user-courses</module>
     </modules>
 
     <build>
