@@ -6,8 +6,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sunbird</groupId>
-        <artifactId>lern-pipeline-jobs</artifactId>
+        <artifactId>data-pipeline</artifactId>
         <version>1.0</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
     <artifactId>activity-aggregate-updater</artifactId>
     <version>1.0.0</version>
@@ -206,7 +207,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <skipTests>false</skipTests>
                 </configuration>
             </plugin>
 
@@ -217,7 +218,7 @@
                 <configuration>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
-                    <filereports>dp-duplication-testsuite.txt</filereports>
+                    <filereports>activity-aggregate-updater-testsuite.txt</filereports>
                 </configuration>
                 <executions>
                     <execution>

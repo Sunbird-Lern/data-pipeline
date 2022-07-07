@@ -10,7 +10,7 @@
 	</prerequisites>
 
 	<groupId>org.sunbird</groupId>
-	<artifactId>lern-pipeline-jobs</artifactId>
+	<artifactId>data-pipeline</artifactId>
 	<version>1.0</version>
 	<packaging>pom</packaging>
 	<name>LERN Jobs</name>
@@ -21,11 +21,8 @@
 
 	<modules>
 		<module>jobs-core</module>
-		<module>lms-jobs/relation-cache-updater</module>
-		<module>lms-jobs/activity-aggregate-updater</module>
-		<module>lms-jobs/credential-generator</module>
-		<module>lms-jobs/enrolment-reconciliation</module>
 		<module>notification</module>
+		<module>lms-jobs</module>
 	</modules>
 
 	<properties>
@@ -33,7 +30,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<scala.version>2.12</scala.version>
 		<scala.maj.version>2.12.11</scala.maj.version>
-		<flink.version>1.13.6</flink.version>
+		<flink.version>1.13.5</flink.version>
 		<kafka.version>2.4.1</kafka.version>
 		<jackson-jaxrs.version>1.9.13</jackson-jaxrs.version>
 		<scoverage.plugin.version>1.4.0</scoverage.plugin.version>
