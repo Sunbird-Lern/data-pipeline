@@ -6,8 +6,9 @@
 
 	<parent>
 		<groupId>org.sunbird</groupId>
-		<artifactId>lern-pipeline-jobs</artifactId>
+		<artifactId>data-pipeline</artifactId>
 		<version>1.0</version>
+		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
 	<groupId>org.sunbird</groupId>
@@ -16,8 +17,9 @@
 	 <packaging>jar</packaging>
 
 	<properties>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.release>11</maven.compiler.release>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jboss-logging>3.3.1.Final </jboss-logging>
 		<httpclient.version>4.5.2</httpclient.version>
@@ -89,7 +91,7 @@
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-module-junit4</artifactId>
-			<version>1.6.5</version>
+			<version>2.0.2</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -100,8 +102,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
-			<artifactId>powermock-api-mockito</artifactId>
-			<version>1.6.5</version>
+			<artifactId>powermock-api-mockito2</artifactId>
+			<version>2.0.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -140,22 +142,21 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.7.5.201505241946</version>
+				<version>0.8.5</version>
 				<configuration>
-					<destFile>${basedir}/target/coverage-reports/jacoco-unit.exec</destFile>
-					<dataFile>${basedir}/target/coverage-reports/jacoco-unit.exec</dataFile>
+					<destFile>${basedir}/target/jacoco-unit.exec</destFile>
+					<dataFile>${basedir}/target/jacoco-unit.exec</dataFile>
+					<excludes>
+						<exclude>**/Reverse*/**</exclude>
+						<exclude>**/routes.*</exclude>
+						<exclude>**/routes$javascript.**</exclude>
+						<exclude>org/sunbird/models/**/*</exclude>
+					</excludes>
 				</configuration>
 				<executions>
 					<execution>
-						<id>jacoco-initialize</id>
 						<goals>
 							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>jacoco-site</id>
-						<phase>package</phase>
-						<goals>
 							<goal>report</goal>
 						</goals>
 					</execution>
