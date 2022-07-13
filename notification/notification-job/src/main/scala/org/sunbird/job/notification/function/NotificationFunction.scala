@@ -1,7 +1,6 @@
 package org.sunbird.job.notification.function
 
 import java.util
-
 import scala.collection.immutable.List
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.`type`.TypeReference
@@ -12,8 +11,9 @@ import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.slf4j.LoggerFactory
 import org.sunbird.job.{BaseProcessKeyedFunction, Metrics}
 import org.sunbird.job.notification.task.NotificationConfig
-import org.sunbird.job.notification.domain.{Event, NotificationMessage, NotificationType}
+import org.sunbird.job.notification.domain.{Event, NotificationMessage, NotificationType, NotificationUtil}
 import org.sunbird.job.notification.util.datasecurity.OneWayHashing
+import org.sunbird.job.util.CassandraUtil
 import org.sunbird.notification.beans.{EmailConfig, EmailRequest, SMSConfig}
 import org.sunbird.notification.email.service.{IEmailFactory, IEmailService}
 import org.sunbird.notification.email.service.impl.IEmailProviderFactory
@@ -22,16 +22,16 @@ import org.sunbird.notification.fcm.providerImpl.FCMHttpNotificationServiceImpl
 import org.sunbird.notification.sms.provider.ISmsProvider
 import org.sunbird.notification.utils.{FCMResponse, SMSFactory}
 
-class NotificationFunction(config: NotificationConfig, @transient var ifcmNotificationService: IFCMNotificationService = null) extends BaseProcessKeyedFunction[String, Event, String](config) {
+class NotificationFunction(config: NotificationConfig, /*@transient var ifcmNotificationService: IFCMNotificationService = null,*/ @transient var notificationUtil: NotificationUtil = null) extends BaseProcessKeyedFunction[String, Event, String](config) {
     
     private[this] val logger = LoggerFactory.getLogger(classOf[NotificationFunction])
     
     private val mapper = new ObjectMapper with ScalaObjectMapper
-    private var smsProvider: ISmsProvider = null
+    //private var smsProvider: ISmsProvider = null
     private var accountKey: String = null
-    private var emailFactory : IEmailFactory = null
-    private var emailService : IEmailService = null
-    ifcmNotificationService = NotificationFactory.getInstance(NotificationFactory.instanceType.httpClinet.name)
+    //private var emailFactory : IEmailFactory = null
+    //private var emailService : IEmailService = null
+    //ifcmNotificationService = NotificationFactory.getInstance(NotificationFactory.instanceType.httpClinet.name)
     private var maxIterations = 0
     private val MAXITERTIONCOUNT = 2
     val ACTOR = "actor"
@@ -61,12 +61,14 @@ class NotificationFunction(config: NotificationConfig, @transient var ifcmNotifi
     override def open(parameters: Configuration): Unit = {
         super.open(parameters)
         accountKey = config.fcm_account_key
-        FCMHttpNotificationServiceImpl.setAccountKey(accountKey)
+        //FCMHttpNotificationServiceImpl.setAccountKey(accountKey)
         val smsConfig = new SMSConfig(config.sms_auth_key, config.sms_default_sender)
-        smsProvider = SMSFactory.getInstance("91SMS", smsConfig)
-        emailFactory = new IEmailProviderFactory
-        emailService = emailFactory.create(new EmailConfig(config.mail_server_from_email, config.mail_server_username, config.mail_server_password, config.mail_server_host, config.mail_server_port))
+        //smsProvider = SMSFactory.getInstance("91SMS", smsConfig)
+        //emailFactory = new IEmailProviderFactory
+        //emailService = emailFactory.create(new EmailConfig(config.mail_server_from_email, config.mail_server_username, config.mail_server_password, config.mail_server_host, config.mail_server_port))
         maxIterations = getMaxIterations
+        notificationUtil =  new NotificationUtil(config.mail_server_from_email, config.mail_server_username, config.mail_server_password, config.mail_server_host, config.mail_server_port,
+            config.sms_auth_key, config.sms_default_sender, config.fcm_account_key)
         logger.info("NotificationService:initialize: Service config initialized")
     }
     
@@ -139,7 +141,8 @@ class NotificationFunction(config: NotificationConfig, @transient var ifcmNotifi
         val subject = config.get(SUBJECT).asInstanceOf[String]
         val emailText = templateMap.get(DATA).asInstanceOf[String]
         val emailRequest = new EmailRequest(subject, emailIds, null, null, "", emailText, null)
-        emailService.sendEmail(emailRequest)
+        notificationUtil.sendEmail(emailRequest)
+        //emailService.sendEmail(emailRequest)
     }
     
     def sendSmsNotification(notificationMap: scala.collection.immutable.HashMap[String, AnyRef], msgId: String) = {
@@ -150,7 +153,8 @@ class NotificationFunction(config: NotificationConfig, @transient var ifcmNotifi
         if (mobileNumbers != null) {
             val templateMap = notificationMap.get(TEMPLATE).get.asInstanceOf[scala.collection.immutable.Map[String, AnyRef]].asJava
             val smsText = templateMap.get(DATA).asInstanceOf[String]
-            smsProvider.bulkSms(mobileNumbers, smsText)
+            //smsProvider.bulkSms(mobileNumbers, smsText)
+            notificationUtil.sendSmsNotification(mobileNumbers, smsText)
         }
         else {
             logger.info("mobile numbers not provided for message id:" + msgId)
@@ -168,11 +172,11 @@ class NotificationFunction(config: NotificationConfig, @transient var ifcmNotifi
         dataMap.put(RAW_DATA, mapper.writeValueAsString(notificationMap.get(RAW_DATA)))
         logger.info("NotificationService:processMessage: calling send notification ")
         if (deviceIds != null) {
-            response = ifcmNotificationService.sendMultiDeviceNotification(deviceIds, dataMap, false)
+            response = notificationUtil.sendMultiDeviceNotification(deviceIds, dataMap)
         } else {
             val configMap: util.Map[String, AnyRef] = notificationMap.get(CONFIG).asInstanceOf[util.Map[String, AnyRef]]
             topic = configMap.getOrDefault(TOPIC, "").asInstanceOf[String]
-            response = ifcmNotificationService.sendTopicNotification(topic, dataMap, false)
+            response = notificationUtil.sendTopicNotification(topic, dataMap)
         }
         if (response != null) {
             logger.info("Send device notiifcation response with canonicalId,ErrorMsg,successCount,FailureCount" + response.getCanonical_ids + "," + response.getError + ", " + response.getSuccess + " " + response.getFailure)
