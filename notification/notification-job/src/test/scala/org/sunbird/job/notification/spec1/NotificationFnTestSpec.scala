@@ -1,4 +1,3 @@
-/*
 package org.sunbird.job.notification.spec1
 
 import com.typesafe.config.{Config, ConfigFactory}
@@ -26,13 +25,14 @@ import org.sunbird.notification.email.service.{IEmailFactory, IEmailService}
 import org.sunbird.notification.fcm.provider.{IFCMNotificationService, NotificationFactory}
 import org.sunbird.notification.fcm.providerImpl.FCMHttpNotificationServiceImpl
 import org.sunbird.notification.sms.provider.ISmsProvider
+import org.sunbird.notification.sms.providerimpl.{Msg91SmsProviderFactory, Msg91SmsProviderImpl}
 import org.sunbird.notification.utils.{PropertiesCache, SMSFactory}
 
 import scala.collection.JavaConverters._
 
 @RunWith(classOf[PowerMockRunner])
-@PowerMockIgnore(Array("org.mockito.*"))
-@PrepareForTest(Array(classOf[NotificationFactory]))
+@PowerMockIgnore(Array("javax.management.*", "javax.net.ssl.*", "javax.security.*"))
+@PrepareForTest(Array(classOf[IFCMNotificationService], classOf[NotificationFactory]))
 class NotoficationFnTestSpec extends BaseTestSpec {
     implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
     var cassandraUtil: CassandraUtil = _
@@ -71,9 +71,10 @@ class NotoficationFnTestSpec extends BaseTestSpec {
         emailFactory = mock[IEmailFactory](Mockito.withSettings())
         emailService = mock[IEmailService](Mockito.withSettings())
         org.mockito.Mockito.when(emailFactory.create(emailConfig)).thenReturn(emailService)
-        PowerMockito.spy(classOf[NotificationFactory])
+        org.mockito.Mockito.when(NotificationFactory.getHttpInstance(emailConfig)).thenReturn(iFCMNotificationService)
+        //PowerMockito.spy(classOf[NotificationFactory])
         //PowerMockito.mockStatic(classOf[NotificationFactory])
-        PowerMockito.doAnswer(_ => iFCMNotificationService).when(classOf[NotificationFactory], "getHttpInstance")
+        //PowerMockito.doAnswer(_ => iFCMNotificationService).when(classOf[NotificationFactory], "getHttpInstance")
         //doReturn()
         //PowerMockito.doReturn(iFCMNotificationService).when(classOf[NotificationFactory], "getHttpInstance")
         //doReturn(iFCMNotificationService).when(classOf[NotificationFactory], "getHttpInstance")
@@ -90,7 +91,7 @@ class NotoficationFnTestSpec extends BaseTestSpec {
         val requestMap = event.edataMap.get("request").get.asInstanceOf[scala.collection.immutable.Map[String, Object]]
         val notificationMap = requestMap.get("notification").get.asInstanceOf[scala.collection.immutable.HashMap[String, AnyRef]]
         org.mockito.Mockito.when(emailService.sendEmail(ArgumentMatchers.any[EmailRequest]())).thenReturn(true)
-        val notificationFn = new NotificationFunction(jobConfig, iFCMNotificationService);
+        val notificationFn = new NotificationFunction(jobConfig, iFCMNotificationService)
         val sentEmail = notificationFn.sendEmailNotification(notificationMap)
         sentEmail shouldNot be(false)
     }
@@ -131,4 +132,3 @@ class NotoficationFnTestSpec extends BaseTestSpec {
     }*/
 
 }
-*/
