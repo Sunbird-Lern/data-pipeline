@@ -17,7 +17,7 @@ import org.sunbird.job.notification.task.NotificationConfig
 import org.sunbird.job.util._
 import org.sunbird.spec.BaseTestSpec
 import redis.clients.jedis.Jedis
-import org.sunbird.job.notification.domain.Event
+import org.sunbird.job.notification.domain.{Event, NotificationUtil}
 import org.sunbird.job.notification.fixture.EventFixture
 import org.sunbird.job.notification.function.NotificationFunction
 import org.sunbird.notification.beans.{EmailConfig, EmailRequest, SMSConfig}
@@ -33,9 +33,9 @@ import scala.collection.JavaConverters._
 @RunWith(classOf[PowerMockRunner])
 @PowerMockIgnore(Array("javax.management.*", "javax.net.ssl.*", "javax.security.*"))
 @PrepareForTest(Array(classOf[IFCMNotificationService], classOf[NotificationFactory]))
-class NotoficationFnTestSpec extends BaseTestSpec {
+class NotificationFnTestSpec extends BaseTestSpec {
     implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
-    var cassandraUtil: CassandraUtil = _
+    //var cassandraUtil: CassandraUtil = _
     var emailFactory : IEmailFactory = _
     var emailService : IEmailService = _
     private var smsProvider: ISmsProvider = _
@@ -45,6 +45,7 @@ class NotoficationFnTestSpec extends BaseTestSpec {
     
     val httpUtil = new HttpUtil
     val mockHttpUtil:HttpUtil = mock[HttpUtil](Mockito.withSettings().serializable())
+    val notificationUtil:NotificationUtil = mock[NotificationUtil](Mockito.withSettings().serializable())
     val notificationFactory : NotificationFactory = mock[NotificationFactory](Mockito.withSettings())
     val iFCMNotificationService : IFCMNotificationService = mock[IFCMNotificationService](Mockito.withSettings())
     /*emailFactory = mock[IEmailFactory](Mockito.withSettings())
@@ -71,7 +72,8 @@ class NotoficationFnTestSpec extends BaseTestSpec {
         emailFactory = mock[IEmailFactory](Mockito.withSettings())
         emailService = mock[IEmailService](Mockito.withSettings())
         org.mockito.Mockito.when(emailFactory.create(emailConfig)).thenReturn(emailService)
-        org.mockito.Mockito.when(NotificationFactory.getHttpInstance(emailConfig)).thenReturn(iFCMNotificationService)
+        smsProvider = mock[ISmsProvider](Mockito.withSettings())
+        //org.mockito.Mockito.when(NotificationFactory.getHttpInstance(emailConfig)).thenReturn(iFCMNotificationService)
         //PowerMockito.spy(classOf[NotificationFactory])
         //PowerMockito.mockStatic(classOf[NotificationFactory])
         //PowerMockito.doAnswer(_ => iFCMNotificationService).when(classOf[NotificationFactory], "getHttpInstance")
@@ -90,21 +92,24 @@ class NotoficationFnTestSpec extends BaseTestSpec {
         val event = new Event(JSONUtil.deserialize[java.util.Map[String, Any]](EventFixture.EVENT_1), 0, 0)
         val requestMap = event.edataMap.get("request").get.asInstanceOf[scala.collection.immutable.Map[String, Object]]
         val notificationMap = requestMap.get("notification").get.asInstanceOf[scala.collection.immutable.HashMap[String, AnyRef]]
+        org.mockito.Mockito.when(notificationUtil.sendEmail(ArgumentMatchers.any[EmailRequest]())).thenReturn(true)
         org.mockito.Mockito.when(emailService.sendEmail(ArgumentMatchers.any[EmailRequest]())).thenReturn(true)
-        val notificationFn = new NotificationFunction(jobConfig, iFCMNotificationService)
+        val notificationFn = new NotificationFunction(jobConfig, notificationUtil)
         val sentEmail = notificationFn.sendEmailNotification(notificationMap)
         sentEmail shouldNot be(false)
     }
     
-    /*"Notification-Mobile " should " Should send message " in {
-        val event = new Event(JSONUtil.deserialize[java.util.Map[String, Any]](EventFixture.EVENT_1), 0, 0)
+    "Notification-Mobile " should " Should send message " in {
+        val event = new Event(JSONUtil.deserialize[java.util.Map[String, Any]](EventFixture.EVENT_2), 0, 0)
         val msgId = event.msgId;
         val requestMap = event.edataMap.get("request").get.asInstanceOf[scala.collection.immutable.Map[String, Object]]
         val notificationMap = requestMap.get("notification").get.asInstanceOf[scala.collection.immutable.HashMap[String, AnyRef]]
+        org.mockito.Mockito.when(notificationUtil.sendSmsNotification(ArgumentMatchers.any[java.util.List[String]], ArgumentMatchers.any[String]())).thenReturn(true)
         org.mockito.Mockito.when(smsProvider.bulkSms(ArgumentMatchers.any[java.util.List[String]], ArgumentMatchers.any[String]())).thenReturn(true)
-        val sentEmail = new NotificationFunction(jobConfig, iFCMNotificationService).sendSmsNotification(notificationMap, msgId)
+        val notificationFn = new NotificationFunction(jobConfig, notificationUtil)
+        val sentEmail = notificationFn.sendSmsNotification(notificationMap, msgId)
         sentEmail shouldNot be(false)
-    }*/
+    }
 
 
     /*"CertPreProcess When User Last Name is String Null " should " Should get Valid getRecipientName " in {
