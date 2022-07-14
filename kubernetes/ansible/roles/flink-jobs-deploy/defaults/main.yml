@@ -93,10 +93,10 @@ registry_sunbird_keyspace: "sunbird"
 cert_registry_table: "cert_registry"
 
 ###  Merge User Courses Job related Vars
-merge-user-courses_consumer_parallelism: 1
-merge-user-courses_parallelism: 1
-merge-user-courses_course_batch_parallelism: 1
-merge-user-courses_course_date_format: "yyyy-MM-dd HH:mm:ss:SSSZ"
+merge_user_courses_consumer_parallelism: 1
+merge_user_courses_parallelism: 1
+merge_user_courses_course_batch_parallelism: 1
+merge_user_courses_course_date_format: "yyyy-MM-dd HH:mm:ss:SSSZ"
 
 
 ### to be removed
@@ -153,7 +153,6 @@ middleware_course_keyspace: "sunbird_courses"
 cloud_store: azure
 
 service_monitor_enabled: true
-master_category_validation_enabled: "Yes"
 
 ### controlling the flink jobs log level
 flink_jobs_console_log_level: INFO

@@ -360,9 +360,9 @@ merge-user-courses:
       output.course.batch.updater.topic = {{ env_name }}.coursebatch.job.request
     }
     task {
-      consumer.parallelism = {{ merge-user-courses_consumer_parallelism }}
-      parallelism = {{ merge-user-courses_parallelism }}
-      course_batch_updater.parallelism = {{ merge-user-courses_course_batch_parallelism }}
+      consumer.parallelism = {{ merge_user_courses_consumer_parallelism }}
+      parallelism = {{ merge_user_courses_parallelism }}
+      course_batch_updater.parallelism = {{ merge_user_courses_course_batch_parallelism }}
     }
     lms-cassandra {
       keyspace = "{{ middleware_course_keyspace }}"
@@ -370,7 +370,7 @@ merge-user-courses:
       user_enrolments.table = "{{ middleware_user_enrolments_table }}"
       user_activity_agg.table = "{{ middleware_user_activity_agg_table }}"
     }
-    course.date.format = "{{ merge-user-courses_course_date_format }}"
+    course.date.format = "{{ merge_user_courses_course_date_format }}"
 
   flink-conf: |+
     jobmanager.memory.flink.size: {{ flink_job_names['merge-user-courses'].jobmanager_memory }}
