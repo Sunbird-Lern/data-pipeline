@@ -92,6 +92,12 @@ collection_certificate_generator_rc_badcharlist: "{{ rc_bad_char_list | default(
 registry_sunbird_keyspace: "sunbird"
 cert_registry_table: "cert_registry"
 
+###  Merge User Courses Job related Vars
+merge-user-courses_consumer_parallelism: 1
+merge-user-courses_parallelism: 1
+merge-user-courses_course_batch_parallelism: 1
+merge-user-courses_course_date_format: "yyyy-MM-dd HH:mm:ss:SSSZ"
+
 
 ### to be removed
 job_classname: ""
