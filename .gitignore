@@ -10,7 +10,7 @@ target/
 dependency-reduced-pom.xml
 .DS_Store
 *.log
-kubernets/config
+kubernetes/config
 .project
 .classpath
 .factorypath
