@@ -36,7 +36,7 @@ jobs:
       - run:
            name: sonar
            command: |
-             mvn verify sonar:sonar -Dlog4j.configuration=./logs -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.coverage.exclusions=**/notification-job/** -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
+             mvn verify sonar:sonar -Dlog4j.configuration=./logs -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.coverage.exclusions=**/notification-sdk/** -Dsonar.test.exclusions=**/notification-sdk/** -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
 
 workflows:
   version: 2
