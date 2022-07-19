@@ -39,9 +39,9 @@ node('build-slave') {
 
                 //   stage Retagging
                          sh """
-                            docker tag knowledge-platform-jobs:${build_tag} ${hub_org}/lern-data-pipeline:${build_tag}
-                  echo {\\"image_name\\" : \\"lern-data-pipeline\\", \\"image_tag\\" : \\"${build_tag}\\", \\"node_name\\" : \\"${env.NODE_NAME}\\"} > metadata.json
-                            """
+                            docker tag data-pipeline:${build_tag} ${hub_org}/data-pipeline:${build_tag}
+                            echo {\\"image_name\\" : \\"data-pipeline\\", \\"image_tag\\" : \\"${build_tag}\\", \\"node_name\\" : \\"${env.NODE_NAME}\\"} > metadata.json
+                             """
 
                //   stage ArchiveArtifacts
                         archiveArtifacts "metadata.json"
