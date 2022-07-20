@@ -1,7 +1,6 @@
 package org.sunbird.job.notification.function
 
 import java.util
-import scala.collection.immutable.List
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -13,25 +12,15 @@ import org.sunbird.job.{BaseProcessKeyedFunction, Metrics}
 import org.sunbird.job.notification.task.NotificationConfig
 import org.sunbird.job.notification.domain.{Event, NotificationMessage, NotificationType, NotificationUtil}
 import org.sunbird.job.notification.util.datasecurity.OneWayHashing
-import org.sunbird.job.util.CassandraUtil
-import org.sunbird.notification.beans.{EmailConfig, EmailRequest, SMSConfig}
-import org.sunbird.notification.email.service.{IEmailFactory, IEmailService}
-import org.sunbird.notification.email.service.impl.IEmailProviderFactory
-import org.sunbird.notification.fcm.provider.{IFCMNotificationService, NotificationFactory}
-import org.sunbird.notification.fcm.providerImpl.FCMHttpNotificationServiceImpl
-import org.sunbird.notification.sms.provider.ISmsProvider
-import org.sunbird.notification.utils.{FCMResponse, SMSFactory}
+import org.sunbird.notification.beans.{ EmailRequest, SMSConfig}
+import org.sunbird.notification.utils.{FCMResponse}
 
-class NotificationFunction(config: NotificationConfig, /*@transient var ifcmNotificationService: IFCMNotificationService = null,*/ @transient var notificationUtil: NotificationUtil = null) extends BaseProcessKeyedFunction[String, Event, String](config) {
+class NotificationFunction(config: NotificationConfig,  @transient var notificationUtil: NotificationUtil = null) extends BaseProcessKeyedFunction[String, Event, String](config) {
     
     private[this] val logger = LoggerFactory.getLogger(classOf[NotificationFunction])
     
     private val mapper = new ObjectMapper with ScalaObjectMapper
-    //private var smsProvider: ISmsProvider = null
     private var accountKey: String = null
-    //private var emailFactory : IEmailFactory = null
-    //private var emailService : IEmailService = null
-    //ifcmNotificationService = NotificationFactory.getInstance(NotificationFactory.instanceType.httpClinet.name)
     private var maxIterations = 0
     private val MAXITERTIONCOUNT = 2
     val ACTOR = "actor"
@@ -60,12 +49,6 @@ class NotificationFunction(config: NotificationConfig, /*@transient var ifcmNoti
     
     override def open(parameters: Configuration): Unit = {
         super.open(parameters)
-        accountKey = config.fcm_account_key
-        //FCMHttpNotificationServiceImpl.setAccountKey(accountKey)
-        val smsConfig = new SMSConfig(config.sms_auth_key, config.sms_default_sender)
-        //smsProvider = SMSFactory.getInstance("91SMS", smsConfig)
-        //emailFactory = new IEmailProviderFactory
-        //emailService = emailFactory.create(new EmailConfig(config.mail_server_from_email, config.mail_server_username, config.mail_server_password, config.mail_server_host, config.mail_server_port))
         maxIterations = getMaxIterations
         notificationUtil =  new NotificationUtil(config.mail_server_from_email, config.mail_server_username, config.mail_server_password, config.mail_server_host, config.mail_server_port,
             config.sms_auth_key, config.sms_default_sender, config.fcm_account_key)
@@ -142,7 +125,6 @@ class NotificationFunction(config: NotificationConfig, /*@transient var ifcmNoti
         val emailText = templateMap.get(DATA).asInstanceOf[String]
         val emailRequest = new EmailRequest(subject, emailIds, null, null, "", emailText, null)
         notificationUtil.sendEmail(emailRequest)
-        //emailService.sendEmail(emailRequest)
     }
     
     def sendSmsNotification(notificationMap: scala.collection.immutable.HashMap[String, AnyRef], msgId: String) = {
@@ -153,7 +135,6 @@ class NotificationFunction(config: NotificationConfig, /*@transient var ifcmNoti
         if (mobileNumbers != null) {
             val templateMap = notificationMap.get(TEMPLATE).get.asInstanceOf[scala.collection.immutable.Map[String, AnyRef]].asJava
             val smsText = templateMap.get(DATA).asInstanceOf[String]
-            //smsProvider.bulkSms(mobileNumbers, smsText)
             notificationUtil.sendSmsNotification(mobileNumbers, smsText)
         }
         else {

@@ -15,8 +15,6 @@ class NotificationConfig(override val config: Config) extends BaseJobConfig(conf
     
     // Kafka Topics Configuration
     val kafkaInputTopic: String = config.getString("kafka.input.topic")
-    //val kafkaAuditEventTopic: String = config.getString("kafka.output.audit.topic")
-    
     override val kafkaConsumerParallelism: Int = config.getInt("task.consumer.parallelism")
     
     // Consumers

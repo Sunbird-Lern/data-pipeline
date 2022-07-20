@@ -26,6 +26,7 @@ jobs:
           command: |
             cd jobs-core && mvn scoverage:report
             cd ../lms-jobs && mvn scoverage:report
+            cd ../notification/notification-job && mvn scoverage:report
       - run:
           name: Save test results
           command: |
