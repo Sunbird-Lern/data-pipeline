@@ -20,7 +20,8 @@ jobs:
       - run:
           name: Execute jobs-core scala coverage report
           command: |
-            cd jobs-core && mvn scoverage:report
+            mvn clean install
+            cd ../jobs-core && mvn scoverage:report
             cd ../lms-jobs && mvn scoverage:report
       - run:
           name: Save test results
