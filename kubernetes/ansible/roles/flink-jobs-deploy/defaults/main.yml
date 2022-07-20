@@ -98,6 +98,19 @@ merge_user_courses_parallelism: 1
 merge_user_courses_course_batch_parallelism: 1
 merge_user_courses_course_date_format: "yyyy-MM-dd HH:mm:ss:SSSZ"
 
+### assessment-aggregator related vars
+assessaggregator_parallelism: 1
+assessaggregator_consumer_parallelism: 1
+assessaggregator_downstream_parallelism: 1
+assessaggregator_scoreaggregator_parallelism: 1
+middleware_cassandra_courses_keyspace: sunbird_courses
+middleware_cassandra_assessment_aggregator_table: assessment_aggregator
+middleware_cassandra_assessment_question_type : question
+middleware_cassandra_user_enrolments_table: user_enrolments
+middleware_cassandra_user_activity_agg_table: user_activity_agg
+content_read_api_host: "http://dev.sunbirded.org"
+content_read_api_endpoint: "/api/content/v1/read/"
+
 
 ### to be removed
 job_classname: ""
@@ -146,6 +159,16 @@ flink_job_names:
     taskmanager_memory: 1024m
     taskslots: 1
     cpu_requests: 0.3
+  assessment-aggregator:
+    job_class_name: 'org.sunbird.dp.assessment.task.AssessmentAggregatorStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskmanager_process_memory: 1700m
+    jobmanager_process_memory: 1600m
+    taskslots: 1
+    cpu_requests: 0.3
+    scale_enabled: false
 
 
 ### Global vars
