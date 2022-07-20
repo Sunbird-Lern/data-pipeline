@@ -18,10 +18,13 @@ jobs:
             sudo apt-get update || sudo apt-get update
             sudo apt-get install -y imagemagick
       - run:
-          name: Execute jobs-core scala coverage report
+          name: Execute clean install
           command: |
             mvn clean install
-            cd ../jobs-core && mvn scoverage:report
+      - run:
+          name: Execute jobs-core scala coverage report
+          command: |
+            cd jobs-core && mvn scoverage:report
             cd ../lms-jobs && mvn scoverage:report
       - run:
           name: Save test results
