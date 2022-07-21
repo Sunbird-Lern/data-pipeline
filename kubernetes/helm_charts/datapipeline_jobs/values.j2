@@ -73,9 +73,13 @@ log4j_console_properties: |
 base_config: |
   kafka {
       broker-servers = "{{ kafka_brokers }}"
+      producer.broker-servers = "{{ kafka_brokers }}"
+      consumer.broker-servers = "{{ kafka_brokers }}"
       zookeeper = "{{ zookeepers }}"
       producer {
         max-request-size = {{ producer_max_request_size }}
+        batch.size = {{ producer_batch_size }}
+        linger.ms = {{ producer_linger_ms }}
       }
     }
     job {
@@ -101,6 +105,7 @@ base_config: |
       restart-strategy.attempts = {{ restart_attempts }}
       restart-strategy.delay = {{ restart_delay }} # in milli-seconds
     }
+    redisdb.connection.timeout = {{ redis_timeout }}
     redis {
       host = {{ dp_redis_host }}
       port = 6379
@@ -391,9 +396,9 @@ assessment-aggregator:
   assessment-aggregator: |+
     include file("/data/flink/conf/base-config.conf")
     kafka {
-      producer.broker-servers = "{{ ingestion_kafka_brokers }}"
-      consumer.broker-servers = "{{ ingestion_kafka_brokers }}"
-      zookeeper = "{{ ingestion_zookeepers }}"
+      producer.broker-servers = "{{ kafka_brokers }}"
+      consumer.broker-servers = "{{ kafka_brokers }}"
+      zookeeper = "{{ zookeepers }}"
       input.topic = {{ env_name }}.telemetry.assess
       failed.topic= {{ env_name }}.telemetry.assess.failed
       groupId = {{ env_name }}-assessment-aggregator-group
