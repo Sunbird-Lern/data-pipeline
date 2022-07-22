@@ -18,15 +18,9 @@ jobs:
             sudo apt-get update || sudo apt-get update
             sudo apt-get install -y imagemagick
       - run:
-          name: Execute clean install
+          name: Execute coverage report
           command: |
-            mvn clean install
-      - run:
-          name: Execute jobs-core scala coverage report
-          command: |
-            cd jobs-core && mvn scoverage:report
-            cd ../lms-jobs && mvn scoverage:report
-            cd ../notification/notification-job && mvn scoverage:report
+            mvn clean scoverage:report
       - run:
           name: Save test results
           command: |
@@ -42,7 +36,7 @@ jobs:
       - run:
            name: sonar
            command: |
-             mvn verify -DskipTests=true sonar:sonar -Dlog4j.configuration=./logs -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.coverage.exclusions=**/notification-sdk/** -Dsonar.test.exclusions=**/notification-sdk/** -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
+             mvn -X sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
 
 workflows:
   version: 2

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sunbird</groupId>
-        <artifactId>lern-pipeline-jobs</artifactId>
+        <artifactId>data-pipeline</artifactId>
         <version>1.0</version>
     </parent>
 
@@ -47,6 +47,18 @@
         <dependency>
             <groupId>org.sunbird</groupId>
             <artifactId>collection-certificate-generator</artifactId>
+            <version>1.0.0</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.sunbird</groupId>
+            <artifactId>merge-user-courses</artifactId>
+            <version>1.0.0</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.sunbird</groupId>
+            <artifactId>assessment-aggregator</artifactId>
             <version>1.0.0</version>
             <type>jar</type>
         </dependency>
@@ -101,7 +113,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <repository>lern-pipeline-jobs</repository>
+                            <repository>data-pipeline</repository>
                             <tag>${release-version}</tag>
                         </configuration>
                     </plugin>
