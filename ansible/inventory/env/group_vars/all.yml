@@ -7,6 +7,7 @@ ansible_vault_password: "{{lp_vault_ansible_vault_password}}"
 secrets_path: '{{inventory_dir}}/group_vars/common.yml'
 
 env_name: "{{ env }}"
+bb: lern
 instance_name: "{{ env }}"
 instance: "{{ env }}"
 cert_env_prefix : "{{ instance }}"
