@@ -38,6 +38,7 @@ restart_delay: 30000 # in milli-seconds
 producer_max_request_size: 1572864
 producer_batch_size: 98304
 producer_linger_ms: 10
+redis_timeout: 30000
 
 ### Activity Aggregate job related vars
 activity_agg_consumer_parallelism: 1
