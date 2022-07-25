@@ -5,13 +5,13 @@ jobs:
     docker:
       - image: circleci/openjdk:stretch
     resource_class: medium
-    working_directory: ~/kp
+    working_directory: ~/lern
     steps:
       - checkout
       - restore_cache:
           keys:
-            - kp-jobs-dependency-cache-{{ checksum "pom.xml" }} # appends cache key with a hash of pom.xml fi
-            - kp-jobs-dependency-cache- # fallback in case previous cache key is not foun
+            - lern-jobs-dependency-cache-{{ checksum "pom.xml" }} # appends cache key with a hash of pom.xml fi
+            - lern-jobs-dependency-cache- # fallback in case previous cache key is not foun
       - run: 
           name: Installation of imagemagick
           command: |
@@ -30,13 +30,13 @@ jobs:
       - save_cache:
             paths:
               - ~/.m2
-            key: kp-jobs-dependency-cache-{{ checksum "pom.xml" }}
+            key: lern-jobs-dependency-cache-{{ checksum "pom.xml" }}
       - store_test_results:
           path: ~/test-results
       - run:
            name: sonar
            command: |
-             mvn -X sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=project-sunbird_knowledge-platform-jobs -Dsonar.organization=project-sunbird -Dsonar.host.url=https://sonarcloud.io -Dsonar.exclusions=**/cert-processor/** -Dsonar.scala.coverage.reportPaths=/home/circleci/kp/target/scoverage.xml
+             mvn -X sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
 
 workflows:
   version: 2
