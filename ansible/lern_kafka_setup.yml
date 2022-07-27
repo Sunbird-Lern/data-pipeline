@@ -9,4 +9,4 @@
       debug:
         var: kafka_id
   roles:
-    - setup-kafka
+    - setup-lern-kafka

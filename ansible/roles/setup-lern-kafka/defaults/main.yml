@@ -3,7 +3,7 @@ bb: lern
 kafka_partition_override_size: 5242880
 dp_downstream_kafka_max_message_bytes: 1572864
 
-processing_kafka_overriden_topics:
+processing_lern_kafka_overriden_topics:
   - name: telemetry.assess
     retention_time: 172800000
     replication_factor: 1
@@ -50,7 +50,7 @@ processing_kafka_overriden_topics:
     retention_time: 172800000
     replication_factor: 1
 
-processing_kafka_topics:
+processing_lern_kafka_topics:
   - name: telemetry.assess
     num_of_partitions: 2
     replication_factor: 1
