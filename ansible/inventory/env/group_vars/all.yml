@@ -119,3 +119,6 @@ download_neo4j: true
 neo4j_upstream_download: false
 enable_suppress_exception: false
 enable_rc_certificate: true
+
+### kafka and zookeeper ip vars and being used in kafka topiccreation role.
+processing_zookeeper_ip: "{{ groups['processing-cluster-zookeepers'][0] }}"
