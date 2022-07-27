@@ -3,14 +3,14 @@ bb: lern
 kafka_partition_override_size: 5242880
 dp_downstream_kafka_max_message_bytes: 1572864
 
-processing_kafka_overriden_topics:
+processing_lern_kafka_overriden_topics:
   - name: telemetry.assess
     retention_time: 172800000
     replication_factor: 1
   - name: telemetry.assess.failed
     retention_time: 172800000
     replication_factor: 1
-  - name: telemetry.assess.raw
+  - name: content.postpublish.request
     retention_time: 172800000
     replication_factor: 1
   - name: issue.certificate.request
@@ -48,16 +48,19 @@ processing_kafka_overriden_topics:
     replication_factor: 1
   - name: lms.notification
     retention_time: 172800000
+    replication_factor: 1
+  - name: contentstate.invalid
+    num_of_partitions: 2
     replication_factor: 1
 
-processing_kafka_topics:
+processing_lern_kafka_topics:
   - name: telemetry.assess
     num_of_partitions: 2
     replication_factor: 1
   - name: telemetry.assess.failed
     num_of_partitions: 2
     replication_factor: 1
-  - name: telemetry.assess.raw
+  - name: content.postpublish.request
     num_of_partitions: 2
     replication_factor: 1
   - name: issue.certificate.request
@@ -94,5 +97,8 @@ processing_kafka_topics:
     num_of_partitions: 2
     replication_factor: 1
   - name: lms.notification
+    num_of_partitions: 2
+    replication_factor: 1
+  - name: contentstate.invalid
     num_of_partitions: 2
     replication_factor: 1
