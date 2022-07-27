@@ -1,4 +1,5 @@
-/** */
+/** *//*
+
 package org.sunbird.notification.email;
 
 import java.util.ArrayList;
@@ -15,7 +16,9 @@ import org.junit.Test;
 import org.jvnet.mock_javamail.Mailbox;
 import org.sunbird.notification.beans.EmailConfig;
 
-/** @author Manzarul */
+*/
+/** @author Manzarul *//*
+
 public class EmailTest {
 
   private static GMailAuthenticator authenticator = null;
@@ -102,3 +105,4 @@ public class EmailTest {
     Mailbox.clearAll();
   }
 }
+*/

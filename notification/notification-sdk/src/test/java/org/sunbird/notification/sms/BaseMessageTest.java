@@ -1,3 +1,4 @@
+/*
 package org.sunbird.notification.sms;
 
 import com.mashape.unirest.http.HttpResponse;
@@ -78,8 +79,11 @@ public abstract class BaseMessageTest {
     when(System.getenv(Mockito.anyString())).thenReturn("randomString");
     ISmsProvider msg91SmsProvider = PowerMockito.mock(Msg91SmsProviderImpl.class);
     PowerMockito.when(SMSFactory.getInstance(Mockito.anyString(), Mockito.any(SMSConfig.class))).thenReturn(msg91SmsProvider);
-    /*doCallRealMethod()
+    */
+/*doCallRealMethod()
         .when(pc)
-        .getProperty(AdditionalMatchers.not(Mockito.eq("sunbird_msg_91_auth")));*/
+        .getProperty(AdditionalMatchers.not(Mockito.eq("sunbird_msg_91_auth")));*//*
+
   }
 }
+*/
