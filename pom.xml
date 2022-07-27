@@ -36,6 +36,7 @@
 		<jackson-jaxrs.version>1.9.13</jackson-jaxrs.version>
 		<scoverage.plugin.version>1.4.0</scoverage.plugin.version>
 		<java.target.runtime>11</java.target.runtime>
+		<sonar.exclusions>**/**.java</sonar.exclusions>
 	</properties>
 
 	<repositories>
