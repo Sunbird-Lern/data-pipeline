@@ -18,9 +18,16 @@ jobs:
             sudo apt-get update || sudo apt-get update
             sudo apt-get install -y imagemagick
       - run:
-          name: Execute coverage report
+          name: Execute clean install
           command: |
-            mvn clean scoverage:report
+            mvn clean install
+      - run:
+          name: Execute jobs-core scala coverage report
+          command: |
+            cd jobs-core && mvn scoverage:report
+            cd ../dp-core && mvn scoverage:report
+            cd ../lms-jobs && mvn scoverage:report
+            cd ../notification/notification-job && mvn scoverage:report
       - run:
           name: Save test results
           command: |
@@ -36,7 +43,7 @@ jobs:
       - run:
            name: sonar
            command: |
-             mvn verify sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.sources=$(find . -path '*/src/main' | xargs | tr ' ' ',') -Dsonar.java.binaries=$(find . -path '*/build/classes/java' | xargs | tr ' ' ',') -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
+             mvn -X sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.sources=$(find . -path '*/src/main' | xargs | tr ' ' ',') -Dsonar.java.binaries=$(find . -path '*/build/classes/java' | xargs | tr ' ' ',') -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
 
 workflows:
   version: 2
