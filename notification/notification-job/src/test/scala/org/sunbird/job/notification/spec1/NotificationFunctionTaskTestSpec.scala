@@ -1,4 +1,3 @@
-/*
 package org.sunbird.job.collectioncert.function.spec
 
 import java.util
@@ -88,4 +87,3 @@ object GenerateNotificationSink {
     val values: util.List[String] = new util.ArrayList()
 }
 
-*/
