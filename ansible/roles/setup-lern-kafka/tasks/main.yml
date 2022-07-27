@@ -16,7 +16,4 @@
 - name: overriding lern data pipeline downstream topic size
   shell: "/opt/kafka/bin/kafka-topics.sh  --zookeeper {{processing_zookeeper_ip}}:2181 --alter --topic {{item}} --config max.message.bytes={{dp_downstream_kafka_max_message_bytes}}"
   with_items:
-    - "{{env}}{{bb}}.telemetry.assess.raw"
-    - "{{env}}{{bb}}.telemetry.audit"
-    - "{{env}}{{bb}}.telemetry.failed"
     - "{{env}}{{bb}}.telemetry.raw"
