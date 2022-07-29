@@ -50,7 +50,7 @@ object NotificationStreamTask {
         val configFilePath = Option(ParameterTool.fromArgs(args).get("config.file.path"))
         val config = configFilePath.map {
             path => ConfigFactory.parseFile(new File(path)).resolve()
-        }.getOrElse(ConfigFactory.load("notification-config.conf").withFallback(ConfigFactory.systemEnvironment()))
+        }.getOrElse(ConfigFactory.load("notification-job.conf").withFallback(ConfigFactory.systemEnvironment()))
         val notificationConfig = new NotificationConfig(config)
         val kafkaUtil = new FlinkKafkaConnector(notificationConfig)
         val task = new NotificationStreamTask(notificationConfig, kafkaUtil)
