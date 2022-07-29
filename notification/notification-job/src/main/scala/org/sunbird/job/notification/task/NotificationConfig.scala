@@ -22,7 +22,7 @@ class NotificationConfig(override val config: Config) extends BaseJobConfig(conf
     val notificationFailedProducer = "notification-failed-producer"
     val fcm_account_key : String = config.getString("fcm_account_key")
     val sms_auth_key : String = config.getString("sms_auth_key")
-    val sms_default_sender : String = "DIKAPP"
+    val sms_default_sender : String = config.getString("sms_default_sender")
     val mail_server_from_email : String = config.getString("mail_server_from_email")
     val mail_server_username : String = config.getString("mail_server_username")
     val mail_server_password : String = config.getString("mail_server_password")
