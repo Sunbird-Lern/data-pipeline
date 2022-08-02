@@ -187,7 +187,7 @@ class NotificationFunction(config: NotificationConfig,  @transient var notificat
             eventMap.put("eid", event.eid)
             eventMap.put("mid", event.mid())
             eventMap.put("trace", event.traceMap)
-            eventMap.put("ets", event.ets)
+            //eventMap.put("ets", event.ets)
             eventMap.put("edata", eDatamap)
             eventMap.put("context", event.contextMap)
             eventMap.put("object", event.objectMap)
