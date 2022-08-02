@@ -178,7 +178,7 @@ class NotificationFunction(config: NotificationConfig,  @transient var notificat
         logger.info("NotificationService:handleFailureMessage started")
         val iteration : Int = event.edataMap.get(ITERATION).get.asInstanceOf[Int]
         if (iteration < maxIterations) {
-            val eventMap : java.util.Map[String, Object] = new util.HashMap
+            val eventMap : java.util.Map[String, Any] = new util.HashMap
             val eDatamap : java.util.Map[String, Any] = new util.HashMap
             eDatamap.put("action", event.action)
             eDatamap.put("iteration", 2)
