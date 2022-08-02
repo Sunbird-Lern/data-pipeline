@@ -99,7 +99,7 @@ class NotificationFunction(config: NotificationConfig,  @transient var notificat
                         logger.info("Notification sent successfully.")
                     } else {
                         logger.info("Notification sent failure")
-                        handleFailureMessage(event, context, metrics)
+                        //handleFailureMessage(event, context, metrics)
                     }
                 //}
             }
