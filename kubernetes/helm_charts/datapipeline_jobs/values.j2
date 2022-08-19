@@ -436,3 +436,35 @@ assessment-aggregator:
     parallelism.default: 1
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1
+
+notification-job:
+  notification-job: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = {{ env_name }}.lms.notification
+      groupId = {{ env_name }}-lms.notification
+    }
+    task {
+      restart-strategy.attempts = {{ restart_attempts }} # max 3 restart attempts
+      restart-strategy.delay = 240000 # in milli-seconds # on max restarts (3) within 4 min the job will fail.
+      consumer.parallelism = {{ notification_job_consumer_parallelism }}
+      parallelism = {{ notification_job_parallelism }}
+    }
+    fcm_account_key= "{{ core_vault_sunbird_fcm_account_key }}"
+    sms_auth_key= "{{sunbird_msg_91_auth}}"
+    mail_server_from_email= "{{sunbird_mail_server_from_email}}"
+    sms_default_sender= "{{sunbird_notification_msg_default_sender}}"
+    mail_server_username= "{{sunbird_mail_server_username}}"
+    mail_server_password= "{{sunbird_mail_server_password}}"
+    mail_server_host= "{{sunbird_mail_server_host}}"
+    mail_server_port= "{{sunbird_mail_server_port}}"
+
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['notification-job'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['notification-job'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['notification-job'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
+

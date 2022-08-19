@@ -101,6 +101,10 @@ merge_user_courses_parallelism: 1
 merge_user_courses_course_batch_parallelism: 1
 merge_user_courses_course_date_format: "yyyy-MM-dd HH:mm:ss:SSSZ"
 
+###  Notification Job related Vars
+notification_job_consumer_parallelism: 1
+notification_job_parallelism: 1
+
 ### assessment-aggregator related vars
 assessaggregator_parallelism: 1
 assessaggregator_consumer_parallelism: 1
@@ -172,6 +176,13 @@ flink_job_names:
     taskslots: 1
     cpu_requests: 0.3
     scale_enabled: false
+  notification-job:
+    job_class_name: 'org.sunbird.job.notification.task.NotificationStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
 
 
 ### Global vars
