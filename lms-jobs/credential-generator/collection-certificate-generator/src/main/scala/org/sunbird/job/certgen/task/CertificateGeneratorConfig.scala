@@ -70,15 +70,13 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   // env vars
   val storageType: String = config.getString("cert_cloud_storage_type")
   val containerName: String = config.getString("cert_container_name")
-  val azureStorageSecret: String = config.getString("cert_azure_storage_secret")
-  val azureStorageKey: String = config.getString("cert_azure_storage_key")
+  val storageSecret: String = config.getString(s"cert_${storageType}_storage_secret")
+  val storageKey: String = config.getString(s"cert_${storageType}_storage_key")
   val domainUrl: String = config.getString("cert_domain_url")
   val encServiceUrl: String = config.getString("service.enc.basePath")
   val certRegistryBaseUrl: String = config.getString("service.certreg.basePath")
   val learnerServiceBaseUrl: String = config.getString("service.learner.basePath")
   val basePath: String = domainUrl.concat("/").concat("certs")
-  val awsStorageSecret: String = ""
-  val awsStorageKey: String = ""
   val addCertRegApi = "/certs/v2/registry/add"
   val userFeedCreateEndPoint:String = "/private/user/feed/v1/create"
   val notificationEndPoint: String = "/v2/notification"
