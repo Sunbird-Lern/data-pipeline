@@ -14,8 +14,6 @@ import org.sunbird.job.certgen.task.CertificateGeneratorConfig
 import org.sunbird.job.util.{CassandraUtil, HttpUtil, JSONUtil}
 import org.sunbird.spec.BaseTestSpec
 
-import java.util
-
 class CertValidatorTest extends BaseTestSpec{
   var cassandraUtil: CassandraUtil = _
   val config: Config = ConfigFactory.load("test.conf")
@@ -28,7 +26,7 @@ class CertValidatorTest extends BaseTestSpec{
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
-    cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort)
+    cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort,jobConfig.isMultiDCEnabled)
     val session = cassandraUtil.session
     session.execute(s"DROP KEYSPACE IF EXISTS ${jobConfig.dbKeyspace}")
     val dataLoader = new CQLDataLoader(session)

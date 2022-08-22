@@ -2,20 +2,26 @@ package org.sunbird.job.util
 
 import com.datastax.driver.core._
 import com.datastax.driver.core.exceptions.DriverException
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy
 import org.slf4j.LoggerFactory
 
 import java.util
 
-class CassandraUtil(host: String, port: Int) {
+class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
 
   private[this] val logger = LoggerFactory.getLogger("CassandraUtil")
 
-  val cluster = {
-    Cluster.builder()
-      .addContactPoints(host)
+  var cluster = {
+    val cb = Cluster.builder()
+      .addContactPoint(host)
       .withPort(port)
+      .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM))
       .withoutJMXReporting()
-      .build()
+
+    if(isMultiDCEnabled) {
+      cb.withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().build())
+    }
+    cb.build()
   }
   var session = cluster.connect()
 

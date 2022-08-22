@@ -36,6 +36,7 @@ class BaseJobConfig(val config: Config, val jobName: String) extends Serializabl
   // LMS Cassandra DB Config
   val lmsDbHost: String = config.getString("lms-cassandra.host")
   val lmsDbPort: Int = config.getInt("lms-cassandra.port")
+  val isMultiDCEnabled: Boolean = config.getBoolean("lms-cassandra.isMultiDCEnabled")
 
   def kafkaConsumerProperties: Properties = {
     val properties = new Properties()
