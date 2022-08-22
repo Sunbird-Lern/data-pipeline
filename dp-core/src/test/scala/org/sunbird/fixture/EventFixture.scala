@@ -77,6 +77,12 @@ object EventFixture {
       |    user = "postgres"
       |    password = "postgres"
       |}
+      |
+      |lms-cassandra {
+      |  host = "localhost"
+      |  port = 9142
+      |  isMultiDCEnabled = false
+      |}
       |job {
       |  enable.distributed.checkpointing = true
       |  statebackend {
