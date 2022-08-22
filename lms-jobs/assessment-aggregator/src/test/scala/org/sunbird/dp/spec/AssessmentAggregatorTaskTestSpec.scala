@@ -1,8 +1,6 @@
 package org.sunbird.dp.spec
 
 import com.datastax.driver.core.Row
-
-import java.util
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
@@ -19,7 +17,7 @@ import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.mockito.Mockito
 import org.mockito.Mockito._
 import org.sunbird.dp.assessment.domain.Event
-import org.sunbird.dp.assessment.functions.{AggDetails, UserActivityAgg}
+import org.sunbird.dp.assessment.functions.AggDetails
 import org.sunbird.dp.assessment.task.{AssessmentAggregatorConfig, AssessmentAggregatorStreamTask}
 import org.sunbird.dp.core.cache.RedisConnect
 import org.sunbird.dp.core.job.FlinkKafkaConnector
@@ -27,6 +25,8 @@ import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
 import org.sunbird.dp.fixture.EventFixture
 import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
 import redis.embedded.RedisServer
+
+import java.util
 
 
 class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
@@ -54,7 +54,7 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
     redisServer = new RedisServer(6340)
     redisServer.start()
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
-    cassandraUtil = new CassandraUtil(assessmentConfig.dbHost, assessmentConfig.dbPort)
+    cassandraUtil = new CassandraUtil(assessmentConfig.dbHost, assessmentConfig.dbPort, assessmentConfig.isMultiDCEnabled)
     val session = cassandraUtil.session
     setupRedisTestData()
 

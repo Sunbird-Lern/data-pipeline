@@ -10,8 +10,8 @@ import org.sunbird.job.merge.user.courses.domain.Event
 import org.sunbird.job.merge.user.courses.fixture.EventFixture
 import org.sunbird.job.merge.user.courses.task.MergeUserCoursesConfig
 import org.sunbird.job.merge.user.courses.util.{Commons, MergeOperations}
-import org.sunbird.job.util.{CassandraUtil, HttpUtil, JSONUtil, ScalaJsonUtil}
-import org.sunbird.spec.{BaseTestSpec}
+import org.sunbird.job.util.{CassandraUtil, HttpUtil, JSONUtil}
+import org.sunbird.spec.BaseTestSpec
 
 import java.util
 import java.util.Map
@@ -27,7 +27,7 @@ class MergeOperationsTest extends BaseTestSpec{
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
-    cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort)
+    cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort, jobConfig.isMultiDCEnabled)
     val session = cassandraUtil.session
     session.execute(s"DROP KEYSPACE IF EXISTS ${jobConfig.dbKeyspace}")
     val dataLoader = new CQLDataLoader(session)

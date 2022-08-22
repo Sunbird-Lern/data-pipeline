@@ -25,7 +25,7 @@ class MergeUserCourseFunction(config: MergeUserCoursesConfig)
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
-    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort)
+    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
   }
 
   override def close(): Unit = {

@@ -58,7 +58,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
     dataCache.init()
     contentCache = new DataCache(config, new RedisConnect(config.metaRedisHost, config.metaRedisPort, config), config.contentCacheNode, List())
     contentCache.init()
-    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort)
+    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
     questionType = cassandraUtil.getUDTType(config.dbKeyspace, config.dbudtType)
     restUtil = new RestUtil()
   }
