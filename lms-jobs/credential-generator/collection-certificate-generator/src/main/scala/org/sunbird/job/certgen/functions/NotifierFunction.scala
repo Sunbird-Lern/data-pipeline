@@ -1,9 +1,5 @@
 package org.sunbird.job.certgen.functions
 
-import java.lang.reflect.Type
-import java.text.SimpleDateFormat
-import java.util
-import java.util.Date
 import com.datastax.driver.core.querybuilder.{QueryBuilder, Select}
 import com.datastax.driver.core.{Row, TypeTokens}
 import com.google.gson.reflect.TypeToken
@@ -14,9 +10,13 @@ import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
 import org.sunbird.job.certgen.task.CertificateGeneratorConfig
 import org.sunbird.job.exception.InvalidEventException
-import org.sunbird.job.util.{CassandraUtil, HttpUtil, JSONUtil, ScalaJsonUtil}
+import org.sunbird.job.util.{CassandraUtil, HttpUtil, ScalaJsonUtil}
 import org.sunbird.job.{BaseProcessFunction, Metrics}
 
+import java.lang.reflect.Type
+import java.text.SimpleDateFormat
+import java.util
+import java.util.Date
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
@@ -33,7 +33,7 @@ class NotifierFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, @
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
-    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort)
+    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
   }
 
   override def close(): Unit = {

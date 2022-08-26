@@ -66,6 +66,7 @@ object EventFixture {
       |lms-cassandra {
       |  host = "localhost"
       |  port = 9142
+      |  isMultiDCEnabled = false
       |}
       |
       |redis-meta {

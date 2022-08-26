@@ -1,25 +1,25 @@
 package org.sunbird.job.certgen.spec
 
-import com.datastax.driver.core.{ResultSet, Row}
+import com.datastax.driver.core.Row
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.typesafe.config.{Config, ConfigFactory}
 import kong.unirest.UnirestException
 import org.cassandraunit.CQLDataLoader
 import org.cassandraunit.dataset.cql.FileCQLDataSet
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
-import org.mockito.ArgumentMatchers.{any, anyString}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, when}
 import org.sunbird.incredible.processor.CertModel
-import org.sunbird.incredible.{CertificateConfig, JsonKeys, ScalaModuleJsonUtils, StorageParams}
 import org.sunbird.incredible.processor.store.StorageService
+import org.sunbird.incredible.{CertificateConfig, JsonKeys, ScalaModuleJsonUtils, StorageParams}
 import org.sunbird.job.Metrics
-import org.sunbird.job.certgen.domain.{Certificate, Event, Issuer, Recipient, Training, UserEnrollmentData}
+import org.sunbird.job.certgen.domain._
 import org.sunbird.job.certgen.exceptions.ServerException
 import org.sunbird.job.certgen.fixture.EventFixture
-import org.sunbird.job.certgen.functions.{CertMapper, CertValidator, CertificateGeneratorFunction}
+import org.sunbird.job.certgen.functions.{CertMapper, CertificateGeneratorFunction}
 import org.sunbird.job.certgen.task.CertificateGeneratorConfig
-import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HTTPResponse, HttpUtil, JSONUtil}
+import org.sunbird.job.util._
 import org.sunbird.spec.BaseTestSpec
 
 import java.text.SimpleDateFormat
@@ -34,7 +34,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
   lazy val jobConfig: CertificateGeneratorConfig = new CertificateGeneratorConfig(config)
   val httpUtil: HttpUtil = new HttpUtil
   val mockHttpUtil = mock[HttpUtil](Mockito.withSettings().serializable())
-  val storageParams: StorageParams = StorageParams(jobConfig.storageType, jobConfig.azureStorageKey, jobConfig.azureStorageSecret, jobConfig.containerName)
+  val storageParams: StorageParams = StorageParams(jobConfig.storageType, jobConfig.storageKey, jobConfig.storageSecret, jobConfig.containerName)
   val storageService: StorageService = new StorageService(storageParams)
   val metricJson = s"""{"${jobConfig.enrollmentDbReadCount}": 0, "${jobConfig.skippedEventCount}": 0}"""
   val mockMetrics = mock[Metrics](Mockito.withSettings().serializable())
@@ -48,7 +48,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
-    cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort)
+    cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort, jobConfig.isMultiDCEnabled)
     val session = cassandraUtil.session
     session.execute(s"DROP KEYSPACE IF EXISTS ${jobConfig.dbKeyspace}")
     val dataLoader = new CQLDataLoader(session)
