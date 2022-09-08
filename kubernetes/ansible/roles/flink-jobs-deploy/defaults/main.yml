@@ -188,3 +188,13 @@ service_monitor_enabled: true
 flink_jobs_console_log_level: INFO
 flink_libraries_log_level: ERROR
 
+####Postgres configurations
+postgres:
+  db_url: "{{ groups['postgres'][0] }}"
+  db_username: analytics
+  db_name: analytics
+  db_password: "{{core_vault_dp_pgdb_password}}"
+  db_table_name: "{{env}}_consumer_channel_mapping"
+  db_port: 5432
+  db_admin_user: postgres
+  db_admin_password: "{{core_vault_postgres_password}}"
