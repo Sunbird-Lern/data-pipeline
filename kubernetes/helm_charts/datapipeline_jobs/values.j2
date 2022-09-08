@@ -122,7 +122,7 @@ base_config: |
     lms-cassandra {
       host = "{{ core_cassandra_connection_ip }}"
       port = "9042"
-      isMultiDCEnabled = {{ cassandra_isMutiDCEnabled | default(false) }}
+      isMultiDCEnabled = {{ cassandra_isMutiDCEnabled }}
     }
     neo4j {
       routePath = "{{ neo4j_route_path }}"
