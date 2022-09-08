@@ -120,19 +120,12 @@ base_config: |
       port = 6379
     }
     redis-meta {
-{% if metadata2_redis_host is defined %}
+      {% if metadata2_redis_host is defined %}
       host = {{ metadata2_redis_host }}
-{% else %}
+      {% else %}
       host = {{ redis_host }}
-{% endif %}
+      {% endif %}
       port = 6379
-    }
-    postgres {
-      host = {{ postgres.db_url }}
-      port = {{ postgres.db_port }}
-      maxConnections = {{ postgres_max_connections }}
-      user = "{{ postgres.db_username }}"
-      password = "{{ postgres.db_password }}"
     }
     lms-cassandra {
       host = "{{ core_cassandra_connection_ip }}"
@@ -151,6 +144,13 @@ base_config: |
       supportedVersion = {
         itemset = "2.0"
       }
+    }
+    postgres {
+      host = {{ postgres.db_url }}
+      port = {{ postgres.db_port }}
+      maxConnections = {{ postgres_max_connections }}
+      user = "{{ postgres.db_username }}"
+      password = "{{ postgres.db_password }}"
     }
 
 activity-aggregate-updater:
