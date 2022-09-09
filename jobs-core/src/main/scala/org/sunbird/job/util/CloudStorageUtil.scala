@@ -10,21 +10,20 @@ import java.io.File
 class CloudStorageUtil(config: BaseJobConfig) extends Serializable {
 
   val cloudStorageType: String = config.getString("cloud_storage_type", "azure")
+  val supportedCloudStorageType: List[String] = List("azure", "aws", "gcloud")
   var storageService: BaseStorageService = null
   val container: String = getContainerName
 
   @throws[Exception]
   def getService: BaseStorageService = {
     if (null == storageService) {
-      if (StringUtils.equalsIgnoreCase(cloudStorageType, "azure")) {
-        val azureStorageKey = config.getString("azure_storage_key", "")
-        val azureStorageSecret = config.getString("azure_storage_secret", "")
-        storageService = StorageServiceFactory.getStorageService(StorageConfig(cloudStorageType, azureStorageKey, azureStorageSecret))
-      } else if (StringUtils.equalsIgnoreCase(cloudStorageType, "aws")) {
-        val awsStorageKey = config.getString("aws_storage_key", "")
-        val awsStorageSecret = config.getString("aws_storage_secret", "")
-        storageService = StorageServiceFactory.getStorageService(StorageConfig(cloudStorageType, awsStorageKey, awsStorageSecret))
-      } else throw new Exception("Error while initialising cloud storage: " + cloudStorageType)
+      if (supportedCloudStorageType.contains(cloudStorageType)) {
+        val storageKey = config.getString(s"${cloudStorageType}_storage_key", "")
+        val storageSecret = config.getString(s"${cloudStorageType}_storage_secret", "")
+        storageService = StorageServiceFactory.getStorageService(StorageConfig(cloudStorageType, storageKey, storageSecret))
+      } else {
+        throw new Exception("Error while initialising cloud storage: " + cloudStorageType)
+      }
     }
     storageService
   }

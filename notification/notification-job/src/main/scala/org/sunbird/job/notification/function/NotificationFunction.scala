@@ -1,10 +1,12 @@
 package org.sunbird.job.notification.function
 
+import com.fasterxml.jackson.annotation.JsonInclude
+
 import java.util
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.ScalaObjectMapper
+import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.slf4j.LoggerFactory
@@ -12,8 +14,8 @@ import org.sunbird.job.{BaseProcessKeyedFunction, Metrics}
 import org.sunbird.job.notification.task.NotificationConfig
 import org.sunbird.job.notification.domain.{Event, NotificationMessage, NotificationType, NotificationUtil}
 import org.sunbird.job.notification.util.datasecurity.OneWayHashing
-import org.sunbird.notification.beans.{ EmailRequest, SMSConfig}
-import org.sunbird.notification.utils.{FCMResponse}
+import org.sunbird.notification.beans.EmailRequest
+import org.sunbird.notification.utils.FCMResponse
 
 class NotificationFunction(config: NotificationConfig,  @transient var notificationUtil: NotificationUtil = null) extends BaseProcessKeyedFunction[String, Event, String](config) {
     
@@ -176,16 +178,26 @@ class NotificationFunction(config: NotificationConfig,  @transient var notificat
     
     private def handleFailureMessage(event: Event, context: KeyedProcessFunction[String, Event, String]#Context, metrics: Metrics): Unit = {
         logger.info("NotificationService:handleFailureMessage started")
-        var iteration : Int = event.edataMap.get(ITERATION).get.asInstanceOf[Int]
+        val iteration : Int = event.edataMap.get(ITERATION).get.asInstanceOf[Int]
         if (iteration < maxIterations) {
-            var eMap = event.edataMap;
-            iteration = iteration + 1
-            eMap += (ITERATION -> iteration)
-            event.edataMap+(ITERATION -> iteration)
-            //val notificationEvent = generateKafkaFailureEvent(event)
-            logger.info("pushAuditEvent: audit event generated for certificate : " + event.getJson())
+            val eventMap : java.util.Map[String, Any] = new util.HashMap
+            val eDatamap : java.util.Map[String, Any] = new util.HashMap
+            eDatamap.put("action", event.action)
+            eDatamap.put("iteration", 2)
+            eDatamap.put("request", event.requestMap)
+            eventMap.put("actor", event.actor)
+            eventMap.put("eid", event.eid)
+            eventMap.put("mid", event.mid())
+            eventMap.put("trace", event.traceMap)
+            //eventMap.put("ets", event.ets)
+            eventMap.put("edata", eDatamap)
+            eventMap.put("context", event.contextMap)
+            eventMap.put("object", event.objectMap)
+            val strMapper = new ObjectMapper() with ScalaObjectMapper
+            strMapper.registerModule(DefaultScalaModule)
+            val failedEvent = strMapper.writeValueAsString(eventMap)
             metrics.incCounter(config.failedEventCount)
-            context.output(config.notificationFailedOutputTag, event.getJson())
+            context.output(config.notificationFailedOutputTag, failedEvent)
         } else {
             metrics.incCounter(config.skippedEventCount)
         }
