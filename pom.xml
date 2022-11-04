@@ -10,32 +10,20 @@
 	</prerequisites>
 
 	<groupId>org.sunbird</groupId>
-	<artifactId>knowledge-platform-jobs</artifactId>
+	<artifactId>data-pipeline</artifactId>
 	<version>1.0</version>
 	<packaging>pom</packaging>
-	<name>Knowledge Platform Jobs</name>
+	<name>LERN Jobs</name>
 	<description>
-		KP Flink jobs for stream processing
+		LERN Flink jobs for stream processing
 	</description>
 	<url>https://sunbird.org/</url>
 
 	<modules>
 		<module>jobs-core</module>
-		<module>relation-cache-updater</module>
-		<module>activity-aggregate-updater</module>
-        <module>post-publish-processor</module>
-		<module>credential-generator</module>
-        <module>publish-pipeline</module>
-		<module>video-stream-generator</module>
-		<module>search-indexer</module>
-		<module>enrolment-reconciliation</module>
-		<module>auto-creator-v2</module>
-		<module>content-auto-creator</module>
-		<module>asset-enrichment</module>
-		<module>audit-history-indexer</module>
-		<module>audit-event-generator</module>
-		<module>metrics-data-transformer</module>
-		<module>qrcode-image-generator</module>
+		<module>notification</module>
+		<module>dp-core</module>
+		<module>lms-jobs</module>
 	</modules>
 
 	<properties>
@@ -43,10 +31,12 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<scala.version>2.12</scala.version>
 		<scala.maj.version>2.12.11</scala.maj.version>
-		<flink.version>1.13.6</flink.version>
+		<flink.version>1.13.5</flink.version>
 		<kafka.version>2.4.1</kafka.version>
 		<jackson-jaxrs.version>1.9.13</jackson-jaxrs.version>
 		<scoverage.plugin.version>1.4.0</scoverage.plugin.version>
+		<java.target.runtime>11</java.target.runtime>
+		<sonar.exclusions>**/**.java</sonar.exclusions>
 	</properties>
 
 	<repositories>
@@ -89,8 +79,8 @@
 					<artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.1</version>
 					<configuration>
-						<source>1.8</source>
-						<target>1.8</target>
+						<source>1.11</source>
+						<target>1.11</target>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -102,6 +92,7 @@
 						<aggregate>true</aggregate>
 						<highlighting>true</highlighting>
 						<excludedPackages>org.sunbird.incredible</excludedPackages>
+						<excludedPackages>org.sunbird.notification-sdk</excludedPackages>
 					</configuration>
 				</plugin>
 			</plugins>

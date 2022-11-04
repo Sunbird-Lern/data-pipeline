@@ -1,0 +1,196 @@
+imagepullsecrets: sunbird-registry-secret
+
+### Job manager related vars
+jobmanager_rpc_port: 6123
+jobmanager_blob_port: 6124
+jobmanager_query_port: 6125
+jobmanager_ui_port: 8081
+jobmanager_prom_port: 9250
+jobmanager_heap_memory: 1024
+jobmanager_ui_rest_port: 80
+jobmanager_ui_tcp_port: 8081
+jobmanager_ui_service:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+
+### taskmanager related vars
+healthcheck: true
+taskmanager_liveness:
+  livenessProbe:
+    tcpSocket:
+      port: 6122
+    initialDelaySeconds: 30
+    periodSeconds: 60
+
+taskmanager_prom_port: 9251
+taskmanager_rpc_port: 6122
+taskmanager_heap_memory: 1024
+
+### base-config related vars
+postgres_max_connections: 2
+flink_container_name: flink-check-points-store
+checkpoint_interval: 60000
+checkpoint_pause_between_seconds: 5000
+checkpoint_compression_enabled: true
+restart_attempts: 3
+restart_delay: 30000 # in milli-seconds
+producer_max_request_size: 1572864
+producer_batch_size: 98304
+producer_linger_ms: 10
+redis_timeout: 30000
+
+### Activity Aggregate job related vars
+activity_agg_consumer_parallelism: 1
+activity_agg_dedup_parallelism: 1
+activity_agg_parallelism: 1
+enrolment_complete_parallelism: 1
+middleware_consumption_table: "user_content_consumption"
+middleware_user_activity_agg_table: "user_activity_agg"
+activity_agg_checkpointing_interval: 300000
+activity_agg_checkpointing_pause_interval: 90000
+activity_agg_batch_interval: 60
+activity_agg_batch_read_size: 1
+activity_agg_batch_write_size: 10
+activity_agg_window_shards: 1000
+activity_agg_dedup_index: 13
+activity_agg_dedup_expiry: 604800
+activity_module_aggs_enabled: true
+activity_input_dedup_enabled: true
+activity_agg_enrolment_filter_processe_enabled: true
+activity_agg_collection_status_cache_expiry_time: 3600
+
+
+### Relation Cache Updater Job related Vars
+extractor_consumer_parallelism: 1
+relation_cache_updater_consumer_parallelism: 1
+relation_cache_updater_parallelism: 1
+middleware_content_hierarchy_table: "content_hierarchy"
+
+###  Certificate Job related Vars
+certificate_generator_consumer_parallelism: 1
+certificate_generator_parallelism: 1
+
+### Enrolment Reconciliation
+enrolment_reconciliation_consumer_parallelism: 1
+enrolment_reconciliation_parallelism: 1
+enrolment_reconciliation_batch_write_size: 10
+enrolment_reconciliation_filter_processe_enabled: true
+enrolment_reconciliation_collection_status_cache_expiry_time: 3600
+
+### Collection Cert Pre Processor
+collection_cert_pre_processor_consumer_parallelism: 1
+generate_certificate_parallelism: 1
+middleware_course_batch_table: "course_batch"
+middleware_user_enrolments_table: "user_enrolments"
+middleware_assessment_aggregator_table: "assessment_aggregator"
+
+###  Collection Generator Job related Vars
+collection_certificate_generator_consumer_parallelism: 1
+collection_certificate_generator_parallelism: 1
+collection_certificate_generator_enable_suppress_exception: "{{ enable_suppress_exception | lower }}"
+collection_certificate_generator_enable_rc_certificate: "{{ enable_rc_certificate | lower }}"
+collection_certificate_pre_processor_enable_suppress_exception: "{{ enable_suppress_exception | lower }}"
+collection_certificate_generator_rc_badcharlist: "{{ rc_bad_char_list | default('\"\\\\x00,\\\\\\\\aaa,\\\\aaa,Ø,Ý,\\\\\"') }}"
+registry_sunbird_keyspace: "sunbird"
+cert_registry_table: "cert_registry"
+
+###  Merge User Courses Job related Vars
+merge_user_courses_consumer_parallelism: 1
+merge_user_courses_parallelism: 1
+merge_user_courses_course_batch_parallelism: 1
+merge_user_courses_course_date_format: "yyyy-MM-dd HH:mm:ss:SSSZ"
+
+###  Notification Job related Vars
+notification_job_consumer_parallelism: 1
+notification_job_parallelism: 1
+
+### assessment-aggregator related vars
+assessaggregator_parallelism: 1
+assessaggregator_consumer_parallelism: 1
+assessaggregator_downstream_parallelism: 1
+assessaggregator_scoreaggregator_parallelism: 1
+middleware_cassandra_courses_keyspace: sunbird_courses
+middleware_cassandra_assessment_aggregator_table: assessment_aggregator
+middleware_cassandra_assessment_question_type : question
+middleware_cassandra_user_enrolments_table: user_enrolments
+middleware_cassandra_user_activity_agg_table: user_activity_agg
+content_read_api_host: "http://dev.sunbirded.org"
+content_read_api_endpoint: "/api/content/v1/read/"
+
+
+### to be removed
+job_classname: ""
+
+### class name vars
+flink_job_names:
+  activity-aggregate-updater:
+    job_class_name: 'org.sunbird.job.aggregate.task.ActivityAggregateUpdaterStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  relation-cache-updater:
+    job_class_name: 'org.sunbird.job.relationcache.task.RelationCacheUpdaterStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  enrolment-reconciliation:
+    job_class_name: 'org.sunbird.job.recounciliation.task.EnrolmentReconciliationStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  collection-cert-pre-processor:
+    job_class_name: 'org.sunbird.job.collectioncert.task.CollectionCertPreProcessorTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  collection-certificate-generator:
+    job_class_name: 'org.sunbird.job.certgen.task.CertificateGeneratorStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  merge-user-courses:
+    job_class_name: 'org.sunbird.job.merge.user.courses.task.MergeUserCoursesStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  assessment-aggregator:
+    job_class_name: 'org.sunbird.dp.assessment.task.AssessmentAggregatorStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskmanager_process_memory: 1700m
+    jobmanager_process_memory: 1600m
+    taskslots: 1
+    cpu_requests: 0.3
+    scale_enabled: false
+  notification-job:
+    job_class_name: 'org.sunbird.job.notification.task.NotificationStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+
+
+### Global vars
+middleware_course_keyspace: "sunbird_courses"
+cloud_store: azure
+
+service_monitor_enabled: true
+
+### controlling the flink jobs log level
+flink_jobs_console_log_level: INFO
+flink_libraries_log_level: ERROR

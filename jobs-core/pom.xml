@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sunbird</groupId>
-        <artifactId>knowledge-platform-jobs</artifactId>
+        <artifactId>data-pipeline</artifactId>
         <version>1.0</version>
     </parent>
 
@@ -81,7 +81,7 @@
         <dependency>
             <groupId>org.sunbird</groupId>
             <artifactId>cloud-store-sdk_2.12</artifactId>
-            <version>1.2.9</version>
+            <version>1.4.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>log4j</artifactId>
@@ -184,7 +184,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.20</version>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <skipTests>false</skipTests>
                 </configuration>
             </plugin>
 
@@ -195,7 +195,7 @@
                 <configuration>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
-                    <filereports>kp-core-testsuite.txt</filereports>
+                    <filereports>lern-core-testsuite.txt</filereports>
                 </configuration>
                 <executions>
                     <execution>
