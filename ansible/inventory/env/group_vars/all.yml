@@ -122,7 +122,7 @@ enable_rc_certificate: true
 ### kafka and zookeeper ip vars and being used in kafka topiccreation role.
 processing_zookeeper_ip: "{{ groups['processing-cluster-zookeepers'][0] }}"
 ## MultiDC flag for LERN data pipeline jobs
-cassandra_isMultiDCEnabled: false
+cassandra_isMultiDCEnabled: "{{is_multidc_enabled}}"
 
 # LERN BB specific kafka topics,have to be overridden in private devops repo to include BB Name for integrators.
 kafka_topic_course_batch_job_request: "{{env_name}}.coursebatch.job.request"
