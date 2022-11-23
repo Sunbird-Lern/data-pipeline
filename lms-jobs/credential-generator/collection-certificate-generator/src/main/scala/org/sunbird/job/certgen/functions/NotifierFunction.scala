@@ -8,6 +8,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
+import org.sunbird.incredible.JsonKeys
 import org.sunbird.job.certgen.task.CertificateGeneratorConfig
 import org.sunbird.job.exception.InvalidEventException
 import org.sunbird.job.util.{CassandraUtil, HttpUtil, ScalaJsonUtil}
@@ -60,11 +61,11 @@ class NotifierFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, @
         logger.info("notification template is present in the cert-templates object {}",
           certTemplate.get(metaData.templateId).containsKey(config.notifyTemplate))
         val notifyTemplate = getNotifyTemplateFromRes(certTemplate.get(metaData.templateId))
-        if ( notifyTemplate != null && notifyTemplate.containsKey("stateImageUrl")) {
-          val placeholderUrl = notifyTemplate.getOrElse("stateImageUrl","")
+        if ( notifyTemplate != null && notifyTemplate.containsKey(JsonKeys.STATE_IMAGE_URL)) {
+          val placeholderUrl = notifyTemplate.getOrElse(JsonKeys.STATE_IMAGE_URL,"")
           if(placeholderUrl != null){
             val replacedUrl = placeholderUrl.replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath)
-            notifyTemplate.replace("stateImageUrl", placeholderUrl, replacedUrl)
+            notifyTemplate.replace(JsonKeys.STATE_IMAGE_URL, placeholderUrl, replacedUrl)
           }
         }
         val request = mutable.Map[String, AnyRef]("request" -> (notifyTemplate ++ mutable.Map[String, AnyRef](
