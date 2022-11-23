@@ -204,7 +204,7 @@ trait IssueCertificateHelper {
             "issuedDate" -> dateFormatter.format(enrolledUser.issuedOn),
             "data" -> List(Map[String, AnyRef]("recipientName" -> recipientName, "recipientId" -> event.userId)),
             "criteria" -> Map[String, String]("narrative" -> certName),
-            "svgTemplate" -> template.getOrElse("url", ""),
+            "svgTemplate" -> template.getOrElse("url", "").replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath),
             "oldId" -> enrolledUser.oldId,
             "templateId" -> template.getOrElse(config.identifier, ""),
             "userId" -> event.userId,
@@ -217,7 +217,6 @@ trait IssueCertificateHelper {
             "name" -> certName,
             "tag" -> event.batchId
         )
-        eData.asJava.replace("svgTemplate",config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath)
         ScalaJsonUtil.serialize(BEJobRequestEvent(edata = eData, `object` = EventObject(id = event.userId)))
     }
     def getLocationDetails(userDetails: Map[String, AnyRef], additionalProps: Map[String, List[String]]): Map[String, Any] = {
