@@ -3,8 +3,8 @@ imagepullsecrets: {{ imagepullsecrets }}
 dockerhub: {{ dockerhub }}
 repository: {{flink_repository|default('data-pipeline')}}
 image_tag: {{ image_tag }}
-azure_account: {{ azure_account }}
-azure_secret: {{ azure_secret }}
+cloud_account: {{ cloud_account }}
+cloud_secret: {{ cloud_secret }}
 serviceMonitor:
   enabled: {{ service_monitor_enabled | lower}}
 
@@ -88,7 +88,7 @@ base_config: |
       statebackend {
         blob {
           storage {
-            account = "{{ azure_account }}.blob.core.windows.net"
+            account = "{{ cloud_account }}.blob.core.windows.net"
             container = "{{ flink_container_name }}"
             checkpointing.dir = "checkpoint"
           }
@@ -350,8 +350,8 @@ collection-certificate-generator:
     cert_domain_url = "{{ cert_domain_url }}"
     cert_container_name = "{{ cert_container_name }}"
     cert_cloud_storage_type = "{{ cert_cloud_storage_type }}"
-    cert_azure_storage_secret = "{{ cert_azure_storage_secret }}"
-    cert_azure_storage_key = "{{ cert_azure_storage_key }}"
+    cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
+    cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
     cloud_store_base_path = "{{ cloud_store_base_path }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"

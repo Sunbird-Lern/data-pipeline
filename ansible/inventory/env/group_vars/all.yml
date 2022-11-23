@@ -85,8 +85,8 @@ search_es7_host: "{{ groups['es7']|join(':9200,')}}:9200"
 
 mlworkbench: "{{ groups['mlworkbench'][0]}}"
 
-azure_account: "{{ sunbird_public_storage_account_name }}"
-azure_secret: "{{ sunbird_public_storage_account_key }}"
+cloud_account: "{{ sunbird_public_storage_account_name }}"
+cloud_secret: "{{ sunbird_public_storage_account_key }}"
 dedup_redis_host: "{{ dp_redis_host }}"
 kp_redis_host: "{{ groups['redisall'][0] }}"
 neo4j_route_path: "bolt://{{ groups['learning-neo4j-node1'][0] }}:7687"
@@ -109,9 +109,9 @@ cert_rc_entity: "TrainingCertificate"
 certificate_base_path: "https://{{domain_name}}/certs"
 cert_domain_url:  "{{proto}}://{{domain_name}}"
 cert_container_name: "{{cert_env_prefix}}-e-credentials"
-cert_cloud_storage_type: "azure"
-cert_azure_storage_secret: "{{sunbird_private_storage_account_key}}"
-cert_azure_storage_key: "{{sunbird_private_storage_account_name}}"
+cert_cloud_storage_type: "{{cloud_service_provider}}"
+cert_cloud_storage_secret: "{{sunbird_private_storage_account_key}}"
+cert_cloud_storage_key: "{{sunbird_private_storage_account_name}}"
 cloud_store_base_path: "{{cloud_store_base_path}}"
 
 default_channel: "org.sunbird"
@@ -123,7 +123,7 @@ enable_rc_certificate: true
 ### kafka and zookeeper ip vars and being used in kafka topiccreation role.
 processing_zookeeper_ip: "{{ groups['processing-cluster-zookeepers'][0] }}"
 ## MultiDC flag for LERN data pipeline jobs
-cassandra_isMultiDCEnabled: false
+cassandra_isMultiDCEnabled: "{{is_multidc_enabled}}"
 
 # LERN BB specific kafka topics,have to be overridden in private devops repo to include BB Name for integrators.
 kafka_topic_course_batch_job_request: "{{env_name}}.coursebatch.job.request"
