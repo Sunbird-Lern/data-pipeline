@@ -191,7 +191,11 @@ trait IssueCertificateHelper {
     def generateCertificateEvent(event: Event, template: Map[String, String], userDetails: Map[String, AnyRef], enrolledUser: EnrolledUser, assessedUser: AssessedUser, additionalProps: Map[String, List[String]], certName: String)(metrics:Metrics, config:CollectionCertPreProcessorConfig, cache:DataCache, httpUtil: HttpUtil) = {
         val firstName = Option(userDetails.getOrElse("firstName", "").asInstanceOf[String]).getOrElse("")
         val lastName = Option(userDetails.getOrElse("lastName", "").asInstanceOf[String]).getOrElse("")
-        def nullStringCheck(name:String):String = {if(StringUtils.equalsIgnoreCase("null", name)) ""  else name}
+
+        def nullStringCheck(name: String): String = {
+            if (StringUtils.equalsIgnoreCase("null", name)) "" else name
+        }
+
         val recipientName = nullStringCheck(firstName).concat(" ").concat(nullStringCheck(lastName)).trim
         val courseName = getCourseName(event.courseId)(metrics, config, cache, httpUtil)
         val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
@@ -213,10 +217,9 @@ trait IssueCertificateHelper {
             "name" -> certName,
             "tag" -> event.batchId
         )
-
-        ScalaJsonUtil.serialize(BEJobRequestEvent(edata = eData, `object` = EventObject(id= event.userId)))
+        eData.asJava.replace("svgTemplate",config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath)
+        ScalaJsonUtil.serialize(BEJobRequestEvent(edata = eData, `object` = EventObject(id = event.userId)))
     }
-
     def getLocationDetails(userDetails: Map[String, AnyRef], additionalProps: Map[String, List[String]]): Map[String, Any] = {
         if(additionalProps.getOrElse("location", List()).nonEmpty) {
             val userLocations = userDetails.getOrElse("userLocations", List()).asInstanceOf[List[Map[String, AnyRef]]].map(l => l.getOrElse("type", "").asInstanceOf[String] -> l.getOrElse("name", "").asInstanceOf[String]).toMap

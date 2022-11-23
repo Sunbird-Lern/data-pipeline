@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat
 import java.util
 import java.util.Date
 import scala.collection.JavaConverters._
+import scala.collection.convert.ImplicitConversions.`map AsJavaMap`
 import scala.collection.mutable
 
 case class NotificationMetaData(userId: String, courseName: String, issuedOn: Date, courseId: String, batchId: String, templateId: String, partition: Int, offset: Long)
@@ -59,6 +60,13 @@ class NotifierFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, @
         logger.info("notification template is present in the cert-templates object {}",
           certTemplate.get(metaData.templateId).containsKey(config.notifyTemplate))
         val notifyTemplate = getNotifyTemplateFromRes(certTemplate.get(metaData.templateId))
+        if ( notifyTemplate != null && notifyTemplate.containsKey("stateImageUrl")) {
+          val placeholderUrl = notifyTemplate.getOrElse("stateImageUrl","")
+          if(placeholderUrl != null){
+            val replacedUrl = placeholderUrl.replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath)
+            notifyTemplate.replace("stateImageUrl", placeholderUrl, replacedUrl)
+          }
+        }
         val request = mutable.Map[String, AnyRef]("request" -> (notifyTemplate ++ mutable.Map[String, AnyRef](
           config.firstName -> userResponse.getOrElse(config.firstName, "").asInstanceOf[String],
           config.trainingName -> metaData.courseName,
