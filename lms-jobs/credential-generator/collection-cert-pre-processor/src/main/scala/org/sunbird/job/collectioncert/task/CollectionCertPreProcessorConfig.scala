@@ -79,6 +79,6 @@ class CollectionCertPreProcessorConfig(override val config: Config) extends Base
     val assessmentContentTypes = if(config.hasPath("assessment.metrics.supported.contenttype")) config.getStringList("assessment.metrics.supported.contenttype") else util.Arrays.asList("SelfAssess")
     val userAccBlockedErrCode = "UOS_USRRED0006"
     val enableSuppressException: Boolean = if(config.hasPath("enable.suppress.exception")) config.getBoolean("enable.suppress.exception") else false
-    val cloudStoreBasePath = config.getString("cloud_store_base_path")
+    val cloudStoreBasePath = config.getString("cloud_store_base_url")
     val cloudStoreBasePathPlaceholder = "$CLOUD_STORE_BASE_PATH"
 }
