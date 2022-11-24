@@ -316,7 +316,7 @@ collection-cert-pre-processor:
       port = 6379
     }
     assessment.metrics.supported.contenttype = ["SelfAssess"]
-    cloud_store_base_path = "{{ cloud_store_base_path }}"
+    cloud_storage_base_url = "{{ cloud_storage_base_url }}"
 
   flink-conf: |+
     jobmanager.memory.flink.size: {{ flink_job_names['collection-cert-pre-processor'].jobmanager_memory }}
@@ -352,7 +352,7 @@ collection-certificate-generator:
     cert_cloud_storage_type = "{{ cert_cloud_storage_type }}"
     cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
     cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
-    cloud_store_base_path = "{{ cloud_store_base_path }}"
+    cloud_storage_base_url = "{{ cloud_storage_base_url }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"
       learner.basePath = "{{ learner_service_base_url }}"
