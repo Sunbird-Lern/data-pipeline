@@ -152,3 +152,8 @@ kafka_group_certificate_generator: "{{env_name}}-certificate-generator-group"
 kafka_group_merge_courses: "{{env_name}}-merge-courses-group"
 kafka_group_assessment_aggregator: "{{env_name}}-assessment-aggregator-group"
 kafka_group_lms_notification: "{{env_name}}-lms-notification"
+
+## Checkpoint Config
+checkpoint_store_type: "{{cloud_service_provider}}"
+azure_cloud_account: "{{ sunbird_public_storage_account_name }}"
+azure_cloud_secret: "{{ sunbird_public_storage_account_key }}"
