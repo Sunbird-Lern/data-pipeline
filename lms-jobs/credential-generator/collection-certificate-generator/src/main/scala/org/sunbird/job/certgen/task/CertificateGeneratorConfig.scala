@@ -70,8 +70,8 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   // env vars
   val storageType: String = config.getString("cert_cloud_storage_type")
   val containerName: String = config.getString("cert_container_name")
-  val storageSecret: String = config.getString(s"cert_${storageType}_storage_secret")
-  val storageKey: String = config.getString(s"cert_${storageType}_storage_key")
+  val storageSecret: String = config.getString("cert_cloud_storage_secret")
+  val storageKey: String = config.getString("cert_cloud_storage_key")
   val domainUrl: String = config.getString("cert_domain_url")
   val encServiceUrl: String = config.getString("service.enc.basePath")
   val certRegistryBaseUrl: String = config.getString("service.certreg.basePath")
@@ -153,5 +153,7 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val userFeedMsg: String = "You have earned a certificate! Download it from your profile page."
   val priorityValue = 1
   val userFeedCount = "user-feed-count"
-  
+  val cloudStoreBasePath = config.getString("cloud_storage_base_url")
+  val cloudStoreBasePathPlaceholder = "$CLOUD_STORE_BASE_PATH"
+
 }

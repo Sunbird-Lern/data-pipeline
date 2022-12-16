@@ -29,7 +29,7 @@ taskmanager_heap_memory: 1024
 
 ### base-config related vars
 postgres_max_connections: 2
-flink_container_name: flink-check-points-store
+flink_container_name: "{{ cloud_storage_flink_bucketname }}"
 checkpoint_interval: 60000
 checkpoint_pause_between_seconds: 5000
 checkpoint_compression_enabled: true
