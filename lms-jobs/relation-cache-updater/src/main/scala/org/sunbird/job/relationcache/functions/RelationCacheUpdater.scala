@@ -143,7 +143,6 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
         optionalNodesMap.filter(m => m._2.nonEmpty).toMap
     }
     private def getOrComposeOptionalNodes(hierarchy: java.util.Map[String, AnyRef], compose: Boolean = true): List[String] = {
-        //getting list optional nodes from hierarchy
         if (hierarchy.containsKey("optionalNodes") && !compose)
             hierarchy.getOrDefault("optionalNodes", java.util.Arrays.asList()).asInstanceOf[java.util.List[String]].asScala.toList
         else {
