@@ -154,8 +154,6 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
         }
     }
     private def isOptional(content: java.util.Map[String, AnyRef]): Boolean = {
-        //check for both collection and optional property
-        StringUtils.equalsIgnoreCase(content.getOrDefault("mimeType", "").asInstanceOf[String], "application/vnd.ekstep.content-collection") &&
           StringUtils.equalsIgnoreCase(content.getOrDefault("optional", "").asInstanceOf[String], "true")
     }
     private def getAncestors(identifier: String, hierarchy: java.util.Map[String, AnyRef], parents: List[String] = List()): Map[String, List[String]] = {
