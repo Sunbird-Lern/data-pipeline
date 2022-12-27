@@ -56,7 +56,7 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
     cassandraUtil = new CassandraUtil(assessmentConfig.dbHost, assessmentConfig.dbPort, assessmentConfig.isMultiDCEnabled)
     val session = cassandraUtil.session
-    setupRedisTestData()
+    setupRedisOptionalNodeTestData()
 
     val dataLoader = new CQLDataLoader(session)
     dataLoader.load(new FileCQLDataSet(getClass.getResource("/test.cql").getPath, true, true));
@@ -181,6 +181,22 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
     })
 
     // Setup content Cache
+    val contentCache = redisConnect.getConnection(assessmentConfig.contentCacheNode)
+    EventFixture.contentCacheList.map(nodes => {
+      nodes.map(node => {
+        contentCache.set(node._1, node._2)
+      })
+    })
+  }
+
+  def setupRedisOptionalNodeTestData() {
+    val redisConnect = new RedisConnect(assessmentConfig.metaRedisHost, assessmentConfig.metaRedisPort, assessmentConfig)
+    val jedis = redisConnect.getConnection(assessmentConfig.relationCacheNode)
+    EventFixture.optionalNodesList.map(nodes => {
+      nodes.map(node => {
+        jedis.sadd(node._1, node._2)
+      })
+    })
     val contentCache = redisConnect.getConnection(assessmentConfig.contentCacheNode)
     EventFixture.contentCacheList.map(nodes => {
       nodes.map(node => {
