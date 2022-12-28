@@ -225,17 +225,12 @@ localhost:8081
 ### Setting up Cloud storage connection:
 Setup cloud storage specific variables as environment variables.
 ```shell
-export cloud_storage_type=  #values can be 'aws' or 'azure'
+export cloud_storage_type=  #values can be any cloud service provider
 
-For AWS Cloud Storage connectivity: 
-export aws_storage_key=
-export aws_storage_secret=
-export aws_storage_container=
-
-For Azure Cloud Storage connectivity:
-export azure_storage_key=
-export azure_storage_secret=
-export azure_storage_container=
+For Cloud Storage connectivity: 
+export cloud_storage_key=
+export cloud_storage_secret=
+export cloud_storage_container=
 
 export content_youtube_apikey= #key to fetch metadata of youtube videos
 
