@@ -80,5 +80,5 @@ class CollectionCertPreProcessorConfig(override val config: Config) extends Base
     val userAccBlockedErrCode = "UOS_USRRED0006"
     val enableSuppressException: Boolean = if(config.hasPath("enable.suppress.exception")) config.getBoolean("enable.suppress.exception") else false
     val cloudStoreBasePath = config.getString("cloud_storage_base_url")
-    val cloudStoreBasePathPlaceholder = config.getString("cloud_store_base_path_placeholder")
+    val cloudStoreBasePathPlaceholder = "$CLOUD_BASE_PATH"
 }
