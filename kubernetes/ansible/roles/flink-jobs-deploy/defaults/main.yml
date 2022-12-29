@@ -26,6 +26,7 @@ taskmanager_liveness:
 taskmanager_prom_port: 9251
 taskmanager_rpc_port: 6122
 taskmanager_heap_memory: 1024
+cloud_store_base_path_placeholder: "$CLOUD_BASE_PATH"
 
 ### base-config related vars
 postgres_max_connections: 2
