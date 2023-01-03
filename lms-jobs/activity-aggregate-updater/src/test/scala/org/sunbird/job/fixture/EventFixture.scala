@@ -72,7 +72,7 @@ object EventFixture {
 
   val EVENT_2: String =
     """
-      |{"eid":"BE_JOB_REQUEST","ets":1563788371969,"mid":"LMS.1563788371969.590c5fa0-0ce8-46ed-bf6c-681c0a1fdac8","actor":{"type":"System","id":"Course Batch Updater"},"context":{"pdata":{"ver":"1.0","id":"org.sunbird.platform"}},"object":{"type":"CourseBatchEnrolment","id":"0126083288437637121_8454cb21-3ce9-4e30-85b5-fade097880d8"},"edata":{"contents":[{"contentId":"do_R1","status":2},{"contentId":"do_R2","status":1},{"contentId":"do_R3","status":2},{"contentId":"do_R4","status":2}],"action":"batch-enrolment-update","iteration":1,"batchId":"Batch1","userId":"user001","courseId":"course001"}}
+      |{"eid":"BE_JOB_REQUEST","ets":1563788371969,"mid":"LMS.1563788371969.590c5fa0-0ce8-46ed-bf6c-681c0a1fdac8","actor":{"type":"System","id":"Course Batch Updater"},"context":{"pdata":{"ver":"1.0","id":"org.sunbird.platform"}},"object":{"type":"CourseBatchEnrolment","id":"0126083288437637121_8454cb21-3ce9-4e30-85b5-fade097880d8"},"edata":{"contents":[{"contentId":"do_R1","status":2},{"contentId":"do_R2","status":1},{"contentId":"do_R3","status":2}],"action":"batch-enrolment-update","iteration":1,"batchId":"Batch1","userId":"user001","courseId":"course001"}}
       |""".stripMargin
 
   /** **** course structure ****
@@ -112,18 +112,16 @@ object EventFixture {
    *
    *
    */
-  val e2_courseLeafNodes = Map("course001:course001:leafnodes" -> List("do_R1", "do_R3", "do_R2","do_R4"))
+  val e2_courseLeafNodes = Map("course001:course001:leafnodes" -> List("do_R1", "do_R3", "do_R2"))
   val e2_unitLeafNodes_1 = Map("course001:unit1:leafnodes" -> List("do_R1", "do_R3"))
-  val e2_unitLeafNodes_2 = Map("course001:unit2:leafnodes" -> List("do_R2", "do_R3","do_R4"))
-  val e2_unitOptionlNodes_2 = Map("course001:unit2:optionalnodes" -> List("do_R4"))
+  val e2_unitLeafNodes_2 = Map("course001:unit2:leafnodes" -> List("do_R2", "do_R3"))
 
   val e2_ancestorsResource_1 = Map("course001:do_R1:ancestors" -> List("unit1", "course001"))
   val e2_ancestorsResource_2 = Map("course001:do_R3:ancestors" -> List("unit1", "unit2", "course001"))
   val e2_ancestorsResource_3 = Map("course001:do_R2:ancestors" -> List("unit2", "course001"))
-  val e2_ancestorsResource_4 = Map("course001:do_R4:ancestors" -> List("unit2", "course001"))
 
   val CASE_2:Map[String, AnyRef] = Map("event" -> EVENT_2, "cacheData" -> List(e2_courseLeafNodes,
-    e2_unitLeafNodes_1, e2_unitLeafNodes_2, e2_unitOptionlNodes_2, e2_ancestorsResource_1, e2_ancestorsResource_2,e2_ancestorsResource_3,e2_ancestorsResource_4))
+    e2_unitLeafNodes_1, e2_unitLeafNodes_2,e2_ancestorsResource_1, e2_ancestorsResource_2,e2_ancestorsResource_3))
 
   /** *
    *

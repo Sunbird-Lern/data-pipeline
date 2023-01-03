@@ -25,7 +25,6 @@ INSERT INTO sunbird_courses.user_content_consumption(userid, contentid, batchid,
 INSERT INTO sunbird_courses.user_content_consumption(userid, contentid, batchid,courseid,progress,status,viewcount,completedcount) VALUES ('user001','do_R1','Batch1','course001',100, 2,1,0) ;
 INSERT INTO sunbird_courses.user_content_consumption(userid, contentid, batchid,courseid,progress,status,viewcount,completedcount) VALUES ('user001','do_R2','Batch1','course001',100, 2,1,0) ;
 INSERT INTO sunbird_courses.user_content_consumption(userid, contentid, batchid,courseid,progress,status,viewcount,completedcount) VALUES ('user001','do_R3','Batch1','course001',100, 2,1,0) ;
-INSERT INTO sunbird_courses.user_content_consumption(userid, contentid, batchid,courseid,progress,status,viewcount,completedcount) VALUES ('user001','do_R4','Batch1','course001',100, 2,1,0) ;
 
 
 
