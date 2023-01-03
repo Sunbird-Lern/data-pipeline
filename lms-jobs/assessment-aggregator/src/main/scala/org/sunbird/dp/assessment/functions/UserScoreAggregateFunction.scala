@@ -71,25 +71,20 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
   }
 
   def getBestScore(event: Event): UserActivityAgg = {
-    if (isOptional(event.courseId, event.contentId))
-      event.toString.replace(s"$event.contentId","")
-
     val query = QueryBuilder.select().column("content_id").column("attempt_id").column("last_attempted_on").column("total_max_score").column("total_score").as("score").from(config.dbKeyspace, config.dbTable)
       .where(QueryBuilder.eq("course_id", event.courseId)).and(QueryBuilder.eq("batch_id", event.batchId))
       .and(QueryBuilder.eq("user_id", event.userId))
     val rows = cassandraUtil.find(query.toString).asScala.toList
-
-    UserActivityAgg(aggregates = getAggregates(rows), aggDetails = getAggregateDetails(rows))
-
-  }
-  def isOptional(courseId: String, contentId: String): Boolean = {
-    val optionalNodes = dataCache.getKeyMembers(key = s"$courseId:$courseId:optionalnodes")
-    if (!optionalNodes.isEmpty) {
+    val optionalNodes = dataCache.getKeyMembers(key = s"${event.courseId}:${event.courseId}:optionalnodes")
+    val filteredRows = rows.filterNot(r => {
+      val contentId = r.getString("content_id")
       optionalNodes.contains(contentId)
-    } else {
-        false
-    }
+    })
+    println("rows:"+ rows + "filtered rows:" + filteredRows)
+    UserActivityAgg(aggregates = getAggregates(filteredRows), aggDetails = getAggregateDetails(filteredRows))
+
   }
+
   def updateUserActivity(event: Event, score: UserActivityAgg): Unit = {
     val scoreLastUpdatedTime: Map[String, Long] = score.aggregates.map(m => m._1 -> System.currentTimeMillis())
     val updateQuery = QueryBuilder.update(config.dbKeyspace, config.activityTable)
