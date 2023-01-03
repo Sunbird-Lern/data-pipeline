@@ -2,6 +2,7 @@ package org.sunbird.job.aggregate.functions
 
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
+
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.querybuilder.{QueryBuilder, Select, Update}
 import com.google.gson.Gson
@@ -22,7 +23,6 @@ import org.sunbird.job.util.{CassandraUtil, HttpUtil}
 import org.sunbird.job.{Metrics, WindowBaseProcessFunction}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
 
 class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUtil: HttpUtil, @transient var cassandraUtil: CassandraUtil = null)
                                 (implicit val stringTypeInfo: TypeInformation[String])
@@ -126,8 +126,7 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
     val userId = userConsumption.userId
     val contextId = "cb:" + userConsumption.batchId
     val key = s"$courseId:$courseId:${config.leafNodes}"
-    var leafNodes = ListBuffer(readFromCache(key, metrics).distinct)
-
+    val leafNodes = readFromCache(key, metrics).distinct
     if (leafNodes.isEmpty) {
       logger.error(s"leaf nodes are not available for: $key")
       context.output(config.failedEventOutputTag, gson.toJson(userConsumption))
@@ -144,8 +143,6 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
         throw new Exception(message)
       }
     } else {
-      var optionalNodes = readFromCache(key = s"$courseId:$courseId:${config.optionalnodes}", metrics).distinct
-      leafNodes -= optionalNodes
       val completedCount = leafNodes.intersect(userConsumption.contents.filter(cc => cc._2.status == 2).map(cc => cc._2.contentId).toList.distinct).size
       val contentStatus = userConsumption.contents.map(cc => (cc._2.contentId, cc._2.status)).toMap
       val inputContents = userConsumption.contents.filter(cc => cc._2.fromInput).keys.toList
@@ -175,12 +172,8 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
     }).values.flatten.filter(a => !StringUtils.equals(a, courseId)).toList.distinct
 
     // LeafNodes of the identified child collections - for this user.
-
     val collectionsWithLeafNodes = ancestors.map(unitId => {
-      var leafNodes = ListBuffer(readFromCache(key = s"$courseId:$unitId:${config.leafNodes}", metrics).distinct)
-      var optionalNodes = readFromCache(key = s"$courseId:$unitId:${config.optionalnodes}", metrics).distinct
-      leafNodes -= optionalNodes
-      (unitId, leafNodes)
+      (unitId, readFromCache(key = s"$courseId:$unitId:${config.leafNodes}", metrics).distinct)
     }).toMap
 
     // Content completed - By this user.
