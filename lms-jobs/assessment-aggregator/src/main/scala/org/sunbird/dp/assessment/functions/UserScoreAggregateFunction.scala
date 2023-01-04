@@ -80,7 +80,6 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
       val contentId = r.getString("content_id")
       optionalNodes.contains(contentId)
     })
-    println("rows:"+ rows + "filtered rows:" + filteredRows)
     UserActivityAgg(aggregates = getAggregates(filteredRows), aggDetails = getAggregateDetails(filteredRows))
 
   }
