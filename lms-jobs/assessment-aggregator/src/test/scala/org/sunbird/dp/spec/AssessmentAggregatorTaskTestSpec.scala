@@ -28,7 +28,7 @@ import redis.embedded.RedisServer
 
 import java.util
 
-
+//Running the test case(Update optional event to db) individually will get you change in counts since the cache gets updated after each test case,so run all of them at once .
 class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
 
   implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
