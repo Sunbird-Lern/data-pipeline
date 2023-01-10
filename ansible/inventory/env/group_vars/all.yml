@@ -85,8 +85,8 @@ search_es7_host: "{{ groups['es7']|join(':9200,')}}:9200"
 
 mlworkbench: "{{ groups['mlworkbench'][0]}}"
 
-azure_account: "{{ sunbird_public_storage_account_name }}"
-azure_secret: "{{ sunbird_public_storage_account_key }}"
+cloud_account: "{{ cloud_public_storage_accountname }}"
+cloud_secret: "{{ cloud_public_storage_accountname }}"
 dedup_redis_host: "{{ dp_redis_host }}"
 kp_redis_host: "{{ groups['redisall'][0] }}"
 neo4j_route_path: "bolt://{{ groups['learning-neo4j-node1'][0] }}:7687"
@@ -108,10 +108,13 @@ cert_rc_base_url: "http://{{private_ingressgateway_ip}}/registry-service/api/v1"
 cert_rc_entity: "TrainingCertificate"
 certificate_base_path: "https://{{domain_name}}/certs"
 cert_domain_url:  "{{proto}}://{{domain_name}}"
-cert_container_name: "{{cert_env_prefix}}-e-credentials"
-cert_cloud_storage_type: "azure"
-cert_azure_storage_secret: "{{sunbird_private_storage_account_key}}"
-cert_azure_storage_key: "{{sunbird_private_storage_account_name}}"
+cert_container_name: "{{ cloud_storage_certservice_bucketname }}"
+cert_cloud_storage_type: "{{cloud_service_provider}}"
+cert_cloud_storage_secret: "{{cloud_private_storage_secret}}"
+cert_cloud_storage_key: "{{cloud_private_storage_accountname}}"
+cloud_storage_base_url: "{{cloud_storage_base_url}}"
+content_read_api_host: "{{content_read_api_host}}"
+content_read_api_endpoint: "{{content_read_api_endpoint}}"
 
 default_channel: "org.sunbird"
 download_neo4j: true
@@ -122,7 +125,7 @@ enable_rc_certificate: true
 ### kafka and zookeeper ip vars and being used in kafka topiccreation role.
 processing_zookeeper_ip: "{{ groups['processing-cluster-zookeepers'][0] }}"
 ## MultiDC flag for LERN data pipeline jobs
-cassandra_isMultiDCEnabled: false
+cassandra_isMultiDCEnabled: "{{is_multidc_enabled}}"
 
 # LERN BB specific kafka topics,have to be overridden in private devops repo to include BB Name for integrators.
 kafka_topic_course_batch_job_request: "{{env_name}}.coursebatch.job.request"
@@ -151,3 +154,9 @@ kafka_group_certificate_generator: "{{env_name}}-certificate-generator-group"
 kafka_group_merge_courses: "{{env_name}}-merge-courses-group"
 kafka_group_assessment_aggregator: "{{env_name}}-assessment-aggregator-group"
 kafka_group_lms_notification: "{{env_name}}-lms-notification"
+
+## Checkpoint Config
+checkpoint_store_type: "{{cloud_service_provider}}"
+azure_cloud_account: "{{ cloud_public_storage_accountname }}"
+azure_cloud_secret: "{{ cloud_public_storage_secret }}"
+cloud_storage_flink_bucketname: "flink-check-points-store"

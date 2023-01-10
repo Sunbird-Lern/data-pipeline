@@ -29,7 +29,7 @@ taskmanager_heap_memory: 1024
 
 ### base-config related vars
 postgres_max_connections: 2
-flink_container_name: flink-check-points-store
+flink_container_name: "{{ cloud_storage_flink_bucketname }}"
 checkpoint_interval: 60000
 checkpoint_pause_between_seconds: 5000
 checkpoint_compression_enabled: true
@@ -115,9 +115,6 @@ middleware_cassandra_assessment_aggregator_table: assessment_aggregator
 middleware_cassandra_assessment_question_type : question
 middleware_cassandra_user_enrolments_table: user_enrolments
 middleware_cassandra_user_activity_agg_table: user_activity_agg
-content_read_api_host: "http://dev.sunbirded.org"
-content_read_api_endpoint: "/api/content/v1/read/"
-
 
 ### to be removed
 job_classname: ""
