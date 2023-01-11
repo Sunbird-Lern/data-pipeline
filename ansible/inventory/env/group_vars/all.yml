@@ -117,6 +117,7 @@ content_read_api_host: "{{content_read_api_host}}"
 content_read_api_endpoint: "{{content_read_api_endpoint}}"
 content_cloud_storage_container: "{{cloud_storage_content_bucketname}}"
 cloud_store_base_path_placeholder: "CLOUD_BASE_PATH"
+cloud_storage_cname_url: "{{cloud_storage_cname_url}}"
 
 default_channel: "org.sunbird"
 download_neo4j: true
