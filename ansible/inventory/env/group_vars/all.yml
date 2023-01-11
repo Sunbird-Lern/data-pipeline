@@ -115,6 +115,7 @@ cert_cloud_storage_key: "{{cloud_private_storage_accountname}}"
 cloud_storage_base_url: "{{cloud_storage_base_url}}"
 content_read_api_host: "{{content_read_api_host}}"
 content_read_api_endpoint: "{{content_read_api_endpoint}}"
+content_cloud_storage_container: "{{cloud_storage_content_bucketname}}"
 
 default_channel: "org.sunbird"
 download_neo4j: true

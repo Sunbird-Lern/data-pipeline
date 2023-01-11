@@ -81,4 +81,5 @@ class CollectionCertPreProcessorConfig(override val config: Config) extends Base
     val enableSuppressException: Boolean = if(config.hasPath("enable.suppress.exception")) config.getBoolean("enable.suppress.exception") else false
     val cloudStoreBasePath = config.getString("cloud_storage_base_url")
     val cloudStoreBasePathPlaceholder = "$CLOUD_BASE_PATH"
+    val contentCloudStorageContainer = config.getString("content_cloud_storage_container")
 }

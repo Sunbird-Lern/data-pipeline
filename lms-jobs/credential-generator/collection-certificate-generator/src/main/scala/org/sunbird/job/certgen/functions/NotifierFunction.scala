@@ -64,7 +64,7 @@ class NotifierFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, @
         if ( notifyTemplate != null && notifyTemplate.containsKey(JsonKeys.STATE_IMAGE_URL)) {
           val placeholderUrl = notifyTemplate.getOrElse(JsonKeys.STATE_IMAGE_URL,"")
           if(placeholderUrl != null){
-            val replacedUrl = placeholderUrl.replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath)
+            val replacedUrl = placeholderUrl.replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath+"/"+config.contentCloudStorageContainer)
             notifyTemplate.put(JsonKeys.STATE_IMAGE_URL, replacedUrl)
           }
         }

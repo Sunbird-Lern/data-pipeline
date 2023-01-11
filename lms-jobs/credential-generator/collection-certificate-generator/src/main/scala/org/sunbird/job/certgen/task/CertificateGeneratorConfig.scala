@@ -155,4 +155,5 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val userFeedCount = "user-feed-count"
   val cloudStoreBasePath = config.getString("cloud_storage_base_url")
   val cloudStoreBasePathPlaceholder = "$CLOUD_BASE_PATH"
+  val contentCloudStorageContainer = config.getString("content_cloud_storage_container")
 }

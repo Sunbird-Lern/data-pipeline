@@ -203,7 +203,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   def generateRequest(event: Event, certModel: CertModel, reIssue: Boolean):  Map[String, AnyRef] = {
     val req = Map("filters" -> Map())
     val publicKeyId: String = callCertificateRc(config.rcSearchApi, null, req)
-    val replacedUrl = if(event.svgTemplate.contains(config.cloudStoreBasePathPlaceholder)) event.svgTemplate.replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath) else event.svgTemplate
+    val replacedUrl = if(event.svgTemplate.contains(config.cloudStoreBasePathPlaceholder)) event.svgTemplate.replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath+"/"+config.contentCloudStorageContainer) else event.svgTemplate
     logger.info("generateRequest: template url from event {}", event.svgTemplate)
     logger.info("generateRequest: template url after replacing placeholder {}", replacedUrl)
     val createCertReq = Map[String, AnyRef](
