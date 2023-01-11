@@ -325,7 +325,9 @@ collection-cert-pre-processor:
     }
     assessment.metrics.supported.contenttype = ["SelfAssess"]
     cloud_storage_base_url = "{{ cloud_storage_base_url }}"
-    content_cloud_storage_container = "{{ content_cloud_storage_container }}"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder }}"
+    content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
+    cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
 
   flink-conf: |+
     jobmanager.memory.flink.size: {{ flink_job_names['collection-cert-pre-processor'].jobmanager_memory }}
@@ -362,7 +364,9 @@ collection-certificate-generator:
     cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
     cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
     cloud_storage_base_url = "{{ cloud_storage_base_url }}"
-    content_cloud_storage_container = "{{ content_cloud_storage_container }}"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder }}"
+    content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
+    cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"
       learner.basePath = "{{ learner_service_base_url }}"

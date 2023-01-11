@@ -204,7 +204,7 @@ trait IssueCertificateHelper {
             "issuedDate" -> dateFormatter.format(enrolledUser.issuedOn),
             "data" -> List(Map[String, AnyRef]("recipientName" -> recipientName, "recipientId" -> event.userId)),
             "criteria" -> Map[String, String]("narrative" -> certName),
-            "svgTemplate" -> template.getOrElse("url", "").replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath+"/"+config.contentCloudStorageContainer),
+            "svgTemplate" -> template.getOrElse("url", "").replace(config.cloudStoreBasePathPlaceholder, config.baseUrl+"/"+config.contentCloudStorageContainer),
             "oldId" -> enrolledUser.oldId,
             "templateId" -> template.getOrElse(config.identifier, ""),
             "userId" -> event.userId,
