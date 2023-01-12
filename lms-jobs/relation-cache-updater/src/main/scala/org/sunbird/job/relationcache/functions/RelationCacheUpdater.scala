@@ -61,6 +61,9 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
                 val leafNodesMap = getLeafNodes(rootId, hierarchy)
                 logger.info("Leaf-nodes cache updating for: " + leafNodesMap.size)
                 storeDataInCache(rootId, "leafnodes", leafNodesMap, dataCache)(metrics)
+                val optionalNodesMap = getOptionalNodes(rootId, hierarchy)
+                logger.info("Optional-nodes cache updating for: " + optionalNodesMap.size)
+                storeDataInCache(rootId, "optionalnodes", optionalNodesMap, dataCache)(metrics)
                 val ancestorsMap = getAncestors(rootId, hierarchy)
                 logger.info("Ancestors cache updating for: "+ ancestorsMap.size)
                 storeDataInCache(rootId, "ancestors", ancestorsMap, dataCache)(metrics)
@@ -121,6 +124,37 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
 
     private def isCollection(content: java.util.Map[String, AnyRef]): Boolean = {
         StringUtils.equalsIgnoreCase(content.getOrDefault("mimeType", "").asInstanceOf[String], "application/vnd.ekstep.content-collection")
+    }
+
+    private def getOptionalNodes(identifier: String, hierarchy: java.util.Map[String, AnyRef]): Map[String, List[String]] = {
+        val mimeType = hierarchy.getOrDefault("mimeType", "").asInstanceOf[String]
+        val optionalNodesMap = if (StringUtils.equalsIgnoreCase(mimeType, "application/vnd.ekstep.content-collection") ) {
+            val optionalNodes = getOrComposeOptionalNodes(hierarchy, false)
+            val map: Map[String, List[String]] = if (optionalNodes.nonEmpty) Map() + (identifier -> optionalNodes) else Map()
+            val children = getChildren(hierarchy)
+            val childOptionalNodesMap = if (CollectionUtils.isNotEmpty(children)) {
+                children.asScala.map(child => {
+                    val childId = child.get("identifier").asInstanceOf[String]
+                    getOptionalNodes(childId, child)
+                }).flatten.toMap
+            } else Map()
+            map ++ childOptionalNodesMap
+        } else Map()
+        optionalNodesMap.filter(m => m._2.nonEmpty).toMap
+    }
+    private def getOrComposeOptionalNodes(hierarchy: java.util.Map[String, AnyRef], compose: Boolean = true): List[String] = {
+        if (hierarchy.containsKey("optionalNodes") && !compose)
+            hierarchy.getOrDefault("optionalNodes", java.util.Arrays.asList()).asInstanceOf[java.util.List[String]].asScala.toList
+        else {
+            val children = getChildren(hierarchy)
+            val childCollections = children.asScala.filter(c => isOptional(c))
+            val optionalList = childCollections.map(coll => getOrComposeOptionalNodes(coll, true)).flatten.toList
+            val ids = children.asScala.filterNot(c => isOptional(c)).map(c => c.getOrDefault("identifier", "").asInstanceOf[String]).filter(id => StringUtils.isNotBlank(id))
+            optionalList ++ ids
+        }
+    }
+    private def isOptional(content: java.util.Map[String, AnyRef]): Boolean = {
+        StringUtils.equalsIgnoreCase(content.getOrDefault("optional", "").asInstanceOf[String], "true")
     }
 
     private def getAncestors(identifier: String, hierarchy: java.util.Map[String, AnyRef], parents: List[String] = List()): Map[String, List[String]] = {
