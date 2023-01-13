@@ -328,7 +328,7 @@ collection-cert-pre-processor:
     cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
     cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
     cloud_storage_base_url = "{{ cloud_storage_base_url }}"
-    cloud_store_base_path_placeholder = "CLOUD_BASE_PATH"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder | default('CLOUD_BASE_PATH')}}"
     content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
 
@@ -367,7 +367,7 @@ collection-certificate-generator:
     cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
     cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
     cloud_storage_base_url = "{{ cloud_storage_base_url }}"
-    cloud_store_base_path_placeholder = "{{cloud_store_base_path_placeholder}}"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder | default('CLOUD_BASE_PATH')}}"
     content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
