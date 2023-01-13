@@ -203,10 +203,13 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   def generateRequest(event: Event, certModel: CertModel, reIssue: Boolean):  Map[String, AnyRef] = {
     val req = Map("filters" -> Map())
     val publicKeyId: String = callCertificateRc(config.rcSearchApi, null, req)
+    val replacedUrl = if(event.svgTemplate.contains(config.cloudStoreBasePathPlaceholder)) event.svgTemplate.replace(config.cloudStoreBasePathPlaceholder, config.baseUrl+"/"+config.contentCloudStorageContainer) else event.svgTemplate
+    logger.info("generateRequest: template url from event {}", event.svgTemplate)
+    logger.info("generateRequest: template url after replacing placeholder {}", replacedUrl)
     val createCertReq = Map[String, AnyRef](
       "certificateLabel" -> certModel.certificateName,
       "status" -> "ACTIVE",
-      "templateUrl" -> event.svgTemplate,
+      "templateUrl" -> replacedUrl,
       "training" -> Training(event.related.getOrElse(config.COURSE_ID, "").asInstanceOf[String], event.courseName, "Course", event.related.getOrElse(config.BATCH_ID, "").asInstanceOf[String]),
       "recipient" -> Recipient(certModel.identifier, certModel.recipientName, null),
       "issuer" -> Issuer(certModel.issuer.url, certModel.issuer.name, publicKeyId),

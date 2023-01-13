@@ -64,8 +64,8 @@ class NotifierFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, @
         if ( notifyTemplate != null && notifyTemplate.containsKey(JsonKeys.STATE_IMAGE_URL)) {
           val placeholderUrl = notifyTemplate.getOrElse(JsonKeys.STATE_IMAGE_URL,"")
           if(placeholderUrl != null){
-            val replacedUrl = placeholderUrl.replace(config.cloudStoreBasePathPlaceholder, config.cloudStoreBasePath)
-            notifyTemplate.replace(JsonKeys.STATE_IMAGE_URL, placeholderUrl, replacedUrl)
+            val replacedUrl = placeholderUrl.replace(config.cloudStoreBasePathPlaceholder, config.baseUrl+"/"+config.contentCloudStorageContainer)
+            notifyTemplate.put(JsonKeys.STATE_IMAGE_URL, replacedUrl)
           }
         }
         val request = mutable.Map[String, AnyRef]("request" -> (notifyTemplate ++ mutable.Map[String, AnyRef](
@@ -158,6 +158,5 @@ class NotifierFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, @
   override def metricsList(): List[String] = {
     List(config.courseBatchdbReadCount, config.skipNotifyUserCount, config.notifiedUserCount, config.failedEventCount)
   }
-
 
 }
