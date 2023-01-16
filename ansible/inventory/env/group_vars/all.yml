@@ -86,7 +86,7 @@ search_es7_host: "{{ groups['es7']|join(':9200,')}}:9200"
 mlworkbench: "{{ groups['mlworkbench'][0]}}"
 
 cloud_account: "{{ cloud_public_storage_accountname }}"
-cloud_secret: "{{ cloud_public_storage_accountname }}"
+cloud_secret: "{{ cloud_public_storage_secret }}"
 dedup_redis_host: "{{ dp_redis_host }}"
 kp_redis_host: "{{ groups['redisall'][0] }}"
 neo4j_route_path: "bolt://{{ groups['learning-neo4j-node1'][0] }}:7687"
