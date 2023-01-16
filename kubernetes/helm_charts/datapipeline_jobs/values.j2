@@ -8,7 +8,9 @@ cloud_storage_key: {{ cloud_private_storage_accountname }}
 cloud_storage_secret: {{ cloud_private_storage_secret }}
 cloud_storage_endpoint: {{ cloud_private_storage_endpoint }}
 cloud_storage_path_style_access: {{ cloud_storage_pathstyle_access }}
+{% if cloud_service_provider == "gcloud" %}
 cloud_storage_project_id: {{ cloud_private_storage_project }}
+{% endif %}
 serviceMonitor:
   enabled: {{ service_monitor_enabled | lower}}
 
