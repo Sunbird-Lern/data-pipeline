@@ -24,6 +24,7 @@
 		<module>notification</module>
 		<module>dp-core</module>
 		<module>lms-jobs</module>
+		<module>user-org-jobs</module>
 	</modules>
 
 	<properties>

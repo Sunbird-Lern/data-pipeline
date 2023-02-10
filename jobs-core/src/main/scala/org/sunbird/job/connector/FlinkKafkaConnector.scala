@@ -34,4 +34,5 @@ class FlinkKafkaConnector(config: BaseJobConfig) extends Serializable {
     new FlinkKafkaProducer[T](kafkaTopic,
       new JobRequestSerializationSchema[T](kafkaTopic), config.kafkaProducerProperties, Semantic.AT_LEAST_ONCE)
   }
+
 }
