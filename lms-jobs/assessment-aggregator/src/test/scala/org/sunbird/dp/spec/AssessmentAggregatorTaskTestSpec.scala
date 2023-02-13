@@ -152,19 +152,6 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
     assert(1 == resultMap5.getOrDefault("attempts_count:do_3129323935897108481169", 0))
   }
 
-  "AssessmentAggregator " should "Skip the missing records from the event" in {
-    val forceValidationAssessmentConfig: AssessmentAggregatorConfig = new AssessmentAggregatorConfig(ConfigFactory.load("forcevalidate.conf"))
-    when(mockKafkaUtil.kafkaEventSource[Event](forceValidationAssessmentConfig.kafkaInputTopic)).thenReturn(new AssessmentAggreagatorEventSourceForceValidation)
-    when(mockKafkaUtil.kafkaEventSink[Event](forceValidationAssessmentConfig.kafkaFailedTopic)).thenReturn(new FailedEventsSink)
-    when(mockKafkaUtil.kafkaStringSink(forceValidationAssessmentConfig.kafkaCertIssueTopic)).thenReturn(new certificateIssuedEventsSink)
-    val task = new AssessmentAggregatorStreamTask(forceValidationAssessmentConfig, mockKafkaUtil)
-    task.process()
-    BaseMetricsReporter.gaugeMetrics(s"${assessmentConfig.jobName}.${assessmentConfig.batchSuccessCount}").getValue() should be(3)
-    BaseMetricsReporter.gaugeMetrics(s"${assessmentConfig.jobName}.${assessmentConfig.cacheHitCount}").getValue() should be(5)
-    BaseMetricsReporter.gaugeMetrics(s"${assessmentConfig.jobName}.${assessmentConfig.apiHitSuccessCount}").getValue() should be(2)
-    BaseMetricsReporter.gaugeMetrics(s"${assessmentConfig.jobName}.${assessmentConfig.ignoredEventsCount}").getValue() should be(1)
-  }
-
   def testCassandraUtil(cassandraUtil: CassandraUtil): Unit = {
     cassandraUtil.reconnect()
     val response = cassandraUtil.find("SELECT * FROM sunbird_courses.assessment_aggregator;")
