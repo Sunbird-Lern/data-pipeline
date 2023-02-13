@@ -28,7 +28,7 @@ import redis.embedded.RedisServer
 
 import java.util
 
-
+//Running the test case(Update optional event to db) individually will get you change in counts since the cache gets updated after each test case,so run all of them at once .
 class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
 
   implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
@@ -56,7 +56,6 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
     cassandraUtil = new CassandraUtil(assessmentConfig.dbHost, assessmentConfig.dbPort, assessmentConfig.isMultiDCEnabled)
     val session = cassandraUtil.session
-    setupRedisTestData()
 
     val dataLoader = new CQLDataLoader(session)
     dataLoader.load(new FileCQLDataSet(getClass.getResource("/test.cql").getPath, true, true));
@@ -82,6 +81,7 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
 
 
   "AssessmentAggregator " should "Update event to db" in {
+    setupRedisTestData()
     when(mockKafkaUtil.kafkaEventSource[Event](assessmentConfig.kafkaInputTopic)).thenReturn(new AssessmentAggreagatorEventSource)
     when(mockKafkaUtil.kafkaEventSink[Event](assessmentConfig.kafkaFailedTopic)).thenReturn(new FailedEventsSink)
     when(mockKafkaUtil.kafkaStringSink(assessmentConfig.kafkaCertIssueTopic)).thenReturn(new certificateIssuedEventsSink)
@@ -168,6 +168,22 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
     })
 
     // Setup content Cache
+    val contentCache = redisConnect.getConnection(assessmentConfig.contentCacheNode)
+    EventFixture.contentCacheList.map(nodes => {
+      nodes.map(node => {
+        contentCache.set(node._1, node._2)
+      })
+    })
+  }
+
+  def setupRedisOptionalNodeTestData() {
+    val redisConnect = new RedisConnect(assessmentConfig.metaRedisHost, assessmentConfig.metaRedisPort, assessmentConfig)
+    val jedis = redisConnect.getConnection(assessmentConfig.relationCacheNode)
+    EventFixture.optionalNodesList.map(nodes => {
+      nodes.map(node => {
+        jedis.sadd(node._1, node._2)
+      })
+    })
     val contentCache = redisConnect.getConnection(assessmentConfig.contentCacheNode)
     EventFixture.contentCacheList.map(nodes => {
       nodes.map(node => {
