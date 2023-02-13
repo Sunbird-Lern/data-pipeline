@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import org.sunbird.dp.assessment.domain.Event
 import org.apache.flink.configuration.Configuration
 import org.sunbird.dp.assessment.task.AssessmentAggregatorConfig
+import org.sunbird.dp.core.cache.{DataCache, RedisConnect}
 import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
 import org.sunbird.dp.core.util.CassandraUtil
 
@@ -30,13 +31,15 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
 
   val mapType: Type = new TypeToken[util.Map[String, AnyRef]]() {}.getType
   private[this] val logger = LoggerFactory.getLogger(classOf[UserScoreAggregateFunction])
-
+  private var dataCache: DataCache = _
   override def metricsList() = List(config.dbScoreAggUpdateCount, config.dbScoreAggReadCount,
     config.failedEventCount, config.batchSuccessCount,
     config.skippedEventCount)
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
+    dataCache = new DataCache(config, new RedisConnect(config.metaRedisHost, config.metaRedisPort, config), config.relationCacheNode, List())
+    dataCache.init()
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
   }
 
@@ -72,8 +75,13 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
       .where(QueryBuilder.eq("course_id", event.courseId)).and(QueryBuilder.eq("batch_id", event.batchId))
       .and(QueryBuilder.eq("user_id", event.userId))
     val rows = cassandraUtil.find(query.toString).asScala.toList
+    val optionalNodes = dataCache.getKeyMembers(key = s"${event.courseId}:${event.courseId}:optionalnodes")
+    val filteredRows = rows.filterNot(r => {
+      val contentId = r.getString("content_id")
+      optionalNodes.contains(contentId)
+    })
+    UserActivityAgg(aggregates = getAggregates(filteredRows), aggDetails = getAggregateDetails(filteredRows))
 
-    UserActivityAgg(aggregates = getAggregates(rows), aggDetails = getAggregateDetails(rows))
   }
 
   def updateUserActivity(event: Event, score: UserActivityAgg): Unit = {
@@ -88,7 +96,7 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
       .and(QueryBuilder.eq(config.activityUser, event.userId))
     cassandraUtil.upsert(updateQuery.toString)
     logger.info("Successfully updated scores in user activity  - batchid: "
-      + event.batchId + " ,userid: " + event.userId + " ,couserid: "
+      + event.batchId + " ,userid: " + event.userId + " ,courseid: "
       + event.courseId)
   }
 
