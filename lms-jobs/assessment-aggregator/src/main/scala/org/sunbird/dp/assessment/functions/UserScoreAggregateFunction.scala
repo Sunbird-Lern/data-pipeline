@@ -30,7 +30,6 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
 
   val mapType: Type = new TypeToken[util.Map[String, AnyRef]]() {}.getType
   private[this] val logger = LoggerFactory.getLogger(classOf[UserScoreAggregateFunction])
-
   override def metricsList() = List(config.dbScoreAggUpdateCount, config.dbScoreAggReadCount,
     config.failedEventCount, config.batchSuccessCount,
     config.skippedEventCount)
@@ -72,8 +71,8 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
       .where(QueryBuilder.eq("course_id", event.courseId)).and(QueryBuilder.eq("batch_id", event.batchId))
       .and(QueryBuilder.eq("user_id", event.userId))
     val rows = cassandraUtil.find(query.toString).asScala.toList
-
     UserActivityAgg(aggregates = getAggregates(rows), aggDetails = getAggregateDetails(rows))
+
   }
 
   def updateUserActivity(event: Event, score: UserActivityAgg): Unit = {
@@ -88,7 +87,7 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
       .and(QueryBuilder.eq(config.activityUser, event.userId))
     cassandraUtil.upsert(updateQuery.toString)
     logger.info("Successfully updated scores in user activity  - batchid: "
-      + event.batchId + " ,userid: " + event.userId + " ,couserid: "
+      + event.batchId + " ,userid: " + event.userId + " ,courseid: "
       + event.courseId)
   }
 

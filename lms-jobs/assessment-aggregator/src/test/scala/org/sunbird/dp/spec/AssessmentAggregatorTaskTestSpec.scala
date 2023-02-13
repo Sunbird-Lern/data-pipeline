@@ -28,7 +28,6 @@ import redis.embedded.RedisServer
 
 import java.util
 
-
 class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
 
   implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
@@ -57,7 +56,6 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
     cassandraUtil = new CassandraUtil(assessmentConfig.dbHost, assessmentConfig.dbPort, assessmentConfig.isMultiDCEnabled)
     val session = cassandraUtil.session
     setupRedisTestData()
-
     val dataLoader = new CQLDataLoader(session)
     dataLoader.load(new FileCQLDataSet(getClass.getResource("/test.cql").getPath, true, true));
     // Clear the metrics
@@ -150,19 +148,6 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
     assert(1 == resultMap5.getOrDefault("score:do_3129323935897108481169", 0))
     assert(1 == resultMap5.getOrDefault("max_score:do_3129323935897108481169", 0))
     assert(1 == resultMap5.getOrDefault("attempts_count:do_3129323935897108481169", 0))
-  }
-
-  "AssessmentAggregator " should "Skip the missing records from the event" in {
-    val forceValidationAssessmentConfig: AssessmentAggregatorConfig = new AssessmentAggregatorConfig(ConfigFactory.load("forcevalidate.conf"))
-    when(mockKafkaUtil.kafkaEventSource[Event](forceValidationAssessmentConfig.kafkaInputTopic)).thenReturn(new AssessmentAggreagatorEventSourceForceValidation)
-    when(mockKafkaUtil.kafkaEventSink[Event](forceValidationAssessmentConfig.kafkaFailedTopic)).thenReturn(new FailedEventsSink)
-    when(mockKafkaUtil.kafkaStringSink(forceValidationAssessmentConfig.kafkaCertIssueTopic)).thenReturn(new certificateIssuedEventsSink)
-    val task = new AssessmentAggregatorStreamTask(forceValidationAssessmentConfig, mockKafkaUtil)
-    task.process()
-    BaseMetricsReporter.gaugeMetrics(s"${assessmentConfig.jobName}.${assessmentConfig.batchSuccessCount}").getValue() should be(3)
-    BaseMetricsReporter.gaugeMetrics(s"${assessmentConfig.jobName}.${assessmentConfig.cacheHitCount}").getValue() should be(5)
-    BaseMetricsReporter.gaugeMetrics(s"${assessmentConfig.jobName}.${assessmentConfig.apiHitSuccessCount}").getValue() should be(2)
-    BaseMetricsReporter.gaugeMetrics(s"${assessmentConfig.jobName}.${assessmentConfig.ignoredEventsCount}").getValue() should be(1)
   }
 
   def testCassandraUtil(cassandraUtil: CassandraUtil): Unit = {

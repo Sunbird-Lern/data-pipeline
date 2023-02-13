@@ -90,6 +90,7 @@ class ActivityAggregateUpdaterConfig(override val config: Config) extends BaseJo
   val unitActivityType = "course-unit"
   val courseActivityType = "course"
   val leafNodes = "leafnodes"
+  val optionalnodes = "optionalnodes"
   val ancestors = "ancestors"
   val viewcount = "viewcount"
   val completedcount = "completedcount"
