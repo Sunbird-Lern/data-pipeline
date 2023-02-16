@@ -2,8 +2,7 @@ package org.sunbird.dp.assessment.functions
 
 import java.lang.reflect.Type
 import java.util
-import java.util.Date
-
+import java.util.{Date, UUID}
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.google.gson.Gson
@@ -104,6 +103,34 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
         + event.batchId + " ,userid: " + event.userId + " ,couserid: "
         + event.courseId)
     }
+
+    createIssueCertEvent(event, context, metrics)
   }
+
+
+  /**
+   * Generation of Certificate Issue event for the enrolment completed users to validate and generate certificate.
+   *
+   * @param batchEvent
+   * @param context
+   * @param metrics
+   */
+  def createIssueCertEvent(batchEvent: Event, context: ProcessFunction[Event, Event]#Context,
+                           metrics: Metrics): Unit = {
+    val ets = System.currentTimeMillis
+    val mid = s"""LP.${ets}.${UUID.randomUUID}"""
+    val event =
+      s"""{"eid": "BE_JOB_REQUEST",
+         |"ets": ${ets},
+         |"mid": "${mid}",
+         |"actor": {"id": "Course Certificate Generator","type": "System"},
+         |"context": {"pdata": {"ver": "1.0","id": "org.sunbird.platform"}},
+         |"object": {"id": "${batchEvent.batchId}_${batchEvent.courseId}","type": "CourseCertificateGeneration"},
+         |"edata": {"userIds": ["${batchEvent.userId}"],"action": "issue-certificate","iteration": 1, "trigger": "auto-issue","batchId": "${batchEvent.batchId}","reIssue": false,"courseId": "${batchEvent.courseId}"}}"""
+        .stripMargin.replaceAll("\n", "")
+    context.output(config.certIssueOutputTag, event)
+    metrics.incCounter(config.certIssueEventsCount)
+  }
+
 
 }

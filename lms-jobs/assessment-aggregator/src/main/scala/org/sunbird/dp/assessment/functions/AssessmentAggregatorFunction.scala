@@ -141,7 +141,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
       metrics.incCounter(config.dbUpdateCount)
       metrics.incCounter(config.batchSuccessCount)
       context.output(config.scoreAggregateTag, event)
-      createIssueCertEvent(event, context, metrics)
+//      createIssueCertEvent(event, context, metrics)
     }
     else {
       metrics.incCounter(config.dbReadCount)
@@ -151,7 +151,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
         metrics.incCounter(config.dbUpdateCount)
         metrics.incCounter(config.batchSuccessCount)
         context.output(config.scoreAggregateTag, event)
-        createIssueCertEvent(event, context, metrics)
+//        createIssueCertEvent(event, context, metrics)
       }
       else {
         metrics.incCounter(config.skippedEventCount)
@@ -228,30 +228,6 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
       .setDecimal("duration", BigDecimal.valueOf(questionData.duration)).setTimestamp("assess_ts", new Timestamp(assessTs))
   }
 
-  /**
-   * Generation of Certificate Issue event for the enrolment completed users to validate and generate certificate.
-   *
-   * @param batchEvent
-   * @param context
-   * @param metrics
-   */
-  def createIssueCertEvent(batchEvent: Event, context: ProcessFunction[Event, Event]#Context,
-                           metrics: Metrics): Unit = {
-    val ets = System.currentTimeMillis
-    val mid = s"""LP.${ets}.${UUID.randomUUID}"""
-    val event =
-      s"""{"eid": "BE_JOB_REQUEST",
-         |"ets": ${ets},
-         |"mid": "${mid}",
-         |"actor": {"id": "Course Certificate Generator","type": "System"},
-         |"context": {"pdata": {"ver": "1.0","id": "org.sunbird.platform"}},
-         |"object": {"id": "${batchEvent.batchId}_${batchEvent.courseId}","type": "CourseCertificateGeneration"},
-         |"edata": {"userIds": ["${batchEvent.userId}"],"action": "issue-certificate","iteration": 1, "trigger": "auto-issue","batchId": "${batchEvent.batchId}","reIssue": false,"courseId": "${batchEvent.courseId}"}}"""
-        .stripMargin.replaceAll("\n", "")
-    context.output(config.certIssueOutputTag, event)
-    metrics.incCounter(config.certIssueEventsCount)
-  }
-
   def getQuestionCountFromCache(contentId: String)(metrics: Metrics) = {
     val result = contentCache.getWithRetry(contentId)
     metrics.incCounter(config.cacheHitCount)
@@ -298,7 +274,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
   def recomputeAggregates(event: Event)(metrics: Metrics, context: ProcessFunction[Event, Event]#Context) = {
     metrics.incCounter(config.recomputeAggEventCount)
     context.output(config.scoreAggregateTag, event)
-    createIssueCertEvent(event, context, metrics)
+//    createIssueCertEvent(event, context, metrics)
   }
 
 }
