@@ -45,15 +45,15 @@ trait IssueCertificateHelper {
     
     def validateTemplate(template: Map[String, String], batchId: String)(config: CollectionCertPreProcessorConfig):Map[String, AnyRef] = {
         val criteria = ScalaJsonUtil.deserialize[Map[String, AnyRef]](template.getOrElse(config.criteria, "{}"))
-        if(!template.getOrElse("url", "").isEmpty && !criteria.isEmpty && !criteria.keySet.intersect(Set(config.enrollment, config.assessment, config.users)).isEmpty) {
+        if(template.getOrElse("url", "").nonEmpty && criteria.nonEmpty && criteria.keySet.intersect(Set(config.enrollment, config.assessment, config.users)).nonEmpty) {
             criteria
         } else {
-            throw new Exception(s"Invalid template for batch : ${batchId}")
+            throw new Exception(s"Invalid template for batch : $batchId")
         }
     }
 
     def validateEnrolmentCriteria(event: Event, enrollmentCriteria: Map[String, AnyRef], certName: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig): EnrolledUser = {
-        if(!enrollmentCriteria.isEmpty) {
+        if(enrollmentCriteria.nonEmpty) {
             val query = QueryBuilder.select().from(config.keyspace, config.userEnrolmentsTable)
               .where(QueryBuilder.eq(config.dbUserId, event.userId)).and(QueryBuilder.eq(config.dbCourseId, event.courseId))
               .and(QueryBuilder.eq(config.dbBatchId, event.batchId))
@@ -63,24 +63,24 @@ trait IssueCertificateHelper {
             if(null != row){
                 val active:Boolean = row.getBool(config.active)   
                 val issuedCertificates = row.getList(config.issuedCertificates, TypeTokens.mapOf(classOf[String], classOf[String])).asScala.toList
-                val isCertIssued = !issuedCertificates.isEmpty && !issuedCertificates.filter(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name,"").asInstanceOf[String])).isEmpty
+                val isCertIssued = issuedCertificates.nonEmpty && issuedCertificates.exists(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name, "")))
                 val status = row.getInt(config.status)
                 val criteriaStatus = enrollmentCriteria.getOrElse(config.status, 2)
-                val oldId = if(isCertIssued && event.reIssue) issuedCertificates.filter(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name,"").asInstanceOf[String]))
+                val oldId = if(isCertIssued && event.reIssue) issuedCertificates.filter(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name,"")))
                   .map(cert => cert.getOrDefault(config.identifier, "")).head else ""
                 val userId = if(active && (criteriaStatus == status) && (!isCertIssued || event.reIssue)) event.userId else ""
                 val issuedOn = row.getTimestamp(config.completedOn)
-                val addProps = enrolmentAdditionProps.map(prop => (prop -> row.getObject(prop.toLowerCase))).toMap
+                val addProps = enrolmentAdditionProps.map(prop => prop -> row.getObject(prop.toLowerCase)).toMap
                 EnrolledUser(userId, oldId, issuedOn, {if(addProps.nonEmpty) Map[String, Any](config.enrollment -> addProps) else Map()})
             } else EnrolledUser("", "")
         } else EnrolledUser(event.userId, "") 
     }
 
     def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
-        if(!assessmentCriteria.isEmpty && !enrolledUser.isEmpty) {
+        if(assessmentCriteria.nonEmpty && enrolledUser.nonEmpty) {
             val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
             
-            val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore)).toMap
+            val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore))
             
             val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
             val assessmentAdditionProps = additionalProps.getOrElse(config.assessment, List())
@@ -94,11 +94,11 @@ trait IssueCertificateHelper {
         } else AssessedUser(enrolledUser)
     }
 
-    def validateUser(userId: String, userCriteria: Map[String, AnyRef], additionalProps: Map[String, List[String]])(metrics:Metrics, config:CollectionCertPreProcessorConfig, httpUtil: HttpUtil) = {
-        if(!userId.isEmpty) {
+    def validateUser(userId: String, userCriteria: Map[String, AnyRef], additionalProps: Map[String, List[String]])(metrics:Metrics, config:CollectionCertPreProcessorConfig, httpUtil: HttpUtil): Map[String, AnyRef] = {
+        if(userId.nonEmpty) {
             val url = config.learnerBasePath + config.userReadApi + "/" + userId + "?organisations,roles,locations,declarations,externalIds"
             val result = getAPICall(url, "response")(config, httpUtil, metrics)
-            if(userCriteria.isEmpty || userCriteria.size == userCriteria.filter(uc => uc._2 == result.getOrElse(uc._1, null)).size) {
+            if(userCriteria.isEmpty || userCriteria.size == userCriteria.count(uc => uc._2 == result.getOrElse(uc._1, null))) {
                 result
             } else Map[String, AnyRef]()
         } else Map[String, AnyRef]()
@@ -130,7 +130,7 @@ trait IssueCertificateHelper {
                 if (metadata.nonEmpty) {
                     val contentType = metadata.getOrElse("contenttype", "")
                     config.assessmentContentTypes.contains(contentType)
-                } else if(!metadata.nonEmpty && config.enableSuppressException){
+                } else if(metadata.isEmpty && config.enableSuppressException){
                         logger.error("Suppressed exception: Metadata cache not available for: " + key)
                         false
                 } else throw new Exception("Metadata cache not available for: " + key)
@@ -174,10 +174,10 @@ trait IssueCertificateHelper {
               .getOrElse(responseParam, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
         } else if(400 == response.status && response.body.contains(config.userAccBlockedErrCode)) {
             metrics.incCounter(config.skippedEventCount)
-            logger.error(s"Error while fetching user details for ${url}: " + response.status + " :: " + response.body)
+            logger.error(s"Error while fetching user details for $url: " + response.status + " :: " + response.body)
             Map[String, AnyRef]()
         } else {
-            throw new Exception(s"Error from get API : ${url}, with response: ${response}")
+            throw new Exception(s"Error from get API : $url, with response: ${response}")
         }
     }
 
@@ -215,7 +215,7 @@ trait IssueCertificateHelper {
         } else Map.empty[String, String]
     }
 
-    def generateCertificateEvent(event: Event, template: Map[String, String], userDetails: Map[String, AnyRef], enrolledUser: EnrolledUser, assessedUser: AssessedUser, additionalProps: Map[String, List[String]], certName: String, attemptDetails: Map[String, String])(metrics:Metrics, config:CollectionCertPreProcessorConfig, cache:DataCache, httpUtil: HttpUtil) = {
+    def generateCertificateEvent(event: Event, template: Map[String, String], userDetails: Map[String, AnyRef], enrolledUser: EnrolledUser, assessedUser: AssessedUser, additionalProps: Map[String, List[String]], certName: String, attemptDetails: Map[String, String])(metrics:Metrics, config:CollectionCertPreProcessorConfig, cache:DataCache, httpUtil: HttpUtil): String = {
         val firstName = Option(userDetails.getOrElse("firstName", "").asInstanceOf[String]).getOrElse("")
         val lastName = Option(userDetails.getOrElse("lastName", "").asInstanceOf[String]).getOrElse("")
 
@@ -261,7 +261,7 @@ trait IssueCertificateHelper {
 
     def getRelatedData(event: Event, enrolledUser: EnrolledUser, assessedUser: AssessedUser,
                        userDetails: Map[String, AnyRef], additionalProps: Map[String, List[String]], certName: String, courseName: String)(config: CollectionCertPreProcessorConfig): Map[String, Any] = {
-        val userAdditionalProps = additionalProps.getOrElse(config.user, List()).filter(prop => userDetails.contains(prop)).map(prop => (prop -> userDetails.getOrElse(prop, null))).toMap
+        val userAdditionalProps = additionalProps.getOrElse(config.user, List()).filter(prop => userDetails.contains(prop)).map(prop => prop -> userDetails.getOrElse(prop, null)).toMap
         val locationProps = getLocationDetails(userDetails, additionalProps) 
         val courseAdditionalProps: Map[String, Any] = if(additionalProps.getOrElse("course", List()).nonEmpty) Map("course" -> Map("name" -> courseName)) else Map()
         Map[String, Any]("batchId" -> event.batchId, "courseId" -> event.courseId, "type" -> certName) ++
