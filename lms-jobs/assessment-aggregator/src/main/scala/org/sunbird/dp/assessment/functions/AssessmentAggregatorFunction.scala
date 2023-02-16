@@ -141,7 +141,6 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
       metrics.incCounter(config.dbUpdateCount)
       metrics.incCounter(config.batchSuccessCount)
       context.output(config.scoreAggregateTag, event)
-//      createIssueCertEvent(event, context, metrics)
     }
     else {
       metrics.incCounter(config.dbReadCount)
@@ -151,7 +150,6 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
         metrics.incCounter(config.dbUpdateCount)
         metrics.incCounter(config.batchSuccessCount)
         context.output(config.scoreAggregateTag, event)
-//        createIssueCertEvent(event, context, metrics)
       }
       else {
         metrics.incCounter(config.skippedEventCount)
@@ -274,7 +272,6 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
   def recomputeAggregates(event: Event)(metrics: Metrics, context: ProcessFunction[Event, Event]#Context) = {
     metrics.incCounter(config.recomputeAggEventCount)
     context.output(config.scoreAggregateTag, event)
-//    createIssueCertEvent(event, context, metrics)
   }
 
 }
