@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat
 import java.util
 import java.util.stream.Collectors
 import java.util.{Base64, Date}
+import scala.collection.Iterator.empty
 import scala.collection.JavaConverters._
 
 class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, storageService: StorageService, @transient var cassandraUtil: CassandraUtil = null)
@@ -287,15 +288,23 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         if (null == certificatesList && certificatesList.isEmpty) {
           certificatesList = new util.ArrayList[util.Map[String, String]]()
         }
+
+        val oldCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
+        val oldCert: util.Map[String, String] = if(oldCerts != null & oldCerts.size()>0) oldCerts.get(0) else null
+
         val updatedCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => !StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
         updatedCerts.add(mapAsJavaMap(Map[String, String](
           config.name -> certMetaData.certificate.name,
           config.identifier -> certMetaData.certificate.id,
           config.token -> certMetaData.certificate.token,
-        ) ++ {if(!certMetaData.certificate.lastIssuedOn.isEmpty) Map[String, String](config.lastIssuedOn -> certMetaData.certificate.lastIssuedOn)
+        ) ++ {if(certMetaData.certificate.lastIssuedOn.nonEmpty) Map[String, String](config.lastIssuedOn -> certMetaData.certificate.lastIssuedOn)
         else Map[String, String]()}
         ++ {if(config.enableRcCertificate) Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
         else Map[String, String]()}
+        ++ {if(oldCert != null) {if(oldCert.containsKey("attempt_count")) Map[String, String]("attempt_count" -> oldCert.get("attempt_count")) else Map[String, String]()}
+        else Map[String, String]("attempt_count" -> event.eData.getOrElse("attempt_count", "").asInstanceOf[String]) }
+        ++ {if(oldCert != null) {if(oldCert.containsKey("attempt_id")) Map[String, String]("attempt_id" -> oldCert.get("attempt_id")) else Map[String, String]()}
+        else Map[String, String]("attempt_id" -> event.eData.getOrElse("attempt_id", "").asInstanceOf[String]) }
         ))
         
         val query = getUpdateIssuedCertQuery(updatedCerts, certMetaData.userId, certMetaData.courseId, certMetaData.batchId, config)
