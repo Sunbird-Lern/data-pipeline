@@ -201,10 +201,10 @@ trait IssueCertificateHelper {
         val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
         val dateFormat = new SimpleDateFormat(DATE_FORMAT)
 
-        val rows: java.util.List[Row] = cassandraUtil.find(query.toString)
+        val row: Row = cassandraUtil.findOne(query.toString)
         metrics.incCounter(config.dbReadCount)
-        if(null != rows && !rows.isEmpty) {
-            val aggDetailsMapList: List[Map[String,AnyRef]] = rows.asScala.toList.head.getList("agg_details", new TypeToken[String](){}).asScala.toList.map(rec=> {
+        if(null != row) {
+            val aggDetailsMapList: List[Map[String,AnyRef]] = row.getList("agg_details", new TypeToken[String](){}).asScala.toList.map(rec=> {
                 val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
                 deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
                 deserMap.asScala.toMap
