@@ -267,6 +267,4 @@ trait IssueCertificateHelper {
         Map[String, Any]("batchId" -> event.batchId, "courseId" -> event.courseId, "type" -> certName) ++
           locationProps ++ enrolledUser.additionalProps ++ assessedUser.additionalProps ++ userAdditionalProps ++ courseAdditionalProps
     }
-
-    case class AggDetails(attempt_id: String, last_attempted_on: Date, score: Double, content_id: String, max_score: Double, `type`: String)
 }
