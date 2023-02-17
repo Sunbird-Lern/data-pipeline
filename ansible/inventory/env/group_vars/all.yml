@@ -118,6 +118,7 @@ content_read_api_endpoint: "{{content_read_api_endpoint}}"
 content_cloud_storage_container: "{{cloud_storage_content_bucketname}}"
 cloud_store_base_path_placeholder: "CLOUD_BASE_PATH"
 
+
 default_channel: "org.sunbird"
 download_neo4j: true
 neo4j_upstream_download: false
@@ -165,3 +166,6 @@ cloud_storage_endpoint: ""
 cloud_storage_path_style_access: ""
 cloud_storage_project_id: ""
 cloud_storage_flink_bucketname: "flink-check-points-store"
+
+#(user read api details)
+user_read_api_endpoint: "/learner/private/user/v1/read/"
