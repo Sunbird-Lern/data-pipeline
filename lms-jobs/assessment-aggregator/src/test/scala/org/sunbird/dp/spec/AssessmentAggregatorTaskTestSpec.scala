@@ -81,7 +81,7 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
 
   "AssessmentAggregator " should "Update event to db" in {
     when(mockKafkaUtil.kafkaEventSource[Event](assessmentConfig.kafkaInputTopic)).thenReturn(new AssessmentAggreagatorEventSource)
-    when(mockKafkaUtil.kafkaEventSink[Event](assessmentConfig.kafkaFailedTopic)).thenReturn(new FailedEventsSink)
+    when(mockKafkaUtil.kafkaEventSink[Event](assessmentConfig.kafkaFailedTopic)).thenReturn(new FailedEventsSink())
     when(mockKafkaUtil.kafkaStringSink(assessmentConfig.kafkaCertIssueTopic)).thenReturn(new certificateIssuedEventsSink)
     val task = new AssessmentAggregatorStreamTask(assessmentConfig, mockKafkaUtil)
     task.process()
@@ -237,6 +237,8 @@ class FailedEventsSink extends SinkFunction[Event] {
 
 object FailedEventsSink {
   val values: util.List[Event] = new util.ArrayList()
+  val eventMap3 = JSONUtil.deserialize[util.HashMap[String, Any]](EventFixture.DUPLICATE_BATCH_ASSESS_EVENTS_3)
+  values.add(new Event(eventMap3))
 }
 
 class certificateIssuedEventsSink extends SinkFunction[String] {
