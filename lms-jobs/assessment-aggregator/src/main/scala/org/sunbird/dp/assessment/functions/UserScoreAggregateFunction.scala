@@ -31,7 +31,7 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
   private[this] val logger = LoggerFactory.getLogger(classOf[UserScoreAggregateFunction])
   override def metricsList() = List(config.dbScoreAggUpdateCount, config.dbScoreAggReadCount,
     config.failedEventCount, config.batchSuccessCount,
-    config.skippedEventCount)
+    config.skippedEventCount, config.certIssueEventsCount)
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
