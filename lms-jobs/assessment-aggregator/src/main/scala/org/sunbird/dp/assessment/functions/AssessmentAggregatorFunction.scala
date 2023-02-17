@@ -159,7 +159,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
 
   def getUniqueQuestions(assessEvents: List[util.Map[String, AnyRef]]): List[AssessEvent] = {
     assessEvents.map(event => {
-      AssessEvent(event.get("ets").asInstanceOf[Long], new Gson().fromJson(new Gson().toJson(event.get("edata")), classOf[QuestionData]))
+      AssessEvent(event.getOrDefault("ets",0).asInstanceOf[Long], new Gson().fromJson(new Gson().toJson(event.get("edata")), classOf[QuestionData]))
     }).sortWith(_.ets > _.ets).groupBy(_.edata.item.id).map(_._2.head).toList
   }
 
