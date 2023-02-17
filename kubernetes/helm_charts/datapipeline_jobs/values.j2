@@ -522,8 +522,8 @@ user-cache-updater-v2:
       }
     }
     #(user read api details)
-    user_read_api_endpoint: "/learner/private/user/v1/read/"
-    user-read.api.url : "http://{{private_ingressgateway_ip}}{{ user_read_api_endpoint }}"
+    user_read_api_endpoint = "/learner/private/user/v1/read/"
+    user-read.api.url = "http://{{private_ingressgateway_ip}}{{ user_read_api_endpoint }}"
 
 
   flink-conf: |+
