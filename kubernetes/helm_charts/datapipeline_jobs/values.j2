@@ -506,6 +506,7 @@ user-cache-updater-v2:
       restart-strategy.delay = 240000 # in milli-seconds # on max restarts (3) within 4 min the job will fail.
       consumer.parallelism = {{ user_cache_updater_job_consumer_parallelism }}
       parallelism = {{ user_cache_updater_job_parallelism }}
+      usercache.updater.parallelism = {{ user_cache_updater_job_parallelism }}
     }
     regd.user.producer.pid = "learner-service"
     user.self.signin.types = ["google","self"]
