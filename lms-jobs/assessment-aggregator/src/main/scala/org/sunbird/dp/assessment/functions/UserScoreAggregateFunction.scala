@@ -136,7 +136,7 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
          |"actor": {"id": "Course Certificate Generator","type": "System"},
          |"context": {"pdata": {"ver": "1.0","id": "org.sunbird.platform"}},
          |"object": {"id": "${batchEvent.batchId}_${batchEvent.courseId}","type": "CourseCertificateGeneration"},
-         |"edata": {"userIds": ["${batchEvent.userId}"],"action": "issue-certificate","iteration": 1, "trigger": "auto-issue","batchId": "${batchEvent.batchId}","reIssue": false,"courseId": "${batchEvent.courseId}","attempt_id":"$latestAttemptId"}}"""
+         |"edata": {"userIds": ["${batchEvent.userId}"],"action": "issue-certificate","iteration": 1, "trigger": "auto-issue","batchId": "${batchEvent.batchId}","reIssue": false,"courseId": "${batchEvent.courseId}","attemptId":"$latestAttemptId"}}"""
         .stripMargin.replaceAll("\n", "")
     context.output(config.certIssueOutputTag, event)
     metrics.incCounter(config.certIssueEventsCount)
