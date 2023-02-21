@@ -14,7 +14,6 @@ import org.sunbird.incredible.processor.CertModel
 import org.sunbird.incredible.processor.store.StorageService
 import org.sunbird.incredible.processor.views.SvgGenerator
 import org.sunbird.incredible.{CertificateConfig, CertificateGenerator, JsonKeys, ScalaModuleJsonUtils}
-import org.sunbird.job.certgen.domain.Issuer
 import org.sunbird.job.certgen.domain._
 import org.sunbird.job.certgen.exceptions.ServerException
 import org.sunbird.job.certgen.task.CertificateGeneratorConfig
@@ -104,7 +103,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
           JsonKeys.JSON_DATA -> certificateExtension, JsonKeys.ACCESS_CODE -> qrMap.accessCode,
           JsonKeys.RECIPIENT_NAME -> certModel.recipientName, JsonKeys.RECIPIENT_ID -> certModel.identifier,
           config.RELATED -> event.related
-        ) ++ {if (!event.oldId.isEmpty) Map[String, AnyRef](config.OLD_ID -> event.oldId) else Map[String, AnyRef]()}})
+        ) ++ {if (event.oldId.nonEmpty) Map[String, AnyRef](config.OLD_ID -> event.oldId) else Map[String, AnyRef]()}})
         addCertToRegistry(event, addReq, context)(metrics)
         //cert-registry end
         val related = event.related
@@ -124,7 +123,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     val certModelList: List[CertModel] = new CertMapper(certificateConfig).mapReqToCertModel(event)
     certModelList.foreach(certModel => {
       var uuid: String = null
-      val reIssue: Boolean = !event.oldId.isEmpty
+      val reIssue: Boolean = event.oldId.nonEmpty
       //if reissue then read rc for oldId and call rc delete api
       if(reIssue){
         try {
@@ -150,7 +149,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     })
   }
 
-  def deleteOldRegistry(id: String) = {
+  def deleteOldRegistry(id: String): Unit = {
     try {
       deleteCassandraRecord(id)
       deleteEsRecord(id)
@@ -287,17 +286,25 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         if (null == certificatesList && certificatesList.isEmpty) {
           certificatesList = new util.ArrayList[util.Map[String, String]]()
         }
+
+        val oldCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
+        val oldCert: util.Map[String, String] = if(oldCerts != null & oldCerts.size()>0) oldCerts.get(0) else null
+
         val updatedCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => !StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
         updatedCerts.add(mapAsJavaMap(Map[String, String](
           config.name -> certMetaData.certificate.name,
           config.identifier -> certMetaData.certificate.id,
           config.token -> certMetaData.certificate.token,
-        ) ++ {if(!certMetaData.certificate.lastIssuedOn.isEmpty) Map[String, String](config.lastIssuedOn -> certMetaData.certificate.lastIssuedOn)
+        ) ++ {if(certMetaData.certificate.lastIssuedOn.nonEmpty) Map[String, String](config.lastIssuedOn -> certMetaData.certificate.lastIssuedOn)
         else Map[String, String]()}
-        ++ {if(config.enableRcCertificate) Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
+          ++ {if(config.enableRcCertificate) Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
         else Map[String, String]()}
+          ++ {if(oldCert != null) {if(oldCert.containsKey("attempt_count")) Map[String, String]("attempt_count" -> oldCert.get("attempt_count")) else Map[String, String]()}
+        else Map[String, String]("attempt_count" -> event.eData.getOrElse("attempt_count", "").asInstanceOf[String]) }
+          ++ {if(oldCert != null) {if(oldCert.containsKey("attempt_id")) Map[String, String]("attempt_id" -> oldCert.get("attempt_id")) else Map[String, String]()}
+        else Map[String, String]("attempt_id" -> event.eData.getOrElse("attempt_id", "").asInstanceOf[String]) }
         ))
-        
+
         val query = getUpdateIssuedCertQuery(updatedCerts, certMetaData.userId, certMetaData.courseId, certMetaData.batchId, config)
         logger.info("update query {}", query.toString)
         val result = cassandraUtil.update(query)
@@ -314,7 +321,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
           context.output(config.userFeedOutputTag, UserFeedMetaData(certMetaData.userId, certMetaData.courseName, issuedOn, certMetaData.courseId, event.partition, event.offset))
         } else {
           metrics.incCounter(config.failedEventCount)
-          throw new Exception(s"Update certificates to enrolments failed: ${event}")
+          throw new Exception(s"Update certificates to enrolments failed: $event")
         }
 
       })
@@ -324,8 +331,8 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
 
 
   /**
-    * returns query for updating issued_certificates in user_enrollment table
-    */
+   * returns query for updating issued_certificates in user_enrollment table
+   */
   def getUpdateIssuedCertQuery(updatedCerts: util.List[util.Map[String, String]], userId: String, courseId: String, batchId: String, config: CertificateGeneratorConfig):
   Update.Where = QueryBuilder.update(config.dbKeyspace, config.dbEnrollmentTable).where()
     .`with`(QueryBuilder.set(config.issued_certificates, updatedCerts))
