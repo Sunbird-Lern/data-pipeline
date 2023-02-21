@@ -27,15 +27,16 @@ trait IssueCertificateHelper {
         //validateEnrolmentCriteria
         val certName = template.getOrElse(config.name, "")
         val additionalProps: Map[String, List[String]] = ScalaJsonUtil.deserialize[Map[String, List[String]]](template.getOrElse("additionalProps", "{}"))
+        val attemptDetails: Map[String, AnyRef] = getAttemptDetails(event)(metrics, cassandraUtil, config)
+
         val enrolledUser: EnrolledUser = validateEnrolmentCriteria(event, criteria.getOrElse(config.enrollment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], certName, additionalProps)(metrics, cassandraUtil, config)
         //validateAssessmentCriteria
-        val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps)(metrics, cassandraUtil, contentCache, config)
+        val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps, attemptDetails)(metrics, cassandraUtil, contentCache, config)
         //validateUserCriteria
         val userDetails = validateUser(assessedUser.userId, criteria.getOrElse(config.user, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], additionalProps)(metrics, config, httpUtil)
 
         //generateCertificateEvent
         if(userDetails.nonEmpty) {
-            val attemptDetails: Map[String, String] = getAttemptDetails(event)(metrics, cassandraUtil, config)
             generateCertificateEvent(event, template, userDetails, enrolledUser, assessedUser, additionalProps, certName, attemptDetails)(metrics, config, cache, httpUtil)
         } else {
             logger.info(s"""User :: ${event.userId} did not match the criteria for batch :: ${event.batchId} and course :: ${event.courseId}""")
@@ -76,22 +77,29 @@ trait IssueCertificateHelper {
         } else EnrolledUser(event.userId, "") 
     }
 
-    def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
+    def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]], attemptDetails: Map[String, AnyRef])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
         if(assessmentCriteria.nonEmpty && enrolledUser.nonEmpty) {
-            val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
-            
-            val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore))
-            
-            val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
-            val assessmentAdditionProps = additionalProps.getOrElse(config.assessment, List())
-            val addProps = {
-                if (assessmentAdditionProps.nonEmpty && assessmentAdditionProps.contains("score")) Map("score" -> scoreMap)
-                else Map()
+           val scoreTuple = if(attemptDetails.nonEmpty) {
+                val score:Double =  attemptDetails.getOrElse("score", 0d).asInstanceOf[Double]
+               val max_score:Double =  attemptDetails.getOrElse("max_score", 0d).asInstanceOf[Double]
+               (score,Map(attemptDetails.getOrElse("content_id","").asInstanceOf[String] -> (score * 100 / max_score)))
+            } else {
+                val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
+                val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore))
+                val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
+               (score, scoreMap)
             }
-            if(isValidAssessCriteria(assessmentCriteria, score)) {
+
+            val addProps = getAddProps(additionalProps, scoreTuple._2)(config)
+            if(isValidAssessCriteria(assessmentCriteria, scoreTuple._1)) {
                 AssessedUser(enrolledUser, {if(addProps.nonEmpty) Map[String, Any](config.assessment -> addProps) else Map()})
             } else AssessedUser("")
         } else AssessedUser(enrolledUser)
+    }
+
+    def getAddProps(additionalProps: Map[String, List[String]], scoreMap: Map[String, Double])(config:CollectionCertPreProcessorConfig): Map[String, AnyRef] = {
+        val assessmentAdditionProps = additionalProps.getOrElse(config.assessment, List())
+        if (assessmentAdditionProps.nonEmpty && assessmentAdditionProps.contains("score")) Map("score" -> scoreMap) else Map()
     }
 
     def validateUser(userId: String, userCriteria: Map[String, AnyRef], additionalProps: Map[String, List[String]])(metrics:Metrics, config:CollectionCertPreProcessorConfig, httpUtil: HttpUtil): Map[String, AnyRef] = {
@@ -192,30 +200,34 @@ trait IssueCertificateHelper {
         }
     }
 
-    def getAttemptDetails(event: Event)(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig):Map[String, String] = {
-        val contextId = "cb:" + event.batchId
-        val query = QueryBuilder.select().column("agg_details").from(config.keyspace, config.userActivityAggTable)
-          .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
-          .and(QueryBuilder.eq("user_id", event.userId)).and(QueryBuilder.eq("context_id", contextId))
+    def getAttemptDetails(event: Event)(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig):Map[String, AnyRef] = {
+        if(event.attemptId.nonEmpty) {
+            val contextId = "cb:" + event.batchId
+            val query = QueryBuilder.select().column("agg_details").from(config.keyspace, config.userActivityAggTable)
+              .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
+              .and(QueryBuilder.eq("user_id", event.userId)).and(QueryBuilder.eq("context_id", contextId))
 
-        val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
-        val dateFormat = new SimpleDateFormat(DATE_FORMAT)
+            val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
+            val dateFormat = new SimpleDateFormat(DATE_FORMAT)
 
-        val row: Row = cassandraUtil.findOne(query.toString)
-        metrics.incCounter(config.dbReadCount)
-        if(null != row) {
-            val aggDetailsMapList: List[Map[String,AnyRef]] = row.getList("agg_details", new TypeToken[String](){}).asScala.toList.map(rec=> {
-                val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
-                deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
-                deserMap.asScala.toMap
-            })
-            val sortedListMap: List[Map[String,AnyRef]] = aggDetailsMapList.sortBy(_("last_attempted_on").asInstanceOf[Date])(Ordering[Date].reverse)
-            val latestAttempt: Map[String, AnyRef] = sortedListMap.head
-            Map("attempt_count" -> sortedListMap.size.asInstanceOf[String], "attempt_id" -> latestAttempt.getOrElse("attempt_id","").asInstanceOf[String])
-        } else Map.empty[String, String]
+            val row: Row = cassandraUtil.findOne(query.toString)
+            metrics.incCounter(config.dbReadCount)
+            if(null != row) {
+                val aggDetailsMapList: List[Map[String,AnyRef]] = row.getList("agg_details", new TypeToken[String](){}).asScala.toList.map(rec=> {
+                    val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
+                    deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
+                    deserMap.asScala.toMap
+                })
+                val sortedListMap: List[Map[String,AnyRef]] = aggDetailsMapList.sortBy(_("last_attempted_on").asInstanceOf[Date])(Ordering[Date])
+                val aggDetails: Map[String, AnyRef] = sortedListMap.filter(rec=> rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)).head
+                val attempt_count: Double = sortedListMap.indexWhere(rec => {rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)}) + 1
+
+                Map("attempt_count" -> attempt_count, "attempt_id" -> aggDetails.getOrElse("attempt_id",""), "score" -> aggDetails.getOrElse("score",""))
+            } else Map.empty[String, AnyRef]
+        } else Map.empty[String, AnyRef]
     }
 
-    def generateCertificateEvent(event: Event, template: Map[String, String], userDetails: Map[String, AnyRef], enrolledUser: EnrolledUser, assessedUser: AssessedUser, additionalProps: Map[String, List[String]], certName: String, attemptDetails: Map[String, String])(metrics:Metrics, config:CollectionCertPreProcessorConfig, cache:DataCache, httpUtil: HttpUtil): String = {
+    def generateCertificateEvent(event: Event, template: Map[String, String], userDetails: Map[String, AnyRef], enrolledUser: EnrolledUser, assessedUser: AssessedUser, additionalProps: Map[String, List[String]], certName: String, attemptDetails: Map[String, AnyRef])(metrics:Metrics, config:CollectionCertPreProcessorConfig, cache:DataCache, httpUtil: HttpUtil): String = {
         val firstName = Option(userDetails.getOrElse("firstName", "").asInstanceOf[String]).getOrElse("")
         val lastName = Option(userDetails.getOrElse("lastName", "").asInstanceOf[String]).getOrElse("")
 
