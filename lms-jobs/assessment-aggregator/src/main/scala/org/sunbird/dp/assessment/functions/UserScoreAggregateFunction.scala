@@ -138,6 +138,7 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
          |"object": {"id": "${batchEvent.batchId}_${batchEvent.courseId}","type": "CourseCertificateGeneration"},
          |"edata": {"userIds": ["${batchEvent.userId}"],"action": "issue-certificate","iteration": 1, "trigger": "auto-issue","batchId": "${batchEvent.batchId}","reIssue": false,"courseId": "${batchEvent.courseId}","attemptId":"$latestAttemptId"}}"""
         .stripMargin.replaceAll("\n", "")
+    logger.info("UserScoreAggregateFunction:: createIssueCertEvent:: " + event)
     context.output(config.certIssueOutputTag, event)
     metrics.incCounter(config.certIssueEventsCount)
   }
