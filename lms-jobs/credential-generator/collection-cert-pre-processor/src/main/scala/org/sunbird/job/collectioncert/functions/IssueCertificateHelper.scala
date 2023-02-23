@@ -27,7 +27,7 @@ trait IssueCertificateHelper {
         //validateEnrolmentCriteria
         val certName = template.getOrElse(config.name, "")
         val additionalProps: Map[String, List[String]] = ScalaJsonUtil.deserialize[Map[String, List[String]]](template.getOrElse("additionalProps", "{}"))
-        val attemptDetails: Map[String, AnyRef] = getAttemptDetails(event)(metrics, cassandraUtil, config)
+        val attemptDetails: Map[String, AnyRef] = if(event.attemptId.nonEmpty) getAttemptDetails(event)(metrics, cassandraUtil, config) else Map.empty[String, AnyRef]
 
         val enrolledUser: EnrolledUser = validateEnrolmentCriteria(event, criteria.getOrElse(config.enrollment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], certName, additionalProps)(metrics, cassandraUtil, config)
         //validateAssessmentCriteria
@@ -201,29 +201,27 @@ trait IssueCertificateHelper {
     }
 
     def getAttemptDetails(event: Event)(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig):Map[String, AnyRef] = {
-        if(event.attemptId.nonEmpty) {
-            val contextId = "cb:" + event.batchId
-            val query = QueryBuilder.select().column("agg_details").from(config.keyspace, config.userActivityAggTable)
-              .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
-              .and(QueryBuilder.eq("user_id", event.userId)).and(QueryBuilder.eq("context_id", contextId))
+        val contextId = "cb:" + event.batchId
+        val query = QueryBuilder.select().column("agg_details").from(config.keyspace, config.userActivityAggTable)
+          .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
+          .and(QueryBuilder.eq("user_id", event.userId)).and(QueryBuilder.eq("context_id", contextId))
 
-            val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
-            val dateFormat = new SimpleDateFormat(DATE_FORMAT)
+        val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
+        val dateFormat = new SimpleDateFormat(DATE_FORMAT)
 
-            val row: Row = cassandraUtil.findOne(query.toString)
-            metrics.incCounter(config.dbReadCount)
-            if(null != row) {
-                val aggDetailsMapList: List[Map[String,AnyRef]] = row.getList("agg_details", new TypeToken[String](){}).asScala.toList.map(rec=> {
-                    val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
-                    deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
-                    deserMap.asScala.toMap
-                })
-                val sortedListMap: List[Map[String,AnyRef]] = aggDetailsMapList.sortBy(_("last_attempted_on").asInstanceOf[Date])(Ordering[Date])
-                val aggDetails: Map[String, AnyRef] = sortedListMap.filter(rec=> rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)).head
-                val attempt_count: Double = sortedListMap.indexWhere(rec => {rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)}) + 1
+        val row: Row = cassandraUtil.findOne(query.toString)
+        metrics.incCounter(config.dbReadCount)
+        if(null != row) {
+            val aggDetailsMapList: List[Map[String,AnyRef]] = row.getList("agg_details", new TypeToken[String](){}).asScala.toList.map(rec=> {
+                val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
+                deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
+                deserMap.asScala.toMap
+            })
+            val sortedListMap: List[Map[String,AnyRef]] = aggDetailsMapList.sortBy(_("last_attempted_on").asInstanceOf[Date])(Ordering[Date])
+            val aggDetails: Map[String, AnyRef] = sortedListMap.filter(rec=> rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)).head
+            val attempt_count: Double = sortedListMap.indexWhere(rec => {rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)}) + 1
 
-                Map("attempt_count" -> attempt_count.asInstanceOf[AnyRef], "attempt_id" -> aggDetails.getOrElse("attempt_id",""), "score" -> aggDetails.getOrElse("score",""))
-            } else Map.empty[String, AnyRef]
+            Map("attempt_count" -> attempt_count.asInstanceOf[AnyRef], "attempt_id" -> aggDetails.getOrElse("attempt_id",""), "score" -> aggDetails.getOrElse("score",""))
         } else Map.empty[String, AnyRef]
     }
 
