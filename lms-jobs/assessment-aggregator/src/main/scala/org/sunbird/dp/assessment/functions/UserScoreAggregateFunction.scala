@@ -104,16 +104,22 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
         + event.batchId + " ,userid: " + event.userId + " ,couserid: "
         + event.courseId)
     }
-    val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
-    val dateFormat = new SimpleDateFormat(DATE_FORMAT)
-    val aggDetailsMapList: List[Map[String,AnyRef]] = score.aggDetails.map(rec=> {
-      val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
-      deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
-      deserMap.asScala.toMap
-    })
-    val latestAttempt: Map[String, AnyRef] = aggDetailsMapList.sortBy(_("last_attempted_on").asInstanceOf[Date])(Ordering[Date].reverse).head
 
-    val latestAttemptId: String = if(score.aggDetails.nonEmpty) latestAttempt.getOrElse("attempt_id", "").asInstanceOf[String] else ""
+    val contentScoreKeys = score.aggregates.keySet.filter(key => key.startsWith("score:"))
+
+    val latestAttemptId: String = if(score.aggDetails.nonEmpty && contentScoreKeys.size==1) {
+      val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
+      val dateFormat = new SimpleDateFormat(DATE_FORMAT)
+      val aggDetailsMapList: List[Map[String,AnyRef]] = score.aggDetails.map(rec=> {
+        val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
+        deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
+        deserMap.asScala.toMap
+      })
+      val latestAttempt: Map[String, AnyRef] = aggDetailsMapList.sortBy(_("last_attempted_on").asInstanceOf[Date])(Ordering[Date].reverse).head
+
+      latestAttempt.getOrElse("attempt_id", "").asInstanceOf[String]
+    } else ""
+
     createIssueCertEvent(event, context, metrics, latestAttemptId)
   }
 
