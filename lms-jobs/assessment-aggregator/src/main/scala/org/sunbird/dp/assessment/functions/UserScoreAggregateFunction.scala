@@ -2,8 +2,7 @@ package org.sunbird.dp.assessment.functions
 
 import java.lang.reflect.Type
 import java.util
-import java.util.Date
-
+import java.util.{Date, UUID}
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.google.gson.Gson
@@ -15,8 +14,9 @@ import org.sunbird.dp.assessment.domain.Event
 import org.apache.flink.configuration.Configuration
 import org.sunbird.dp.assessment.task.AssessmentAggregatorConfig
 import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.CassandraUtil
+import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
 
+import java.text.SimpleDateFormat
 import scala.collection.JavaConverters._
 
 case class AggDetails(attempt_id: String, last_attempted_on: Date, score: Double, content_id: String, max_score: Double, `type`: String)
@@ -32,7 +32,7 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
   private[this] val logger = LoggerFactory.getLogger(classOf[UserScoreAggregateFunction])
   override def metricsList() = List(config.dbScoreAggUpdateCount, config.dbScoreAggReadCount,
     config.failedEventCount, config.batchSuccessCount,
-    config.skippedEventCount)
+    config.skippedEventCount, config.certIssueEventsCount)
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
@@ -44,25 +44,25 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
   }
 
   def getAggregateDetails(assessAggRows: List[Row]): List[String] = {
-    if (null != assessAggRows && !assessAggRows.isEmpty) {
+    if (null != assessAggRows && assessAggRows.nonEmpty) {
       assessAggRows.map { row =>
         val aggMap = AggDetails(row.getString("attempt_id"), row.getTimestamp("last_attempted_on"),
           row.getDouble("score"), row.getString("content_id"), row.getDouble("total_max_score"), config.aggType)
         new Gson().toJson(aggMap)
-      }.toList
+      }
     } else List()
   }
 
   def getAggregates(assessAggRows: List[Row]): Map[String, Double] = {
-    if (null != assessAggRows && !assessAggRows.isEmpty) {
+    if (null != assessAggRows && assessAggRows.nonEmpty) {
       val attemptGroupList = assessAggRows.groupBy(row => row.getString("content_id")).values
-      attemptGroupList.map(row => {
+      attemptGroupList.flatMap(row => {
         val scoreRow = row.maxBy(r => r.getDouble("score"))
 
         Map(s"score:${scoreRow.getString("content_id")}" -> scoreRow.getDouble("score"),
           s"max_score:${scoreRow.getString("content_id")}" -> scoreRow.getDouble("total_max_score"),
           s"attempts_count:${scoreRow.getString("content_id")}" -> row.length.toDouble)
-      }).flatten.toMap
+      }).toMap
     } else Map[String, Double]()
   }
 
@@ -104,6 +104,50 @@ class UserScoreAggregateFunction(config: AssessmentAggregatorConfig,
         + event.batchId + " ,userid: " + event.userId + " ,couserid: "
         + event.courseId)
     }
+
+    val contentScoreKeys = score.aggregates.keySet.filter(key => key.startsWith("score:"))
+
+    val latestAttemptId: String = if(score.aggDetails.nonEmpty && contentScoreKeys.size==1) {
+      val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
+      val dateFormat = new SimpleDateFormat(DATE_FORMAT)
+      val aggDetailsMapList: List[Map[String,AnyRef]] = score.aggDetails.map(rec=> {
+        val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
+        deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
+        deserMap.asScala.toMap
+      })
+      val latestAttempt: Map[String, AnyRef] = aggDetailsMapList.sortBy(_("last_attempted_on").asInstanceOf[Date])(Ordering[Date].reverse).head
+
+      latestAttempt.getOrElse("attempt_id", "").asInstanceOf[String]
+    } else ""
+
+    createIssueCertEvent(event, context, metrics, latestAttemptId)
   }
+
+
+  /**
+   * Generation of Certificate Issue event for the enrolment completed users to validate and generate certificate.
+   *
+   * @param batchEvent: Event
+   * @param context: ProcessFunction[Event, Event]#Context
+   * @param metrics: Metrics
+   */
+  def createIssueCertEvent(batchEvent: Event, context: ProcessFunction[Event, Event]#Context,
+                           metrics: Metrics, latestAttemptId: String): Unit = {
+    val ets = System.currentTimeMillis
+    val mid = s"""LP.$ets.${UUID.randomUUID}"""
+    val event =
+      s"""{"eid": "BE_JOB_REQUEST",
+         |"ets": $ets,
+         |"mid": "$mid",
+         |"actor": {"id": "Course Certificate Generator","type": "System"},
+         |"context": {"pdata": {"ver": "1.0","id": "org.sunbird.platform"}},
+         |"object": {"id": "${batchEvent.batchId}_${batchEvent.courseId}","type": "CourseCertificateGeneration"},
+         |"edata": {"userIds": ["${batchEvent.userId}"],"action": "issue-certificate","iteration": 1, "trigger": "auto-issue","batchId": "${batchEvent.batchId}","reIssue": false,"courseId": "${batchEvent.courseId}","attemptId":"$latestAttemptId"}}"""
+        .stripMargin.replaceAll("\n", "")
+    logger.info("UserScoreAggregateFunction:: createIssueCertEvent:: " + event)
+    context.output(config.certIssueOutputTag, event)
+    metrics.incCounter(config.certIssueEventsCount)
+  }
+
 
 }
