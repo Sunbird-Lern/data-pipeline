@@ -27,9 +27,11 @@ trait IssueCertificateHelper {
         //validateEnrolmentCriteria
         val certName = template.getOrElse(config.name, "")
         val additionalProps: Map[String, List[String]] = ScalaJsonUtil.deserialize[Map[String, List[String]]](template.getOrElse("additionalProps", "{}"))
-        val attemptDetails: Map[String, AnyRef] = if(event.attemptId.nonEmpty) getAttemptDetails(event)(metrics, cassandraUtil, config) else Map.empty[String, AnyRef]
 
         val enrolledUser: EnrolledUser = validateEnrolmentCriteria(event, criteria.getOrElse(config.enrollment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], certName, additionalProps)(metrics, cassandraUtil, config)
+
+        val attemptDetails: Map[String, AnyRef] = if(event.attemptId.nonEmpty) getAttemptDetails(event)(metrics, cassandraUtil, config) else Map.empty[String, AnyRef]
+
         //validateAssessmentCriteria
         val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps, attemptDetails)(metrics, cassandraUtil, contentCache, config)
         //validateUserCriteria
