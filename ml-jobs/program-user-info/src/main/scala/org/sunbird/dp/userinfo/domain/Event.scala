@@ -49,3 +49,4 @@ class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
     telemetry.getMap.get("userProfile").asInstanceOf[util.Map[String, Any]].get("organisations").asInstanceOf[util.ArrayList[util.Map[String, Any]]]
   }
 }
+

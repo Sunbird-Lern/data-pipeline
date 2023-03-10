@@ -45,3 +45,4 @@ CREATE KEYSPACE IF NOT EXISTS sunbird_programs WITH replication = {
          AND min_index_interval = 128
          AND read_repair_chance = 0.0
          AND speculative_retry = '99PERCENTILE';
+

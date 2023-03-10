@@ -112,3 +112,4 @@ class ProgramUserInfoEventSource extends SourceFunction[Event] {
 
   override def cancel() = {}
 }
+
