@@ -8,7 +8,7 @@ class ProgramUserInfoConfig(override val config: Config) extends BaseJobConfig(c
   //Kafka
   override val kafkaConsumerParallelism: Int = config.getInt("task.consumer.parallelism")
 
-  val programUserParallelism: Int = config.getInt("task.programUser.parallelism")
+  val programUserParallelism: Int = config.getInt("task.programuser.parallelism")
 
   val kafkaInputTopic: String = config.getString("kafka.input.topic")
 
