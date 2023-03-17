@@ -32,6 +32,8 @@ trait IssueCertificateHelper {
 
         val attemptDetails: Map[String, AnyRef] = if(event.attemptId.nonEmpty) getAttemptDetails(event)(metrics, cassandraUtil, config) else Map.empty[String, AnyRef]
 
+        logger.info("IssueCertificateHelper:: issueCertificate:: attemptDetails:: "+attemptDetails)
+
         //validateAssessmentCriteria
         val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps, attemptDetails)(metrics, cassandraUtil, contentCache, config)
         //validateUserCriteria
@@ -207,22 +209,27 @@ trait IssueCertificateHelper {
         val query = QueryBuilder.select().column("agg_details").from(config.keyspace, config.userActivityAggTable)
           .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
           .and(QueryBuilder.eq("user_id", event.userId)).and(QueryBuilder.eq("context_id", contextId))
-
+        logger.info("IssueCertificateHelper:: getAttemptDetails:: query:: " + query)
         val DATE_FORMAT = "MMM dd, yyyy, h:mm:ss a"
         val dateFormat = new SimpleDateFormat(DATE_FORMAT)
 
         val row: Row = cassandraUtil.findOne(query.toString)
+        logger.info("IssueCertificateHelper:: getAttemptDetails:: row:: " + row)
         metrics.incCounter(config.dbReadCount)
         if(null != row) {
             val aggDetailsMapList: List[Map[String,AnyRef]] = row.getList("agg_details", new TypeToken[String](){}).asScala.toList.map(rec=> {
+                logger.info("IssueCertificateHelper:: getAttemptDetails:: rec:: " + rec)
                 val deserMap = JSONUtil.deserialize[util.Map[String, AnyRef]](rec)
                 deserMap.put("last_attempted_on", dateFormat.parse(deserMap.get("last_attempted_on").asInstanceOf[String]))
+                logger.info("IssueCertificateHelper:: getAttemptDetails:: deserMap:: " + deserMap)
                 deserMap.asScala.toMap
             })
+            logger.info("IssueCertificateHelper:: getAttemptDetails:: aggDetailsMapList:: " + aggDetailsMapList)
             val sortedListMap: List[Map[String,AnyRef]] = aggDetailsMapList.sortBy(_("last_attempted_on").asInstanceOf[Date])(Ordering[Date])
+            logger.info("IssueCertificateHelper:: getAttemptDetails:: sortedListMap:: " + sortedListMap)
             val aggDetails: Map[String, AnyRef] = sortedListMap.filter(rec=> rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)).head
             val attempt_count: Double = sortedListMap.indexWhere(rec => {rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)}) + 1
-
+            logger.info("IssueCertificateHelper:: getAttemptDetails:: attempt_count:: " + attempt_count + " || attempt_id:: " + aggDetails.getOrElse("attempt_id","") + " || score:: " + aggDetails.getOrElse("score",""))
             Map("attempt_count" -> attempt_count.asInstanceOf[AnyRef], "attempt_id" -> aggDetails.getOrElse("attempt_id",""), "score" -> aggDetails.getOrElse("score",""))
         } else Map.empty[String, AnyRef]
     }
