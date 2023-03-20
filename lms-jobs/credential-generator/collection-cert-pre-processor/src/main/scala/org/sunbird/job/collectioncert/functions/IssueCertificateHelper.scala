@@ -31,13 +31,15 @@ trait IssueCertificateHelper {
         val enrolledUser: EnrolledUser = validateEnrolmentCriteria(event, criteria.getOrElse(config.enrollment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], certName, additionalProps)(metrics, cassandraUtil, config)
 
         val attemptDetails: Map[String, AnyRef] = if(event.attemptId.nonEmpty) getAttemptDetails(event)(metrics, cassandraUtil, config) else Map.empty[String, AnyRef]
-
         logger.info("IssueCertificateHelper:: issueCertificate:: attemptDetails:: "+attemptDetails)
 
         //validateAssessmentCriteria
         val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps, attemptDetails)(metrics, cassandraUtil, contentCache, config)
+        logger.info("IssueCertificateHelper:: issueCertificate:: assessedUser:: "+assessedUser)
+
         //validateUserCriteria
         val userDetails = validateUser(assessedUser.userId, criteria.getOrElse(config.user, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]])(metrics, config, httpUtil)
+        logger.info("IssueCertificateHelper:: issueCertificate:: userDetails:: "+userDetails)
 
         //generateCertificateEvent
         if(userDetails.nonEmpty) {
