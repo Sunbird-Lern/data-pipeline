@@ -143,18 +143,16 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
         optionalNodesMap.filter(m => m._2.nonEmpty).toMap
     }
     private def getOrComposeOptionalNodes(hierarchy: java.util.Map[String, AnyRef], compose: Boolean = true): List[String] = {
-        if (hierarchy.containsKey("optionalNodes") && !compose)
-            hierarchy.getOrDefault("optionalNodes", java.util.Arrays.asList()).asInstanceOf[java.util.List[String]].asScala.toList
-        else {
-            val children = getChildren(hierarchy)
-            val childCollections = children.asScala.filter(c => isOptional(c))
-            val optionalList = childCollections.map(coll => getOrComposeOptionalNodes(coll, true)).flatten.toList
-            val ids = children.asScala.filterNot(c => isOptional(c)).map(c => c.getOrDefault("identifier", "").asInstanceOf[String]).filter(id => StringUtils.isNotBlank(id))
-            optionalList ++ ids
-        }
+      val children = getChildren(hierarchy)
+      val ids = children.asScala.filter(c => isOptional(c)).map(c => c.getOrDefault("identifier", "").asInstanceOf[String]).filter(id => StringUtils.isNotBlank(id))
+      val childCollections = children.asScala.filterNot(c => isOptional(c))
+      val optionalList = childCollections.map(coll => getOrComposeOptionalNodes(coll, true)).flatten.toList
+      optionalList ++ ids
     }
+
     private def isOptional(content: java.util.Map[String, AnyRef]): Boolean = {
-        StringUtils.equalsIgnoreCase(content.getOrDefault("optional", "").asInstanceOf[String], "true")
+        val optionalMap = content.getOrDefault("relationalMetadata", new java.util.HashMap[String, AnyRef]()).asInstanceOf[java.util.Map[String, AnyRef]]
+        StringUtils.equalsIgnoreCase(optionalMap.getOrDefault("optional", "").toString, "true")
     }
 
     private def getAncestors(identifier: String, hierarchy: java.util.Map[String, AnyRef], parents: List[String] = List()): Map[String, List[String]] = {
