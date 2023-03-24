@@ -85,6 +85,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
                               context: ProcessFunction[Event, Event]#Context,
                               metrics: Metrics): Unit = {
     try {
+      logger.info("AssessmentAggregatorFunction:: processElement:: event:: " + event)
       // Validating the contentId
       if (isValidContent(event.courseId, event.contentId)(metrics)) {
         val assessEvents = event.assessEvents.asScala
@@ -100,6 +101,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
                * If the totalQuestions from the content Meta and Events count are matching
                * Then we are computing the score metrics and updating the table
                */
+              logger.info("AssessmentAggregatorFunction:: processElement:: sortAndFilteredEvents.size:: " + sortAndFilteredEvents.size)
               if (sortAndFilteredEvents.size <= totalQuestions.asInstanceOf[Int]) {
                 updateDB(scoreMetrics = computeScoreMetrics(sortAndFilteredEvents), event = event)(metrics, context)
               } else {
@@ -136,6 +138,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
 
   def updateDB(scoreMetrics: Aggregate, event: Event)(metrics: Metrics, context: ProcessFunction[Event, Event]#Context): Unit = {
     val assessmentDBResult = getAssessment(event)
+    logger.info("AssessmentAggregatorFunction:: updateDB:: assessmentDBResult:: " + assessmentDBResult)
     if (null == assessmentDBResult) {
       saveAssessment(event, Aggregate(scoreMetrics.totalScore, scoreMetrics.totalMaxScore, scoreMetrics.grandTotal, scoreMetrics.questionsList), new DateTime().getMillis)
       metrics.incCounter(config.dbUpdateCount)
@@ -144,6 +147,8 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
     }
     else {
       metrics.incCounter(config.dbReadCount)
+      logger.info("AssessmentAggregatorFunction:: updateDB:: event.assessmentEts:: " + event.assessmentEts)
+      logger.info("AssessmentAggregatorFunction:: updateDB:: assessmentDBResult time:: " + assessmentDBResult.getTimestamp("last_attempted_on").getTime)
       if (event.assessmentEts > assessmentDBResult.getTimestamp("last_attempted_on").getTime) {
         saveAssessment(event, Aggregate(scoreMetrics.totalScore, scoreMetrics.totalMaxScore, scoreMetrics.grandTotal, scoreMetrics.questionsList),
           assessmentDBResult.getTimestamp("created_on").getTime)
