@@ -29,6 +29,7 @@ trait IssueCertificateHelper {
         val additionalProps: Map[String, List[String]] = ScalaJsonUtil.deserialize[Map[String, List[String]]](template.getOrElse("additionalProps", "{}"))
 
         val enrolledUser: EnrolledUser = validateEnrolmentCriteria(event, criteria.getOrElse(config.enrollment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], certName, additionalProps)(metrics, cassandraUtil, config)
+        logger.info("IssueCertificateHelper:: issueCertificate:: enrolledUser:: "+enrolledUser)
 
         val attemptDetails: Map[String, AnyRef] = if(event.attemptId.nonEmpty) getAttemptDetails(event)(metrics, cassandraUtil, config) else Map.empty[String, AnyRef]
         logger.info("IssueCertificateHelper:: issueCertificate:: attemptDetails:: "+attemptDetails)
@@ -64,6 +65,7 @@ trait IssueCertificateHelper {
             val query = QueryBuilder.select().from(config.keyspace, config.userEnrolmentsTable)
               .where(QueryBuilder.eq(config.dbUserId, event.userId)).and(QueryBuilder.eq(config.dbCourseId, event.courseId))
               .and(QueryBuilder.eq(config.dbBatchId, event.batchId))
+          logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: query:: " + query.toString)
             val row = cassandraUtil.findOne(query.toString)
             metrics.incCounter(config.dbReadCount)
             val enrolmentAdditionProps = additionalProps.getOrElse(config.enrollment, List[String]())
@@ -84,7 +86,8 @@ trait IssueCertificateHelper {
     }
 
     def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]], attemptDetails: Map[String, AnyRef])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
-        if(assessmentCriteria.nonEmpty && enrolledUser.nonEmpty) {
+      logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: assessmentCriteria:: " + assessmentCriteria + " || enrolledUser:: " + enrolledUser + " || attemptDetails:: " + attemptDetails)
+      if(assessmentCriteria.nonEmpty && enrolledUser.nonEmpty) {
             val scoreTuple = if(attemptDetails.nonEmpty) {
                 val score:Double =  attemptDetails.getOrElse("score", 0d).asInstanceOf[Double]
                 val max_score:Double =  attemptDetails.getOrElse("max_score", 0d).asInstanceOf[Double]
@@ -95,9 +98,11 @@ trait IssueCertificateHelper {
                 val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
                 (score, scoreMap)
             }
-
+            logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: scoreTuple:: " + scoreTuple)
             val addProps = getAddProps(additionalProps, scoreTuple._2)(config)
+            logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: addProps:: " + addProps)
             if(isValidAssessCriteria(assessmentCriteria, scoreTuple._1)) {
+              logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: assessedUser " )
                 AssessedUser(enrolledUser, {if(addProps.nonEmpty) Map[String, Any](config.assessment -> addProps) else Map()})
             } else AssessedUser("")
         } else AssessedUser(enrolledUser)
@@ -231,8 +236,8 @@ trait IssueCertificateHelper {
             logger.info("IssueCertificateHelper:: getAttemptDetails:: sortedListMap:: " + sortedListMap)
             val aggDetails: Map[String, AnyRef] = sortedListMap.filter(rec=> rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)).head
             val attempt_count: Double = sortedListMap.indexWhere(rec => {rec.getOrElse("attempt_id","").asInstanceOf[String].equalsIgnoreCase(event.attemptId)}) + 1
-            logger.info("IssueCertificateHelper:: getAttemptDetails:: attempt_count:: " + attempt_count + " || attempt_id:: " + aggDetails.getOrElse("attempt_id","") + " || score:: " + aggDetails.getOrElse("score",""))
-            Map("attempt_count" -> attempt_count.asInstanceOf[AnyRef], "attempt_id" -> aggDetails.getOrElse("attempt_id",""), "score" -> aggDetails.getOrElse("score",""))
+            logger.info("IssueCertificateHelper:: getAttemptDetails:: attempt_count:: " + attempt_count + " || attempt_id:: " + aggDetails.getOrElse("attempt_id","") + " || score:: " + aggDetails.getOrElse("score",0) + " || max_score:: " + aggDetails.getOrElse("max_score",0) + " || content_id:: " + aggDetails.getOrElse("content_id",""))
+            Map("attempt_count" -> attempt_count.asInstanceOf[AnyRef], "attempt_id" -> aggDetails.getOrElse("attempt_id",""), "score" -> aggDetails.getOrElse("score", 0.asInstanceOf[AnyRef]), "max_score" -> aggDetails.getOrElse("max_score", 0.asInstanceOf[AnyRef]), "content_id" -> aggDetails.getOrElse("content_id", ""))
         } else Map.empty[String, AnyRef]
     }
 
