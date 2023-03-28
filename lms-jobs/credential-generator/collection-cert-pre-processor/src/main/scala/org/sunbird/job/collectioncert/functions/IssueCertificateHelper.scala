@@ -22,7 +22,7 @@ trait IssueCertificateHelper {
 
     def issueCertificate(event:Event, template: Map[String, String])(cassandraUtil: CassandraUtil, cache:DataCache, contentCache: DataCache, metrics: Metrics, config: CollectionCertPreProcessorConfig, httpUtil: HttpUtil): String = {
         //validCriteria
-        logger.info("IssueCertificateHelper:: issueCertificate:: event:: "+event)
+        logger.info("issueCertificate i/p event =>"+event)
         val criteria = validateTemplate(template, event.batchId)(config)
         //validateEnrolmentCriteria
         val certName = template.getOrElse(config.name, "")
@@ -249,52 +249,32 @@ trait IssueCertificateHelper {
             if (StringUtils.equalsIgnoreCase("null", name)) "" else name
         }
 
-        logger.info("IssueCertificateHelper:: generateCertificateEvent:: attemptDetails:: " + attemptDetails)
-
         val recipientName = nullStringCheck(firstName).concat(" ").concat(nullStringCheck(lastName)).trim
         val courseName = getCourseName(event.courseId)(metrics, config, cache, httpUtil)
         val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
         val related = getRelatedData(event, enrolledUser, assessedUser, userDetails, additionalProps, certName, courseName)(config)
-        val eData = if(attemptDetails != null && attemptDetails.nonEmpty) {
-            Map[String, AnyRef] (
-                "issuedDate" -> dateFormatter.format(enrolledUser.issuedOn),
-                "data" -> List(Map[String, AnyRef]("recipientName" -> recipientName, "recipientId" -> event.userId)),
-                "criteria" -> Map[String, String]("narrative" -> certName),
-                "svgTemplate" -> template.getOrElse("url", "").replace(config.cloudStoreBasePathPlaceholder, config.baseUrl+"/"+config.contentCloudStorageContainer),
-                "oldId" -> enrolledUser.oldId,
-                "templateId" -> template.getOrElse(config.identifier, ""),
-                "userId" -> event.userId,
-                "orgId" -> userDetails.getOrElse("rootOrgId", ""),
-                "issuer" -> ScalaJsonUtil.deserialize[Map[String, AnyRef]](template.getOrElse(config.issuer, "{}")),
-                "signatoryList" -> ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](template.getOrElse(config.signatoryList, "[]")),
-                "courseName" -> courseName,
-                "basePath" -> config.certBasePath,
-                "related" ->  related,
-                "name" -> certName,
-                "tag" -> event.batchId,
-                "attempt_count" -> attemptDetails.getOrElse("attempt_count",""),
-                "attempt_id" -> attemptDetails.getOrElse("attempt_id","")
-            ) }
-        else {
-            Map[String, AnyRef] (
-                "issuedDate" -> dateFormatter.format(enrolledUser.issuedOn),
-                "data" -> List(Map[String, AnyRef]("recipientName" -> recipientName, "recipientId" -> event.userId)),
-                "criteria" -> Map[String, String]("narrative" -> certName),
-                "svgTemplate" -> template.getOrElse("url", "").replace(config.cloudStoreBasePathPlaceholder, config.baseUrl+"/"+config.contentCloudStorageContainer),
-                "oldId" -> enrolledUser.oldId,
-                "templateId" -> template.getOrElse(config.identifier, ""),
-                "userId" -> event.userId,
-                "orgId" -> userDetails.getOrElse("rootOrgId", ""),
-                "issuer" -> ScalaJsonUtil.deserialize[Map[String, AnyRef]](template.getOrElse(config.issuer, "{}")),
-                "signatoryList" -> ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](template.getOrElse(config.signatoryList, "[]")),
-                "courseName" -> courseName,
-                "basePath" -> config.certBasePath,
-                "related" ->  related,
-                "name" -> certName,
-                "tag" -> event.batchId
-            )
+        val eData = Map[String, AnyRef] (
+            "issuedDate" -> dateFormatter.format(enrolledUser.issuedOn),
+            "data" -> List(Map[String, AnyRef]("recipientName" -> recipientName, "recipientId" -> event.userId)),
+            "criteria" -> Map[String, String]("narrative" -> certName),
+            "svgTemplate" -> template.getOrElse("url", "").replace(config.cloudStoreBasePathPlaceholder, config.baseUrl+"/"+config.contentCloudStorageContainer),
+            "oldId" -> enrolledUser.oldId,
+            "templateId" -> template.getOrElse(config.identifier, ""),
+            "userId" -> event.userId,
+            "orgId" -> userDetails.getOrElse("rootOrgId", ""),
+            "issuer" -> ScalaJsonUtil.deserialize[Map[String, AnyRef]](template.getOrElse(config.issuer, "{}")),
+            "signatoryList" -> ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](template.getOrElse(config.signatoryList, "[]")),
+            "courseName" -> courseName,
+            "basePath" -> config.certBasePath,
+            "related" ->  related,
+            "name" -> certName,
+            "tag" -> event.batchId
+        ) ++ {if(attemptDetails != null && attemptDetails.nonEmpty) { if(attemptDetails.contains("attempt_count")) Map[String, AnyRef]("attempt_count" -> attemptDetails.getOrElse("attempt_count","")) else Map.empty[String, AnyRef] }
+        else Map.empty[String, AnyRef]
+        } ++ {if(attemptDetails != null && attemptDetails.nonEmpty) { if(attemptDetails.contains("attempt_id")) Map[String, AnyRef]("attempt_id" -> attemptDetails.getOrElse("attempt_id","")) else Map.empty[String, AnyRef] }
+        else Map.empty[String, AnyRef]
         }
-        logger.info("IssueCertificateHelper:: generateCertificateEvent:: eData:: " + eData)
+
         ScalaJsonUtil.serialize(BEJobRequestEvent(edata = eData, `object` = EventObject(id = event.userId)))
     }
     def getLocationDetails(userDetails: Map[String, AnyRef], additionalProps: Map[String, List[String]]): Map[String, Any] = {

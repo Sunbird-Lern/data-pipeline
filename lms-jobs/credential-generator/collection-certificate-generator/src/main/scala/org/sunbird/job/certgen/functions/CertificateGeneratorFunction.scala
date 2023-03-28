@@ -276,8 +276,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   }
 
   def updateUserEnrollmentTable(event: Event, certMetaData: UserEnrollmentData, context: KeyedProcessFunction[String, Event, String]#Context)(implicit metrics: Metrics): Unit = {
-    logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: event:: ", event)
-    logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: certMetaData:: ", certMetaData)
+    logger.info("updating user enrollment table {}", certMetaData)
     val primaryFields = Map(config.userId.toLowerCase() -> certMetaData.userId, config.batchId.toLowerCase -> certMetaData.batchId, config.courseId.toLowerCase -> certMetaData.courseId)
     val records = getIssuedCertificatesFromUserEnrollmentTable(primaryFields)
     if (records.nonEmpty) {
@@ -290,7 +289,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
 
         val oldCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
         val oldCert: util.Map[String, String] = if(oldCerts != null & oldCerts.size()>0) oldCerts.get(0) else null
-        logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: oldCert:: ", oldCert)
+
         val updatedCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => !StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
         updatedCerts.add(mapAsJavaMap(Map[String, String](
           config.name -> certMetaData.certificate.name,
@@ -307,9 +306,9 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         ))
 
         val query = getUpdateIssuedCertQuery(updatedCerts, certMetaData.userId, certMetaData.courseId, certMetaData.batchId, config)
-        logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: update query:: ", query.toString)
+        logger.info("update query {}", query.toString)
         val result = cassandraUtil.update(query)
-        logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: update result:: ", result)
+        logger.info("update result {}", result)
         if (result) {
           logger.info("issued certificates in user-enrollment table  updated successfully")
           metrics.incCounter(config.dbUpdateCount)
