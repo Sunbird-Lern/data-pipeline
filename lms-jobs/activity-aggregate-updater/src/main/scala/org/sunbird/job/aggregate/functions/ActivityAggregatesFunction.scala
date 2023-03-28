@@ -41,7 +41,7 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
-    cache = new DataCache(config, new RedisConnect(config), config.nodeStore, List())
+    cache = new DataCache(config, new RedisConnect(config, config.nodeStore, List())
     cache.init()
     collectionStatusCache = TTLCache[String, String](Duration.apply(config.statusCacheExpirySec, TimeUnit.SECONDS))
   }
@@ -126,7 +126,7 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
     val userId = userConsumption.userId
     val contextId = "cb:" + userConsumption.batchId
     val key = s"$courseId:$courseId:${config.leafNodes}"
-    var leafNodes = ListBuffer(readFromCache(key, metrics).distinct)
+    var leafNodes = readFromCache(key, metrics).distinct
 
     if (leafNodes.isEmpty) {
       logger.error(s"leaf nodes are not available for: $key")
@@ -144,8 +144,8 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
         throw new Exception(message)
       }
     } else {
-      var optionalNodes = readFromCache(key = s"$courseId:$courseId:${config.optionalnodes}", metrics).distinct
-      leafNodes -= optionalNodes
+      val optionalNodes = readFromCache(key = s"$courseId:$courseId:${config.optionalnodes}", metrics).distinct
+      leafNodes = leafNodes.diff(optionalNodes)
       val completedCount = leafNodes.intersect(userConsumption.contents.filter(cc => cc._2.status == 2).map(cc => cc._2.contentId).toList.distinct).size
       val contentStatus = userConsumption.contents.map(cc => (cc._2.contentId, cc._2.status)).toMap
       val inputContents = userConsumption.contents.filter(cc => cc._2.fromInput).keys.toList
@@ -177,9 +177,9 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
     // LeafNodes of the identified child collections - for this user.
 
     val collectionsWithLeafNodes = ancestors.map(unitId => {
-      var leafNodes = ListBuffer(readFromCache(key = s"$courseId:$unitId:${config.leafNodes}", metrics).distinct)
-      var optionalNodes = readFromCache(key = s"$courseId:$unitId:${config.optionalnodes}", metrics).distinct
-      leafNodes -= optionalNodes
+      var leafNodes = readFromCache(key = s"$courseId:$unitId:${config.leafNodes}", metrics).distinct
+      val optionalNodes = readFromCache(key = s"$courseId:$unitId:${config.optionalnodes}", metrics).distinct
+      leafNodes = leafNodes.diff(optionalNodes)
       (unitId, leafNodes)
     }).toMap
 
