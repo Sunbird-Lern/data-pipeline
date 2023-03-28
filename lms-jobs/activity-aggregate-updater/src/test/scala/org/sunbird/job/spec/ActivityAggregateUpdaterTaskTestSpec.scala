@@ -120,8 +120,7 @@ class ActivityAggregateUpdaterTaskTestSpec extends BaseTestSpec {
     BaseMetricsReporter.gaugeMetrics(s"${courseAggregatorConfig.jobName}.${courseAggregatorConfig.cacheMissCount}").getValue() should be(6)
     //BaseMetricsReporter.gaugeMetrics(s"${courseAggregatorConfig.jobName}.${courseAggregatorConfig.cacheMissCount}").getValue() should be(0)
 
-    //AuditEventSink.values.size() should be(4)
-    AuditEventSink.values.size() should be(3)
+    AuditEventSink.values.size() should be(4)
     AuditEventSink.values.forEach(event => {
       println("AUDIT_TELEMETRY_EVENT: " + event)
     })
