@@ -1,0 +1,71 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-jobmanager 
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: flink
+    component: {{ .Release.Name }}-jobmanager
+spec:
+  type: ClusterIP
+  ports:
+  - name: rpc
+    port: {{ .Values.jobmanager.rpc_port }}
+  - name: blob
+    port: {{ .Values.jobmanager.blob_port }}
+  - name: query
+    port: {{ .Values.jobmanager.query_port }}
+  - name: ui
+    port: {{ .Values.jobmanager.ui_port }}
+  - name: prom
+    port: {{ .Values.jobmanager.prom_port }}
+  selector:
+    app: flink
+    component: {{ .Release.Name }}-jobmanager
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-jobmanager-webui
+  namespace: {{ .Values.namespace }}
+{{- if .Values.service.annotations }}
+{{- with .Values.service.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+{{- end }}
+spec:
+  {{- if eq .Values.service.type "ClusterIP" }}
+  type: ClusterIP
+  {{- end }}
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  type: LoadBalancer
+  {{- end }}
+  ports:
+  - name: rest
+    port: {{ .Values.rest_port }}
+    protocol: TCP
+    targetPort: {{ .Values.resttcp_port }}
+  selector:
+    app: flink
+    component: {{ .Release.Name }}-jobmanager
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-taskmanager-prometheus
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: flink
+    component: {{ .Release.Name }}-taskmanager
+spec:
+  type: ClusterIP
+  ports:
+  - name: prom
+    port: {{ .Values.taskmanager.prom_port }}
+  selector:
+    app: flink
+    component: {{ .Release.Name }}-taskmanager

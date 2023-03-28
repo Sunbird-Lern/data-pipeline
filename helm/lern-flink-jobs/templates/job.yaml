@@ -1,0 +1,104 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-jobmanager
+  namespace: {{ .Values.namespace }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: {{ .Release.Name }}-jobmanager
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "{{ .Values.jobmanager.prom_port }}"
+    spec:
+      volumes:
+      - name: flink-config-volume
+        configMap:
+          name: {{ .Release.Name }}-config
+          items:
+          - key: flink-conf
+            path: flink-conf.yaml
+          - key: base-config
+            path: base-config.conf
+          - key: {{ .Release.Name }}
+            path: {{ .Release.Name }}.conf
+          - key: log4j_console_properties
+            path: log4j-console.properties
+      restartPolicy: OnFailure
+      imagePullSecrets:
+      - name: {{ .Values.imagepullsecrets }}
+      containers:
+      - name: {{ .Release.Name }}-jobmanager
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: Always
+        workingDir: /opt/flink
+        command: ["/opt/flink/bin/standalone-job.sh"]
+        args: ["start-foreground",
+{{- if eq .Release.Name "activity-aggregate-updater"  }}        
+               "--job-classname={{ .Values.activity_aggregate_updater_job_classname }}",
+{{- else if eq .Release.Name "relation-cache-updater" }}
+               "--job-classname={{ .Values.relation_cache_updater_job_classname }}",
+{{- else if eq .Release.Name "enrolment-reconciliation" }}
+               "--job-classname={{ .Values.enrolment_reconciliation_job_classname }}",
+{{- else if eq .Release.Name "collection-cert-pre-processor" }}
+               "--job-classname={{ .Values.collection_cert_pre_processor_job_classname }}",
+{{- else if eq .Release.Name "collection-certificate-generator" }}
+               "--job-classname={{ .Values.collection_certificate_generator_job_classname }}",
+{{- else if eq .Release.Name "merge-user-courses" }}
+               "--job-classname={{ .Values.merge_user_courses_job_classname }}",
+{{- else if eq .Release.Name "assessment-aggregator" }}
+               "--job-classname={{ .Values.assessment_aggregator_job_classname }}",
+{{- else if eq .Release.Name "notification-job" }}
+               "--job-classname={{ .Values.notification_job_classname }}",
+{{- else if eq .Release.Name "user-cache-updater-v2" }}
+               "--job-classname={{ .Values.user_cache_updater_v2_job_classname }}",
+{{- end }}
+{{- if eq .Values.checkpoint_store_type "azure" }}
+               "-Dfs.azure.account.key.{{ .Values.cloud_storage_key }}.blob.core.windows.net={{ .Values.cloud_storage_secret }}",
+{{- end }}
+{{- if eq .Values.checkpoint_store_type "s3" }}
+               "-Ds3.access-key={{ .Values.cloud_storage_key }}",
+               "-Ds3.secret-key={{ .Values.cloud_storage_secret }}",
+               "-Ds3.endpoint={{ .Values.cloud_storage_endpoint }}",
+               "-Ds3.path.style.access={{ .Values.cloud_storage_path_style_access }}",
+{{- end }}
+{{- if eq .Values.checkpoint_store_type "gcloud" }}
+               "-Dfs.gs.auth.client.id={{ .Values.cloud_storage_key }}",
+               "-Dfs.gs.auth.client.secret={{ .Values.cloud_storage_secret }}",
+               "-Dfs.gs.project.id={{ .Values.cloud_storage_project_id }}",
+{{- end }}
+               "-Dweb.submit.enable=false",
+               "-Dmetrics.reporter.prom.class=org.apache.flink.metrics.prometheus.PrometheusReporter",
+               "-Dmetrics.reporter.prom.port={{ .Values.jobmanager.prom_port }}",
+               "-Djobmanager.rpc.address={{ .Release.Name }}-jobmanager",
+               "-Djobmanager.rpc.port={{ .Values.jobmanager.rpc_port }}",
+               "-Dparallelism.default=1", 
+               "-Dblob.server.port={{ .Values.jobmanager.blob_port }}", 
+               "-Dqueryable-state.server.ports={{ .Values.jobmanager.query_port }}",
+               "--config.file.path",
+               "/data/flink/conf/{{ .Release.Name }}.conf"]
+        ports:
+        - containerPort: {{ .Values.jobmanager.rpc_port }}
+          name: rpc
+        - containerPort: {{ .Values.jobmanager.blob_port }}
+          name: blob
+        - containerPort: {{ .Values.jobmanager.query_port }}
+          name: query
+        - containerPort: {{ .Values.jobmanager.ui_port }}
+          name: ui
+        volumeMounts:
+        - name: flink-config-volume
+          mountPath: /opt/flink/conf/flink-conf.yaml
+          subPath: flink-conf.yaml
+        - name: flink-config-volume
+          mountPath: /data/flink/conf/base-config.conf
+          subPath: base-config.conf
+        - name: flink-config-volume
+          mountPath: /data/flink/conf/{{ .Release.Name }}.conf
+          subPath: {{ .Release.Name }}.conf
+        - name: flink-config-volume
+          mountPath: /opt/flink/conf/log4j-console.properties
+          subPath: log4j-console.properties

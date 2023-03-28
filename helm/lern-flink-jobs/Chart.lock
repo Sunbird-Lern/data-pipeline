@@ -1,0 +1,6 @@
+dependencies:
+- name: common
+  repository: https://keshavprasadms.github.io/sunbird-helmchart-templates
+  version: 0.1.0
+digest: sha256:b5011f0a7ee73c8628672e42afdad27a447860d1754e678c2f46b34f534ac18d
+generated: "2023-03-14T12:14:21.5433421+05:30"
