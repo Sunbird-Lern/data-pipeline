@@ -88,6 +88,8 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
     private def getHierarchy(identifier: String)(implicit metrics: Metrics): java.util.Map[String, AnyRef] = {
         val hierarchy = readHierarchyFromDb(identifier)
         metrics.incCounter(config.dbReadCount)
+        mapper.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true); 
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         if (StringUtils.isNotBlank(hierarchy))
             mapper.readValue(hierarchy, classOf[java.util.Map[String, AnyRef]])
         else new java.util.HashMap[String, AnyRef]()
