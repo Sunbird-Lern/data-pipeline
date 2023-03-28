@@ -6,6 +6,8 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 //import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.json.JsonReadFeature
+import com.fasterxml.jackson.core.JsonParser.Feature
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
@@ -26,7 +28,7 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
     private[this] val logger = LoggerFactory.getLogger(classOf[RelationCacheUpdater])
     private var dataCache: DataCache = _
     private var collectionCache: DataCache = _
-    lazy private val mapper: ObjectMapper = new ObjectMapper()
+    lazy private val mapper: ObjectMapper = new ObjectMapper();
     private val allowedActions = List("post-publish-process", "relation-cache-update")
 
 
@@ -88,6 +90,7 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
 
         metrics.incCounter(config.dbReadCount)
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        mapper.configure(Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true)
         if (StringUtils.isNotBlank(hierarchy))
             mapper.readValue(hierarchy, classOf[java.util.Map[String, AnyRef]])
         else new java.util.HashMap[String, AnyRef]()
