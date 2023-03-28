@@ -41,7 +41,7 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
-    cache = new DataCache(config, new RedisConnect(config, config.nodeStore, List())
+    cache = new DataCache(config, new RedisConnect(config), config.nodeStore, List())
     cache.init()
     collectionStatusCache = TTLCache[String, String](Duration.apply(config.statusCacheExpirySec, TimeUnit.SECONDS))
   }
