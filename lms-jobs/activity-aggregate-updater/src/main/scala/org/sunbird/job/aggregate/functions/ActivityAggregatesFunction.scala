@@ -126,10 +126,12 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
     val userId = userConsumption.userId
     val contextId = "cb:" + userConsumption.batchId
     val key = s"$courseId:$courseId:${config.leafNodes}"
-    var leafNodes = readFromCache(key, metrics).distinct
+
+    val leafNodes = readFromCache(key, metrics).distinct
+    logger.info(s"leaf nodes : $leafNodes")
 
     if (leafNodes.isEmpty) {
-      logger.error(s"leaf nodes are not available for: $key")
+      logger.info(s"leaf nodes are not available for: $key")
       context.output(config.failedEventOutputTag, gson.toJson(userConsumption))
       val status = getCollectionStatus(courseId)
       if (StringUtils.equals("Retired", status)) {
@@ -140,16 +142,18 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
       } else {
         metrics.incCounter(config.failedEventCount)
         val message = s"leaf nodes are not available for a published collection: $courseId"
-        logger.error(message)
+        logger.info(message)
         throw new Exception(message)
       }
     } else {
       val optionalNodes = readFromCache(key = s"$courseId:$courseId:${config.optionalnodes}", metrics).distinct
-      leafNodes = leafNodes.diff(optionalNodes)
-      val completedCount = leafNodes.intersect(userConsumption.contents.filter(cc => cc._2.status == 2).map(cc => cc._2.contentId).toList.distinct).size
+
+      val updatedLeafNodes = leafNodes.diff(optionalNodes)
+      val completedCount = updatedLeafNodes.intersect(userConsumption.contents.filter(cc => cc._2.status == 2).map(cc => cc._2.contentId).toList.distinct).size
+
       val contentStatus = userConsumption.contents.map(cc => (cc._2.contentId, cc._2.status)).toMap
       val inputContents = userConsumption.contents.filter(cc => cc._2.fromInput).keys.toList
-      val collectionProgress = if (completedCount >= leafNodes.size) {
+      val collectionProgress = if (completedCount >= updatedLeafNodes.size) {
         Option(CollectionProgress(userId, userConsumption.batchId, courseId, completedCount, new java.util.Date(), contentStatus, inputContents, true))
       } else {
         Option(CollectionProgress(userId, userConsumption.batchId, courseId, completedCount, null, contentStatus, inputContents))
@@ -278,7 +282,7 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
         metrics.incCounter(config.dbUpdateCount)
       } else {
         val msg = "Database update has failed: " + cqlBatch.toString
-        logger.error(msg)
+        logger.info(msg)
         throw new Exception(msg)
       }
     })
@@ -439,7 +443,7 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
         list.asScala.head.get("status").asInstanceOf[String]
       } else throw new Exception(s"There are no published or retired collection with id: $collectionId")
     } else {
-      logger.error("search-service error: " + response.body)
+      logger.info("search-service error: " + response.body)
       throw new Exception("search-service not returning error:" + response.status)
     }
   }

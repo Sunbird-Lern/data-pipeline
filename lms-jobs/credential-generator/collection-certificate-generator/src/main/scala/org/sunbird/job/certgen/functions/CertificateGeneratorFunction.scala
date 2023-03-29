@@ -220,25 +220,28 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   @throws[ServerException]
   @throws[UnirestException]
   def callCertificateRc(api: String, identifier: String, request: Map[String, AnyRef]): String = {
-    logger.info("Certificate rc called | Api:: " + api)
+    logger.info("CertificateGeneratorFunction:: callCertificateRc:: Certificate rc called | Api:: " + api)
     var id: String = null
     val uri: String = config.rcBaseUrl + "/" + config.rcEntity
     val status = api match {
-      case config.rcDeleteApi => httpUtil.delete(uri + "/" +identifier).status
+      case config.rcDeleteApi => logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Delete API - identifier: " + identifier)
+        httpUtil.delete(uri + "/" +identifier).status
       case config.rcCreateApi =>
         val plainReq: String = ScalaModuleJsonUtils.serialize(request)
         val req = removeBadChars(plainReq)
-        logger.info("RC Create API request: " + req)
+        logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Create API request: " + req)
         val httpResponse = httpUtil.post(uri, req)
         if(httpResponse.status == 200) {
           val response = ScalaJsonUtil.deserialize[Map[String, AnyRef]](httpResponse.body)
+          logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Create API response: " + response)
           id = response.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse(config.rcEntity, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("osid","").asInstanceOf[String]
         } else {
-          logger.error("RC Create Error Response: " + httpResponse.status +  " :: Response: " + httpResponse.body)
+          logger.error("CertificateGeneratorFunction:: callCertificateRc:: RC Create Error Response: " + httpResponse.status +  " :: Response: " + httpResponse.body)
         }
         httpResponse.status
       case config.rcSearchApi =>
         val req: String = ScalaModuleJsonUtils.serialize(request)
+        logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Search API request: " + req)
         val searchUri = config.rcBaseUrl + "/" + "PublicKey" + "/search"
         val httpResponse = httpUtil.post(searchUri, req)
         if(httpResponse.status == 200) {
@@ -248,9 +251,9 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         httpResponse.status
     }
     if (status == 200) {
-      logger.info("certificate rc successfully executed for api: " + api)
+      logger.info("CertificateGeneratorFunction:: callCertificateRc:: certificate rc successfully executed for api: " + api)
     } else {
-      logger.error("certificate rc failed for api: " + api +  " | Status is: " + status)
+      logger.error("CertificateGeneratorFunction:: callCertificateRc:: certificate rc failed for api: " + api +  " | Status is: " + status)
       throw ServerException("ERR_API_CALL", "Something Went Wrong While Making API Call:  " + api +  " | Status is: " + status)
     }
     id
@@ -288,9 +291,6 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
           certificatesList = new util.ArrayList[util.Map[String, String]]()
         }
 
-        val oldCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
-        val oldCert: util.Map[String, String] = if(oldCerts != null & oldCerts.size()>0) oldCerts.get(0) else null
-        logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: oldCert:: ", oldCert)
         val updatedCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => !StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
         updatedCerts.add(mapAsJavaMap(Map[String, String](
           config.name -> certMetaData.certificate.name,
@@ -300,10 +300,6 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         else Map[String, String]()}
           ++ {if(config.enableRcCertificate) Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
         else Map[String, String]()}
-          ++ {if(oldCert != null) {if(oldCert.containsKey("attempt_count")) Map[String, String]("attempt_count" -> oldCert.get("attempt_count")) else Map[String, String]()}
-        else Map[String, String]("attempt_count" -> event.eData.getOrElse("attempt_count", "").asInstanceOf[String]) }
-          ++ {if(oldCert != null) {if(oldCert.containsKey("attempt_id")) Map[String, String]("attempt_id" -> oldCert.get("attempt_id")) else Map[String, String]()}
-        else Map[String, String]("attempt_id" -> event.eData.getOrElse("attempt_id", "").asInstanceOf[String]) }
         ))
 
         val query = getUpdateIssuedCertQuery(updatedCerts, certMetaData.userId, certMetaData.courseId, certMetaData.batchId, config)
