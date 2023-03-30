@@ -38,15 +38,15 @@ class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
   }
 
   def user_Location: util.ArrayList[util.Map[String, Any]] = {
-    telemetry.getMap.get("userProfile").asInstanceOf[util.Map[String, Any]].get("userLocations").asInstanceOf[util.ArrayList[util.Map[String, Any]]]
+    telemetry.read[util.ArrayList[util.Map[String, Any]]]("userProfile.userLocations").getOrElse(null)
   }
 
   def user_Types: util.ArrayList[util.Map[String, Any]] = {
-    telemetry.getMap.get("userProfile").asInstanceOf[util.Map[String, Any]].get("profileUserTypes").asInstanceOf[util.ArrayList[util.Map[String, Any]]]
+    telemetry.read[util.ArrayList[util.Map[String, Any]]]("userProfile.profileUserTypes").getOrElse(null)
   }
 
-  def organisations: util.ArrayList[util.Map[String, Any]] = {
-    telemetry.getMap.get("userProfile").asInstanceOf[util.Map[String, Any]].get("organisations").asInstanceOf[util.ArrayList[util.Map[String, Any]]]
+  def organisations: util.Map[String, Any] = {
+    telemetry.read[util.Map[String, Any]]("userProfile.rootOrg").getOrElse(null)
   }
 }
 

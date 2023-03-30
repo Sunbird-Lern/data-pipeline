@@ -3,27 +3,13 @@ CREATE KEYSPACE IF NOT EXISTS sunbird_programs WITH replication = {
     'replication_factor': '1'
  };
 
- CREATE TABLE IF NOT EXISTS sunbird_programs.program_enrollment (
+CREATE TABLE IF NOT EXISTS sunbird_programs.program_enrollment (
      program_id text,
      program_externalId text,
      program_name text,
      pii_consent_required boolean,
      user_id text,
-     state_code text,
-     state_id text,
-     state_name text,
-     district_code text,
-     district_id text,
-     district_name text,
-     block_code text,
-     block_id text,
-     block_name text,
-     cluster_code text,
-     cluster_id text,
-     cluster_name text,
-     school_code text,
-     school_id text,
-     school_name text,
+     user_locations map<text, text>,
      organisation_id text,
      organisation_name text,
      user_sub_type text,
