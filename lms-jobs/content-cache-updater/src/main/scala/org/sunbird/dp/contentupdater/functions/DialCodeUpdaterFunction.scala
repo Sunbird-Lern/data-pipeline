@@ -7,7 +7,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.contentupdater.core.util.RestUtil
+import org.sunbird.dp.core.util.RestUtil
 import org.sunbird.dp.contentupdater.domain.Event
 import org.sunbird.dp.contentupdater.task.ContentCacheUpdaterConfig
 import org.sunbird.dp.core.cache.{DataCache, RedisConnect}
