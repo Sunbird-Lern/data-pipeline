@@ -498,3 +498,37 @@ notification-job:
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1
 
+content-cache-updater:
+  content-cache-updater: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = "{{ env_name }}.learning.graph.events"
+      groupId = "{{ env_name }}-content-cache-updater-group"
+    }
+	# redis-metadata
+	redis-meta {
+	  database {
+		contentstore.id = 5
+		dialcodestore.id = 6
+	  }
+	  content.host = {{ dp_redis_host }}
+	  dialcode.host = {{ dp_redis_host }}
+	  content.port = 6379
+	  dialcode.port = 6379
+	}
+
+	dialcode {
+	  api {
+		  url = "dialcode/v3/read/"
+		  token = "__token__"
+	  }
+	}
+
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['content-cache-updater'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['content-cache-updater'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['content-cache-updater'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
