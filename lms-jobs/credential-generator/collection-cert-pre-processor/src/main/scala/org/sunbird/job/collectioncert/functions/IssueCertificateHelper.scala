@@ -25,10 +25,13 @@ trait IssueCertificateHelper {
         val certName = template.getOrElse(config.name, "")
         val additionalProps: Map[String, List[String]] = ScalaJsonUtil.deserialize[Map[String, List[String]]](template.getOrElse("additionalProps", "{}"))
         val enrolledUser: EnrolledUser = validateEnrolmentCriteria(event, criteria.getOrElse(config.enrollment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], certName, additionalProps)(metrics, cassandraUtil, config)
+        logger.info("enrolledUser =>"+enrolledUser)
         //validateAssessmentCriteria
         val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps)(metrics, cassandraUtil, contentCache, config)
+        logger.info("assessedUser =>"+assessedUser)
         //validateUserCriteria
         val userDetails = validateUser(assessedUser.userId, criteria.getOrElse(config.user, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], additionalProps)(metrics, config, httpUtil)
+        logger.info("userDetails =>"+userDetails)
 
         //generateCertificateEvent
         if(userDetails.nonEmpty) {
@@ -75,15 +78,16 @@ trait IssueCertificateHelper {
     def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
         if(!assessmentCriteria.isEmpty && !enrolledUser.isEmpty) {
             val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
-            
+            logger.info("filteredUserAssessments =>"+filteredUserAssessments)
             val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore)).toMap
-            
+            logger.info("scoreMap =>"+scoreMap)
             val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
             val assessmentAdditionProps = additionalProps.getOrElse(config.assessment, List())
             val addProps = {
                 if (assessmentAdditionProps.nonEmpty && assessmentAdditionProps.contains("score")) Map("score" -> scoreMap)
                 else Map()
             }
+            logger.info("isValid =>"+isValidAssessCriteria(assessmentCriteria, score))
             if(isValidAssessCriteria(assessmentCriteria, score)) {
                 AssessedUser(enrolledUser, {if(addProps.nonEmpty) Map[String, Any](config.assessment -> addProps) else Map()})
             } else AssessedUser("")
@@ -91,9 +95,13 @@ trait IssueCertificateHelper {
     }
 
     def validateUser(userId: String, userCriteria: Map[String, AnyRef], additionalProps: Map[String, List[String]])(metrics:Metrics, config:CollectionCertPreProcessorConfig, httpUtil: HttpUtil) = {
+        logger.info("userId =>"+userId)
+
         if(!userId.isEmpty) {
             val url = config.learnerBasePath + config.userReadApi + "/" + userId + "?organisations,roles,locations,declarations,externalIds"
+            logger.info("url =>"+url)
             val result = getAPICall(url, "response")(config, httpUtil, metrics)
+            logger.info("result =>"+result)
             if(userCriteria.isEmpty || userCriteria.size == userCriteria.filter(uc => uc._2 == result.getOrElse(uc._1, null)).size) {
                 result
             } else Map[String, AnyRef]()
