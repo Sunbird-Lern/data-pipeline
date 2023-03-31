@@ -147,6 +147,7 @@ kafka_topic_assessment_failed: "{{env_name}}.telemetry.assess.failed"
 kafka_topic_lms_notification: "{{env_name}}.lms.notification"
 kafka_topic_enrolment_reconciliation_failed: "{{env_name}}.enrolment.reconciliation.failed"
 kafka_topic_generate_certificate_failed: "{{env_name}}.generate.certificate.failed"
+kafka_topic_programuser_info: "{{env_name}}.programuser.info"
 
 ## LERN BB specific kafka groups,have to be overridden in private devops repo to include BB Name for integrators.
 kafka_group_activity_agg: "{{env_name}}-activity-aggregate-group"
@@ -157,6 +158,7 @@ kafka_group_certificate_generator: "{{env_name}}-certificate-generator-group"
 kafka_group_merge_courses: "{{env_name}}-merge-courses-group"
 kafka_group_assessment_aggregator: "{{env_name}}-assessment-aggregator-group"
 kafka_group_lms_notification: "{{env_name}}-lms-notification"
+kafka_group_programuser_info: "{{env_name}}-programuser-group"
 
 ## Checkpoint Config
 checkpoint_store_type: "{{cloud_service_provider}}"

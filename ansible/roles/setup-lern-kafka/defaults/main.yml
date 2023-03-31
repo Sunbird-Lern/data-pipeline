@@ -50,7 +50,10 @@ processing_lern_kafka_overriden_topics:
     retention_time: 172800000
     replication_factor: 1
   - name: contentstate.invalid
-    num_of_partitions: 2
+    retention_time: 172800000
+    replication_factor: 1
+  - name: programuser.info
+    retention_time: 172800000
     replication_factor: 1
 
 processing_lern_kafka_topics:
@@ -100,5 +103,8 @@ processing_lern_kafka_topics:
     num_of_partitions: 2
     replication_factor: 1
   - name: contentstate.invalid
+    num_of_partitions: 2
+    replication_factor: 1
+  - name: programuser.info
     num_of_partitions: 2
     replication_factor: 1
