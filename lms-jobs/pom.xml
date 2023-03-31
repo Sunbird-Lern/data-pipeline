@@ -18,7 +18,6 @@
         <module>enrolment-reconciliation</module>
         <module>merge-user-courses</module>
         <module>assessment-aggregator</module>
-        <module>content-cache-updater</module>
     </modules>
 
     <build>
