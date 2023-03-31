@@ -21,9 +21,12 @@ trait IssueCertificateHelper {
         //validCriteria
         logger.info("issueCertificate i/p event =>"+event)
         val criteria = validateTemplate(template, event.batchId)(config)
+        logger.info("criteria =>"+criteria)
         //validateEnrolmentCriteria
         val certName = template.getOrElse(config.name, "")
+        logger.info("certName =>"+certName)
         val additionalProps: Map[String, List[String]] = ScalaJsonUtil.deserialize[Map[String, List[String]]](template.getOrElse("additionalProps", "{}"))
+        logger.info("additionalProps =>"+additionalProps)
         val enrolledUser: EnrolledUser = validateEnrolmentCriteria(event, criteria.getOrElse(config.enrollment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], certName, additionalProps)(metrics, cassandraUtil, config)
         logger.info("enrolledUser =>"+enrolledUser)
         //validateAssessmentCriteria
@@ -76,6 +79,8 @@ trait IssueCertificateHelper {
     }
 
     def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
+        logger.info("assessmentCriteria.isEmpty ??? =>"+assessmentCriteria.isEmpty)
+        logger.info("enrolledUser.isEmpty ???  =>"+enrolledUser.isEmpty)
         if(!assessmentCriteria.isEmpty && !enrolledUser.isEmpty) {
             val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
             logger.info("filteredUserAssessments =>"+filteredUserAssessments)
@@ -110,10 +115,11 @@ trait IssueCertificateHelper {
     
     def getMaxScore(event: Event)(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig, contentCache: DataCache):Map[String, Set[AssessmentUserAttempt]] = {
         val contextId = "cb:" + event.batchId
+        logger.info("contextId =>"+contextId)
         val query = QueryBuilder.select().column("aggregates").column("agg").from(config.keyspace, config.useActivityAggTable)
           .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
           .and(QueryBuilder.eq("user_id", event.userId)).and(QueryBuilder.eq("context_id", contextId))
-
+        logger.info("query =>"+query)
         val rows: java.util.List[Row] = cassandraUtil.find(query.toString)
         metrics.incCounter(config.dbReadCount)
         if(null != rows && !rows.isEmpty) {
@@ -126,13 +132,17 @@ trait IssueCertificateHelper {
             val userAssessments = aggs.keySet.filter(key => key.startsWith("score:")).map(
                 key => {
                     val id= key.replaceAll("score:", "")
+                    logger.info("id =>"+id)
                     AssessmentUserAttempt(id, aggs.getOrElse("score:" + id, 0d), aggs.getOrElse("max_score:" + id, 1d))
                 }).groupBy(f => f.contentId)
               
             val filteredUserAssessments = userAssessments.filterKeys(key => {
+                logger.info("key =>"+key)
                 val metadata = contentCache.getWithRetry(key)
+                logger.info("metadata =>"+metadata)
                 if (metadata.nonEmpty) {
                     val contentType = metadata.getOrElse("contenttype", "")
+                    logger.info("contentType =>"+contentType)
                     config.assessmentContentTypes.contains(contentType)
                 } else if(!metadata.nonEmpty && config.enableSuppressException){
                         logger.error("Suppressed exception: Metadata cache not available for: " + key)
