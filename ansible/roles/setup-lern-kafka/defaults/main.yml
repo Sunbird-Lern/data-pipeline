@@ -1,5 +1,4 @@
 env: dev
-bb: lern
 kafka_partition_override_size: 5242880
 dp_downstream_kafka_max_message_bytes: 1572864
 
