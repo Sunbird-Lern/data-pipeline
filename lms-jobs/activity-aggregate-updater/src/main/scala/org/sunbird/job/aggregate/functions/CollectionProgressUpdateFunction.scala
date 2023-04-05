@@ -35,6 +35,7 @@ class CollectionProgressUpdateFunction(config: ActivityAggregateUpdaterConfig)(i
   }
 
   override def processElement(events: List[CollectionProgress], context: ProcessFunction[List[CollectionProgress], String]#Context, metrics: Metrics): Unit = {
+    logger.info("events => "+events)
     val pendingEnrolments = if (config.filterCompletedEnrolments) events.filter { p =>
       val row = getEnrolment(p.userId, p.courseId, p.batchId)(metrics)
       (row != null && row.getInt("status") != 2)

@@ -58,6 +58,7 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
               metrics: Metrics): Unit = {
 
     logger.debug("Input Events Size: " + events.toList.size)
+    logger.info("events => "+events)
     val inputUserConsumptionList: List[UserContentConsumption] = events
         .groupBy(key => (key.get(config.courseId), key.get(config.batchId), key.get(config.userId)))
         .values.map(value => {
@@ -67,7 +68,9 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
         val courseId = value.head(config.courseId).toString
         val userConsumedContents = value.head(config.contents).asInstanceOf[List[Map[String, AnyRef]]]
         val enrichedContents = getContentStatusFromEvent(userConsumedContents)
-        UserContentConsumption(userId = userId, batchId = batchId, courseId = courseId, enrichedContents)
+        logger.info("userId => "+userId+" courseId => "+courseId+" enrichedContents =>"+enrichedContents)
+
+      UserContentConsumption(userId = userId, batchId = batchId, courseId = courseId, enrichedContents)
       }).toList
 
     // Fetch the content status from the table in batch format
@@ -102,16 +105,22 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
 
     // Saving all queries for course and it's children (only collection) aggregates.
     val aggQueries = courseAggregations.map(agg => getUserAggQuery(agg.activityAgg))
+    logger.info("B4 updating DB aggQueries => "+aggQueries)
     updateDB(config.thresholdBatchWriteSize, aggQueries)(metrics)
+    logger.info("After updating DB => ")
 
     // Saving enrolment completion data.
     val collectionProgressList = courseAggregations.filter(agg => agg.collectionProgress.nonEmpty).map(agg => agg.collectionProgress.get)
+    logger.info(" collectionProgressList => "+collectionProgressList)
 
     val collectionProgressUpdateList = collectionProgressList.filter(progress => !progress.completed)
+    logger.info(" collectionProgressUpdateList => "+collectionProgressUpdateList)
+
     context.output(config.collectionUpdateOutputTag, collectionProgressUpdateList)
 
     val collectionProgressCompleteList = collectionProgressList.filter(progress => progress.completed)
     context.output(config.collectionCompleteOutputTag, collectionProgressCompleteList)
+    logger.info(" collectionProgressCompleteList => "+collectionProgressCompleteList)
 
     // Content AUDIT Event generation and pushing to output tag.
     finalUserConsumptionList.flatMap(userConsumption => contentAuditEvents(userConsumption)).foreach(event => context.output(config.auditEventOutputTag, gson.toJson(event)))
