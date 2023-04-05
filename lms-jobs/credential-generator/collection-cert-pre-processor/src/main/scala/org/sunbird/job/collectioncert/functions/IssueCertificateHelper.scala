@@ -20,6 +20,7 @@ trait IssueCertificateHelper {
     def issueCertificate(event:Event, template: Map[String, String])(cassandraUtil: CassandraUtil, cache:DataCache, contentCache: DataCache, metrics: Metrics, config: CollectionCertPreProcessorConfig, httpUtil: HttpUtil): String = {
         //validCriteria
         logger.info("issueCertificate i/p event =>"+event)
+        logger.info("template in issueCertificate() =>"+template)
         val criteria = validateTemplate(template, event.batchId)(config)
         logger.info("criteria in issueCertificate() =>"+criteria)
         //validateEnrolmentCriteria
@@ -47,6 +48,7 @@ trait IssueCertificateHelper {
     
     def validateTemplate(template: Map[String, String], batchId: String)(config: CollectionCertPreProcessorConfig):Map[String, AnyRef] = {
         val criteria = ScalaJsonUtil.deserialize[Map[String, AnyRef]](template.getOrElse(config.criteria, "{}"))
+        logger.info("criteria in validateTemplate() ??? =>"+criteria)
         if(!template.getOrElse("url", "").isEmpty && !criteria.isEmpty && !criteria.keySet.intersect(Set(config.enrollment, config.assessment, config.users)).isEmpty) {
             criteria
         } else {
@@ -72,6 +74,7 @@ trait IssueCertificateHelper {
                 val isCertIssued = !issuedCertificates.isEmpty && !issuedCertificates.filter(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name,"").asInstanceOf[String])).isEmpty
                 val status = row.getInt(config.status)
                 val criteriaStatus = enrollmentCriteria.getOrElse(config.status, 2)
+                logger.info("criteriaStatus in validateEnrolmentCriteria ??? =>"+criteriaStatus)
                 val oldId = if(isCertIssued && event.reIssue) issuedCertificates.filter(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name,"").asInstanceOf[String]))
                   .map(cert => cert.getOrDefault(config.identifier, "")).head else ""
                 val userId = if(active && (criteriaStatus == status) && (!isCertIssued || event.reIssue)) event.userId else ""
