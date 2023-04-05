@@ -53,9 +53,14 @@ class ContentConsumptionDeDupFunction(config: ActivityAggregateUpdaterConfig)(im
           metrics.incCounter(config.batchEnrolmentUpdateEventCount)
           logger.info(" <== PROCESSING =>")
         }
-      filteredContents.map(c => {
+//      filteredContents.map(c => {
+//        (eData + ("contents" -> List(Map("contentId" -> c.get("contentId"), "status" -> c.get("status"))))).toMap
+//      }).filter(e => discardDuplicates(e)).foreach(d => context.output(config.uniqueConsumptionOutput, d))
+      val fc = filteredContents.map(c => {
         (eData + ("contents" -> List(Map("contentId" -> c.get("contentId"), "status" -> c.get("status"))))).toMap
-      }).filter(e => discardDuplicates(e)).foreach(d => context.output(config.uniqueConsumptionOutput, d))
+      }).filter(e => discardDuplicates(e))
+      logger.info("filteredContents count:: "+ fc.size + " contents : " + filteredContents)
+      fc.foreach(d => context.output(config.uniqueConsumptionOutput, d))
     } else
       {
         logger.info(" <== SKIPPED in isBatchEnrollmentEvent else part =>")
