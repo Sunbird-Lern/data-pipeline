@@ -64,14 +64,40 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     metrics.incCounter(config.totalEventsCount)
     try {
       val certValidator = new CertValidator()
+      val certId = event.identifier
       logger.info("Certificate generator | is rc integration enabled: " + config.enableRcCertificate)
       certValidator.validateGenerateCertRequest(event, config.enableSuppressException)
-      if(isNotMigrated(event)) {
-        generateCertificateUsingRC(event, context)(metrics)
-      } else {
-        metrics.incCounter(config.skippedEventCount)
-        logger.info(s"Certificate already migrated for: ${event.eData.getOrElse("userId", "")} ${event.related}")
+      var stage = getStage(event)
+      var rcCertId: String = ""
+
+      if(stage == "migration_started") {
+        val req = Map("filters" -> Map("oldId"-> certId))
+        rcCertId = callCertificateRc(config.rcSearchApi, null, req)
+        if(rcCertId == null || rcCertId.isBlank) {
+          stage = ""
+        } else {
+          stage = "migration_completed"
+        }
       }
+
+      if (stage ==""){
+        updateCassandraCertificate(certId, "reason", "migration_started")
+        rcCertId = generateCertificateUsingRC(event, context)(metrics)
+        stage = "migration_completed"
+      }
+
+      if (stage == "migration_completed") {
+        val userEnrolment = getUserEnrolmentData(event, rcCertId)
+        updateUserEnrollmentTable(event, userEnrolment, context)(metrics)
+        stage = "enrolment_updated"
+        updateCassandraCertificate(certId, "reason", "enrolment_updated")
+      }
+
+      if (stage == "enrolment_updated") {
+        deleteOldRegistry(event.oldId)
+        updateCassandraCertificate(certId, "reason", "revoked")
+      }
+
     } catch {
       case e: Exception =>
         metrics.incCounter(config.failedEventCount)
@@ -80,28 +106,28 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   }
 
   @throws[Exception]
-  def generateCertificateUsingRC(event: Event, context: KeyedProcessFunction[String, Event, String]#Context)(implicit metrics: Metrics): Unit = {
-    val certModelList: List[CertModel] = new CertMapper(certificateConfig).mapReqToCertModel(event)
-    certModelList.foreach(certModel => {
-      var uuid: String = null
-      //if reissue then read rc for oldId and call rc delete api
-      val related = event.related
-      val certReq = generateRequest(event, certModel)
-      //make api call to registry
-      uuid = callCertificateRc(config.rcCreateApi, null, certReq)
-      val userEnrollmentData = UserEnrollmentData(related.getOrElse(config.BATCH_ID, "").asInstanceOf[String], certModel.identifier,
-        related.getOrElse(config.COURSE_ID, "").asInstanceOf[String], event.courseName, event.templateId,
-        Certificate(uuid, event.name, "", formatter.format(new Date()), event.svgTemplate, config.rcEntity))
-      updateUserEnrollmentTable(event, userEnrollmentData, context)
-      metrics.incCounter(config.successEventCount)
-    })
+  def generateCertificateUsingRC(event: Event, context: KeyedProcessFunction[String, Event, String]#Context)(implicit metrics: Metrics): String = {
+    val certModel: CertModel = new CertMapper(certificateConfig).mapReqToCertModel(event)
 
-    deleteOldRegistry(event.oldId)
+    var uuid: String = null
+    //if reissue then read rc for oldId and call rc delete api
+    val related = event.related
+    val certReq = generateRequest(event, certModel)
+    //make api call to registry
+    uuid = callCertificateRc(config.rcCreateApi, null, certReq)
+
+    uuid
+  }
+
+  def getUserEnrolmentData(event: Event, rcCertId: String): UserEnrollmentData = {
+    UserEnrollmentData(event.related.getOrElse(config.BATCH_ID, "").asInstanceOf[String], event.userId,
+      event.related.getOrElse(config.COURSE_ID, "").asInstanceOf[String], event.courseName, event.templateId,
+      Certificate(rcCertId, event.name, "", formatter.format(event.issuedDate), event.svgTemplate, config.rcEntity))
   }
 
   def deleteOldRegistry(id: String) = {
     try {
-      revokeCassandraRecord(id)
+      updateCassandraCertificate(id, "isrevoked", true)
       deleteEsRecord(id)
     } catch {
       case ex: Exception =>
@@ -110,9 +136,9 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     }
   }
 
-  def revokeCassandraRecord(id: String): Unit = {
+  def updateCassandraCertificate(id: String, colName: String, value: Any): Unit = {
     val query = QueryBuilder.update(config.sbKeyspace, config.certRegTable).where()
-      .`with`(QueryBuilder.set("isrevoked", true))
+      .`with`(QueryBuilder.set(colName, value))
       .where(QueryBuilder.eq("id", id))
       .ifExists
     cassandraUtil.update(query)
@@ -136,6 +162,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
       "recipient" -> Recipient(certModel.identifier, certModel.recipientName, null),
       "issuer" -> Issuer(certModel.issuer.url, certModel.issuer.name, publicKeyId),
       "signatory" -> event.signatoryList,
+      "issuedOn" -> event.issuedDate,
       config.OLD_ID -> event.oldId
     )
     createCertReq
@@ -164,6 +191,15 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         httpResponse.status
       case config.rcSearchApi =>
         val req: String = ScalaModuleJsonUtils.serialize(request)
+        val searchUri = uri + "/search"
+        val httpResponse = httpUtil.post(searchUri, req)
+        if(httpResponse.status == 200) {
+          val resp = ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](httpResponse.body)
+          id = resp.head.getOrElse("osid", null).asInstanceOf[String]
+        }
+        httpResponse.status
+      case config.rcPKSearchApi =>
+        val req: String = ScalaModuleJsonUtils.serialize(request)
         val searchUri = config.rcBaseUrl + "/" + "PublicKey" + "/search"
         val httpResponse = httpUtil.post(searchUri, req)
         if(httpResponse.status == 200) {
@@ -175,8 +211,12 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     if (status == 200) {
       logger.info("certificate rc successfully executed for api: " + api)
     } else {
-      logger.error("certificate rc failed for api: " + api +  " | Status is: " + status)
-      throw ServerException("ERR_API_CALL", "Something Went Wrong While Making API Call:  " + api +  " | Status is: " + status)
+      if (api == config.rcSearchApi && status == 404){
+        logger.error("certificate in rc not found for req: " + ScalaModuleJsonUtils.serialize(request))
+      } else {
+        logger.error("certificate rc failed for api: " + api +  " | Status is: " + status)
+        throw ServerException("ERR_API_CALL", "Something Went Wrong While Making API Call:  " + api +  " | Status is: " + status)
+      }
     }
     id
   }
@@ -282,11 +322,11 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
       `object` = EventObject(id = data.certificate.id, `type` = "Certificate", rollup = Map(config.l1 -> data.courseId).asJava))
   }
 
-  def isNotMigrated(event: Event):Boolean = {
-    val query = QueryBuilder.select("isrevoked").from(config.sbKeyspace, config.certRegTable)
-      .where(QueryBuilder.eq(config.id, event.eData.getOrElse("identifier", "")))
+  def getStage(event: Event):String = {
+    val query = QueryBuilder.select("reason").from(config.sbKeyspace, config.certRegTable)
+      .where(QueryBuilder.eq(config.id, event.identifier))
     val row = cassandraUtil.findOne(query.toString)
-    if (null != row) true else false
+    if (null != row) row.getString(0) else "NOT_AVAILABLE"
   }
 
 }

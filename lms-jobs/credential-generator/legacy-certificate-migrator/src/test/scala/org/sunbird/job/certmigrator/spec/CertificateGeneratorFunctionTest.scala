@@ -132,7 +132,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
 
 
   private def generateRequest(event: Event, kid: String):  Map[String, AnyRef] = {
-    val certModel: CertModel = new CertMapper(certificateConfig).mapReqToCertModel(event).head
+    val certModel: CertModel = new CertMapper(certificateConfig).mapReqToCertModel(event)
     val reIssue: Boolean = !event.oldId.isEmpty
     val related = event.related
     val createCertReq = Map[String, AnyRef](

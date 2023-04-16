@@ -18,6 +18,8 @@ class Event(eventMap: java.util.Map[String, Any], partition: Int, offset: Long) 
 
   def oldId: String = readOrDefault[String]("edata.oldId", "")
 
+  def identifier: String = readOrDefault[String]("edata.identifier", "")
+
   def basePath: String = readOrDefault[String]("edata.basePath", "")
 
   def tag: String = readOrDefault[String]("edata.tag", "")

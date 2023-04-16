@@ -78,6 +78,7 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val rcCreateApi: String = "service.rc.create.api"
   val rcDeleteApi: String = "service.rc.delete.api"
   val rcSearchApi: String = "service.rc.search.api"
+  val rcPKSearchApi: String = "service.rc.publickey.search.api"
 
 
   //constant
