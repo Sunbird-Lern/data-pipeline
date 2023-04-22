@@ -188,7 +188,7 @@ activity-aggregate-updater:
     threshold.batch.write.size = {{ activity_agg_batch_write_size }}
     activity {
       module.aggs.enabled = true
-      input.dedup.enabled = true
+      input.dedup.enabled = false
       filter.processed.enrolments = {{ activity_agg_enrolment_filter_processe_enabled | lower }}
       collection.status.cache.expiry = {{ activity_agg_collection_status_cache_expiry_time }}
     }
