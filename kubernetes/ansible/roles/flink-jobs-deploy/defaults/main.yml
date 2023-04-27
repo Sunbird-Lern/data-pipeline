@@ -94,6 +94,7 @@ collection_certificate_pre_processor_enable_suppress_exception: "{{ enable_suppr
 collection_certificate_generator_rc_badcharlist: "{{ rc_bad_char_list | default('\"\\\\x00,\\\\\\\\aaa,\\\\aaa,Ø,Ý,\\\\\"') }}"
 registry_sunbird_keyspace: "sunbird"
 cert_registry_table: "cert_registry"
+legacy_certificate_migrator_consumer_parallelism: 1
 
 ###  Merge User Courses Job related Vars
 merge_user_courses_consumer_parallelism: 1
