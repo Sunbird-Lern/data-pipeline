@@ -95,6 +95,7 @@ collection_certificate_generator_rc_badcharlist: "{{ rc_bad_char_list | default(
 registry_sunbird_keyspace: "sunbird"
 cert_registry_table: "cert_registry"
 legacy_certificate_migrator_consumer_parallelism: 1
+legacy_certificate_migrator_parallelism: 1
 
 ###  Merge User Courses Job related Vars
 merge_user_courses_consumer_parallelism: 1
