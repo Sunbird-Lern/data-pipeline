@@ -124,6 +124,7 @@ download_neo4j: true
 neo4j_upstream_download: false
 enable_suppress_exception: false
 enable_rc_certificate: true
+certificate_migrator_enable_suppress_exception: false
 
 ### kafka and zookeeper ip vars and being used in kafka topiccreation role.
 processing_zookeeper_ip: "{{ groups['processing-cluster-zookeepers'][0] }}"
@@ -147,6 +148,7 @@ kafka_topic_assessment_failed: "{{env_name}}.telemetry.assess.failed"
 kafka_topic_lms_notification: "{{env_name}}.lms.notification"
 kafka_topic_enrolment_reconciliation_failed: "{{env_name}}.enrolment.reconciliation.failed"
 kafka_topic_generate_certificate_failed: "{{env_name}}.generate.certificate.failed"
+kafka_topic_migrate_certificate_request: "{{env_name}}.rc.certificate.migrate"
 
 ## LERN BB specific kafka groups,have to be overridden in private devops repo to include BB Name for integrators.
 kafka_group_activity_agg: "{{env_name}}-activity-aggregate-group"
@@ -154,6 +156,7 @@ kafka_group_relation_cache_updater: "{{env_name}}-relation-cache-updater-group"
 kafka_group_enrolment_reconciliation: "{{env_name}}-enrolment-reconciliation-group"
 kafka_group_collection_pre_processor: "{{env_name}}-collection-cert-pre-processor-group"
 kafka_group_certificate_generator: "{{env_name}}-certificate-generator-group"
+kafka_group_certificate_migrator: "{{env_name}}-certificate-migrator-group"
 kafka_group_merge_courses: "{{env_name}}-merge-courses-group"
 kafka_group_assessment_aggregator: "{{env_name}}-assessment-aggregator-group"
 kafka_group_lms_notification: "{{env_name}}-lms-notification"

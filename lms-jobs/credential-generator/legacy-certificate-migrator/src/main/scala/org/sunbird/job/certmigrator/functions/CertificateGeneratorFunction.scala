@@ -65,7 +65,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     try {
       val certValidator = new CertValidator()
       val certId = event.identifier
-      logger.info("Certificate generator | is rc integration enabled: " + config.enableRcCertificate)
+      logger.info("Certificate migrator | is rc integration enabled: " + config.enableRcCertificate)
       certValidator.validateGenerateCertRequest(event, config.enableSuppressException)
       var stage = getStage(event)
       var rcCertId: String = ""
@@ -80,7 +80,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         }
       }
 
-      if (stage ==""){
+      if (stage =="" || stage == null){
         updateCassandraCertificate(certId, "reason", "migration_started")
         rcCertId = generateCertificateUsingRC(event, context)(metrics)
         stage = "migration_completed"
@@ -96,6 +96,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
       if (stage == "enrolment_updated") {
         deleteOldRegistry(event.oldId)
         updateCassandraCertificate(certId, "reason", "revoked")
+        logger.info("Certificate migrator | rc migration completed | oldId: " + event.oldId + ", RC ID: " + rcCertId)
       }
 
     } catch {
@@ -122,13 +123,13 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   def getUserEnrolmentData(event: Event, rcCertId: String): UserEnrollmentData = {
     UserEnrollmentData(event.related.getOrElse(config.BATCH_ID, "").asInstanceOf[String], event.userId,
       event.related.getOrElse(config.COURSE_ID, "").asInstanceOf[String], event.courseName, event.templateId,
-      Certificate(rcCertId, event.name, "", formatter.format(event.issuedDate), event.svgTemplate, config.rcEntity))
+      Certificate(rcCertId, event.name, "", formatter.format(new Date()), event.svgTemplate, config.rcEntity))
   }
 
   def deleteOldRegistry(id: String) = {
     try {
       updateCassandraCertificate(id, "isrevoked", true)
-      deleteEsRecord(id)
+//      deleteEsRecord(id)
     } catch {
       case ex: Exception =>
         logger.error("Old registry deletion failed | old id is not present :: identifier " + id+ " :: " + ex.getMessage)
@@ -258,8 +259,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
           config.token -> certMetaData.certificate.token,
         ) ++ {if(!certMetaData.certificate.lastIssuedOn.isEmpty) Map[String, String](config.lastIssuedOn -> certMetaData.certificate.lastIssuedOn)
         else Map[String, String]()}
-        ++ {if(config.enableRcCertificate) Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
-        else Map[String, String]()}
+        ++ Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
         ))
         
         val query = getUpdateIssuedCertQuery(updatedCerts, certMetaData.userId, certMetaData.courseId, certMetaData.batchId, config)
