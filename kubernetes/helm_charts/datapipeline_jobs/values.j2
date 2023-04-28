@@ -20,6 +20,11 @@ scale_properties:
     scale_target_value: {{ flink_job_names['assessment-aggregator'].scale_target_value | default(0) }}
     min_replica: {{ flink_job_names['assessment-aggregator'].min_replica | default(1) }}
     max_replica: {{ flink_job_names['assessment-aggregator'].max_replica | default(2) }}
+  program-user-info:
+    enabled: {{ flink_job_names['program-user-info'].scale_enabled | lower}}
+    scale_target_value: {{ flink_job_names['program-user-info'].scale_target_value | default(0) }}
+    min_replica: {{ flink_job_names['program-user-info'].min_replica | default(1) }}
+    max_replica: {{ flink_job_names['program-user-info'].max_replica | default(2) }}
 
 jobmanager:
   rpc_port: {{ jobmanager_rpc_port }}
@@ -143,6 +148,11 @@ base_config: |
       supportedVersion = {
         itemset = "2.0"
       }
+    }
+    ml-cassandra {
+      host = "{{ core_cassandra_connection_ip }}"
+      port = "9042"
+      isMultiDCEnabled = {{ cassandra_isMultiDCEnabled | lower }}
     }
 
 activity-aggregate-updater:
@@ -581,6 +591,37 @@ user-cache-updater-v2:
     jobmanager.memory.flink.size: {{ flink_job_names['user-cache-updater-v2'].jobmanager_memory }}
     taskmanager.memory.flink.size: {{ flink_job_names['user-cache-updater-v2'].taskmanager_memory }}
     taskmanager.numberOfTaskSlots: {{ flink_job_names['user-cache-updater-v2'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
+
+program-user-info:
+  program-user-info: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      producer.broker-servers = "{{ kafka_brokers }}"
+      consumer.broker-servers = "{{ kafka_brokers }}"
+      zookeeper = "{{ zookeepers }}"
+      input.topic = {{ kafka_topic_programuser_info }}
+      groupId = {{ kafka_group_programuser_info }}
+    }
+    task {
+      consumer.parallelism = {{ programuserinfo_consumer_parallelism }}
+      downstream.parallelism = {{ programuserinfo_downstream_parallelism }}
+      programuser {
+        parallelism = {{ programuserinfo_programuser_parallelism }}
+      }
+
+    }
+    ml-cassandra {
+      keyspace = "{{ middleware_cassandra_programuserinfo_keyspace }}"
+      table = "{{ middleware_cassandra_programuserinfo_table }}"
+    }
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['program-user-info'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['program-user-info'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['program-user-info'].taskslots }}
     parallelism.default: 1
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1

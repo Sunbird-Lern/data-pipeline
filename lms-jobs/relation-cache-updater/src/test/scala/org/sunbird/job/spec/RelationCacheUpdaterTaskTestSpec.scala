@@ -89,12 +89,12 @@ class RelationCacheUpdaterTaskTestSpec extends BaseTestSpec {
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.failedEventCount}").getValue() should be(0)
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.skippedEventCount}").getValue() should be(0)
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.dbReadCount}").getValue() should be(2)
-    BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.cacheWrite}").getValue() should be(61)
+    BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.cacheWrite}").getValue() should be(49)
 
     // Assertion on total keys for leafnodes,optionalnodes and ancestors.
     getKeysLength("*:leafnodes", relCacheDb) should be (18)
     getKeysLength("*:ancestors", relCacheDb) should be (9)
-    getKeysLength("*:optionalnodes",relCacheDb) should be (18)
+    getKeysLength("*:optionalnodes",relCacheDb) should be (6)
 
     // Checking assertion of leafNodes for some of the collections.
     val leafNodes1  = getList("do_11305855864948326411234:do_11305855931314995211239:leafnodes", relCacheDb)
@@ -108,11 +108,11 @@ class RelationCacheUpdaterTaskTestSpec extends BaseTestSpec {
     // Checking assertion of optionalNodes for some of the collections.
     val optionalNodes1 = getList("do_11305855864948326411234:do_11305855931314995211239:optionalnodes", relCacheDb)
     optionalNodes1.size should be(1)
-    optionalNodes1 should contain theSameElementsAs (List("do_11305855931315814411241"))
+    optionalNodes1 should contain theSameElementsAs (List("do_1130314841730334721104"))
 
-    val optionalNodes2 = getList("do_11305855864948326411234:do_11305856061520281611348:optionalnodes", relCacheDb)
+    val optionalNodes2 = getList("do_11305855864948326411234:do_11305855864948326411234:optionalnodes", relCacheDb)
     optionalNodes2.size should be(1)
-    optionalNodes2 should contain theSameElementsAs (List("do_11305856061514547211344"))
+    optionalNodes2 should contain theSameElementsAs (List("do_1130314841730334721104"))
 
     // Checking assertion of Ancestors for some of the resources.
     val ancestors1 = getList("do_11305855864948326411234:do_1130314847650037761106:ancestors", relCacheDb)
