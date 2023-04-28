@@ -22,7 +22,7 @@ trait IssueCertificateHelper {
 
     def issueCertificate(event:Event, template: Map[String, String])(cassandraUtil: CassandraUtil, cache:DataCache, contentCache: DataCache, metrics: Metrics, config: CollectionCertPreProcessorConfig, httpUtil: HttpUtil): String = {
         //validCriteria
-        logger.info("issueCertificate i/p event =>"+event)
+        logger.info("IssueCertificateHelper:: issueCertificate:: event:: "+event)
         val criteria = validateTemplate(template, event.batchId)(config)
         //validateEnrolmentCriteria
         val certName = template.getOrElse(config.name, "")
@@ -36,6 +36,7 @@ trait IssueCertificateHelper {
         val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps, attemptDetails)(metrics, cassandraUtil, contentCache, config)
         //validateUserCriteria
         val userDetails = validateUser(assessedUser.userId, criteria.getOrElse(config.user, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]])(metrics, config, httpUtil)
+           logger.info("IssueCertificateHelper:: issueCertificate:: userDetails:: "+userDetails)
 
         //generateCertificateEvent
         if(userDetails.nonEmpty) {
@@ -60,6 +61,7 @@ trait IssueCertificateHelper {
             val query = QueryBuilder.select().from(config.keyspace, config.userEnrolmentsTable)
               .where(QueryBuilder.eq(config.dbUserId, event.userId)).and(QueryBuilder.eq(config.dbCourseId, event.courseId))
               .and(QueryBuilder.eq(config.dbBatchId, event.batchId))
+          logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: query:: " + query.toString)
             val row = cassandraUtil.findOne(query.toString)
             metrics.incCounter(config.dbReadCount)
             val enrolmentAdditionProps = additionalProps.getOrElse(config.enrollment, List[String]())

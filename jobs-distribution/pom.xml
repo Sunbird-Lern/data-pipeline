@@ -80,6 +80,12 @@
             <version>2.0.0</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>org.sunbird</groupId>
+            <artifactId>program-user-info</artifactId>
+            <version>1.0.0</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 
     <build>
