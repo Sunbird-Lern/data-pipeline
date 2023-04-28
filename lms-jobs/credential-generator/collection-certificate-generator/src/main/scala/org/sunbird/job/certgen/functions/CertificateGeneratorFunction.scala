@@ -14,7 +14,6 @@ import org.sunbird.incredible.processor.CertModel
 import org.sunbird.incredible.processor.store.StorageService
 import org.sunbird.incredible.processor.views.SvgGenerator
 import org.sunbird.incredible.{CertificateConfig, CertificateGenerator, JsonKeys, ScalaModuleJsonUtils}
-import org.sunbird.job.certgen.domain.Issuer
 import org.sunbird.job.certgen.domain._
 import org.sunbird.job.certgen.exceptions.ServerException
 import org.sunbird.job.certgen.task.CertificateGeneratorConfig
@@ -104,7 +103,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
           JsonKeys.JSON_DATA -> certificateExtension, JsonKeys.ACCESS_CODE -> qrMap.accessCode,
           JsonKeys.RECIPIENT_NAME -> certModel.recipientName, JsonKeys.RECIPIENT_ID -> certModel.identifier,
           config.RELATED -> event.related
-        ) ++ {if (!event.oldId.isEmpty) Map[String, AnyRef](config.OLD_ID -> event.oldId) else Map[String, AnyRef]()}})
+        ) ++ {if (event.oldId.nonEmpty) Map[String, AnyRef](config.OLD_ID -> event.oldId) else Map[String, AnyRef]()}})
         addCertToRegistry(event, addReq, context)(metrics)
         //cert-registry end
         val related = event.related
@@ -124,7 +123,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     val certModelList: List[CertModel] = new CertMapper(certificateConfig).mapReqToCertModel(event)
     certModelList.foreach(certModel => {
       var uuid: String = null
-      val reIssue: Boolean = !event.oldId.isEmpty
+      val reIssue: Boolean = event.oldId.nonEmpty
       //if reissue then read rc for oldId and call rc delete api
       if(reIssue){
         try {
@@ -150,7 +149,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     })
   }
 
-  def deleteOldRegistry(id: String) = {
+  def deleteOldRegistry(id: String): Unit = {
     try {
       deleteCassandraRecord(id)
       deleteEsRecord(id)
@@ -221,25 +220,28 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   @throws[ServerException]
   @throws[UnirestException]
   def callCertificateRc(api: String, identifier: String, request: Map[String, AnyRef]): String = {
-    logger.info("Certificate rc called | Api:: " + api)
+    logger.info("CertificateGeneratorFunction:: callCertificateRc:: Certificate rc called | Api:: " + api)
     var id: String = null
     val uri: String = config.rcBaseUrl + "/" + config.rcEntity
     val status = api match {
-      case config.rcDeleteApi => httpUtil.delete(uri + "/" +identifier).status
+      case config.rcDeleteApi => logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Delete API - identifier: " + identifier)
+        httpUtil.delete(uri + "/" +identifier).status
       case config.rcCreateApi =>
         val plainReq: String = ScalaModuleJsonUtils.serialize(request)
         val req = removeBadChars(plainReq)
-        logger.info("RC Create API request: " + req)
+        logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Create API request: " + req)
         val httpResponse = httpUtil.post(uri, req)
         if(httpResponse.status == 200) {
           val response = ScalaJsonUtil.deserialize[Map[String, AnyRef]](httpResponse.body)
+          logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Create API response: " + response)
           id = response.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse(config.rcEntity, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("osid","").asInstanceOf[String]
         } else {
-          logger.error("RC Create Error Response: " + httpResponse.status +  " :: Response: " + httpResponse.body)
+          logger.error("CertificateGeneratorFunction:: callCertificateRc:: RC Create Error Response: " + httpResponse.status +  " :: Response: " + httpResponse.body)
         }
         httpResponse.status
       case config.rcSearchApi =>
         val req: String = ScalaModuleJsonUtils.serialize(request)
+        logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Search API request: " + req)
         val searchUri = config.rcBaseUrl + "/" + "PublicKey" + "/search"
         val httpResponse = httpUtil.post(searchUri, req)
         if(httpResponse.status == 200) {
@@ -249,9 +251,9 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         httpResponse.status
     }
     if (status == 200) {
-      logger.info("certificate rc successfully executed for api: " + api)
+      logger.info("CertificateGeneratorFunction:: callCertificateRc:: certificate rc successfully executed for api: " + api)
     } else {
-      logger.error("certificate rc failed for api: " + api +  " | Status is: " + status)
+      logger.error("CertificateGeneratorFunction:: callCertificateRc:: certificate rc failed for api: " + api +  " | Status is: " + status)
       throw ServerException("ERR_API_CALL", "Something Went Wrong While Making API Call:  " + api +  " | Status is: " + status)
     }
     id
@@ -277,7 +279,8 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   }
 
   def updateUserEnrollmentTable(event: Event, certMetaData: UserEnrollmentData, context: KeyedProcessFunction[String, Event, String]#Context)(implicit metrics: Metrics): Unit = {
-    logger.info("updating user enrollment table {}", certMetaData)
+    logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: event:: ", event)
+    logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: certMetaData:: ", certMetaData)
     val primaryFields = Map(config.userId.toLowerCase() -> certMetaData.userId, config.batchId.toLowerCase -> certMetaData.batchId, config.courseId.toLowerCase -> certMetaData.courseId)
     val records = getIssuedCertificatesFromUserEnrollmentTable(primaryFields)
     if (records.nonEmpty) {
@@ -287,21 +290,22 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         if (null == certificatesList && certificatesList.isEmpty) {
           certificatesList = new util.ArrayList[util.Map[String, String]]()
         }
+
         val updatedCerts: util.List[util.Map[String, String]] = certificatesList.stream().filter(cert => !StringUtils.equalsIgnoreCase(certMetaData.certificate.name, cert.get("name"))).collect(Collectors.toList())
         updatedCerts.add(mapAsJavaMap(Map[String, String](
           config.name -> certMetaData.certificate.name,
           config.identifier -> certMetaData.certificate.id,
           config.token -> certMetaData.certificate.token,
-        ) ++ {if(!certMetaData.certificate.lastIssuedOn.isEmpty) Map[String, String](config.lastIssuedOn -> certMetaData.certificate.lastIssuedOn)
+        ) ++ {if(certMetaData.certificate.lastIssuedOn.nonEmpty) Map[String, String](config.lastIssuedOn -> certMetaData.certificate.lastIssuedOn)
         else Map[String, String]()}
-        ++ {if(config.enableRcCertificate) Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
+          ++ {if(config.enableRcCertificate) Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
         else Map[String, String]()}
         ))
-        
+
         val query = getUpdateIssuedCertQuery(updatedCerts, certMetaData.userId, certMetaData.courseId, certMetaData.batchId, config)
-        logger.info("update query {}", query.toString)
+        logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: update query:: ", query.toString)
         val result = cassandraUtil.update(query)
-        logger.info("update result {}", result)
+        logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: update result:: ", result)
         if (result) {
           logger.info("issued certificates in user-enrollment table  updated successfully")
           metrics.incCounter(config.dbUpdateCount)
@@ -314,7 +318,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
           context.output(config.userFeedOutputTag, UserFeedMetaData(certMetaData.userId, certMetaData.courseName, issuedOn, certMetaData.courseId, event.partition, event.offset))
         } else {
           metrics.incCounter(config.failedEventCount)
-          throw new Exception(s"Update certificates to enrolments failed: ${event}")
+          throw new Exception(s"Update certificates to enrolments failed: $event")
         }
 
       })
@@ -324,8 +328,8 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
 
 
   /**
-    * returns query for updating issued_certificates in user_enrollment table
-    */
+   * returns query for updating issued_certificates in user_enrollment table
+   */
   def getUpdateIssuedCertQuery(updatedCerts: util.List[util.Map[String, String]], userId: String, courseId: String, batchId: String, config: CertificateGeneratorConfig):
   Update.Where = QueryBuilder.update(config.dbKeyspace, config.dbEnrollmentTable).where()
     .`with`(QueryBuilder.set(config.issued_certificates, updatedCerts))

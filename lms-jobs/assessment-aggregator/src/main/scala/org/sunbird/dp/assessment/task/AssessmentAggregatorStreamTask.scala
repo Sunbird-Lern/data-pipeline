@@ -54,14 +54,17 @@ class AssessmentAggregatorStreamTask(config: AssessmentAggregatorConfig, kafkaCo
               .name(config.assessmentAggregatorFunction).uid(config.assessmentAggregatorFunction)
               .setParallelism(config.assessAggregatorParallelism)
 
+        val userScoreAggregateTask = aggregatorStream.getSideOutput(config.scoreAggregateTag).process(new UserScoreAggregateFunction(config))
+          .name(config.userScoreAggregateFn).uid(config.userScoreAggregateFn).setParallelism(config.scoreAggregatorParallelism)
+
         aggregatorStream.getSideOutput(config.failedEventsOutputTag).addSink(kafkaConnector.kafkaEventSink[Event](config.kafkaFailedTopic))
           .name(config.assessFailedEventsSink).uid(config.assessFailedEventsSink)
           .setParallelism(config.downstreamOperatorsParallelism)
-        aggregatorStream.getSideOutput(config.certIssueOutputTag).addSink(kafkaConnector.kafkaStringSink(config.kafkaCertIssueTopic))
+
+        userScoreAggregateTask.getSideOutput(config.certIssueOutputTag).addSink(kafkaConnector.kafkaStringSink(config.kafkaCertIssueTopic))
           .name(config.certIssueEventSink).uid(config.certIssueEventSink)
           .setParallelism(config.downstreamOperatorsParallelism)
-        aggregatorStream.getSideOutput(config.scoreAggregateTag).process(new UserScoreAggregateFunction(config))
-          .name(config.userScoreAggregateFn).uid(config.userScoreAggregateFn).setParallelism(config.scoreAggregatorParallelism)
+
         env.execute(config.jobName)
     }
 }
