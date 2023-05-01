@@ -434,6 +434,7 @@ legacy-certificate-migrator:
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"
+      rc.rcApiKey = "{{ sunbird_api_auth_token }}"
     }
     enable.suppress.exception = {{ certificate_migrator_enable_suppress_exception | lower }}
     enable.rc.certificate = {{ collection_certificate_generator_enable_rc_certificate | lower }}
