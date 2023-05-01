@@ -71,7 +71,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
       var rcCertId: String = ""
 
       if(stage == "migration_started") {
-        val req = Map("filters" -> Map("oldId"-> certId))
+        val req = Map("filters" -> Map("oldId"-> Map("eq"->certId)), "limit" -> 1.asInstanceOf[AnyRef])
         rcCertId = callCertificateRc(config.rcSearchApi, null, req)
         if(rcCertId == null || rcCertId.isBlank) {
           stage = ""
@@ -129,7 +129,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   def deleteOldRegistry(id: String) = {
     try {
       updateCassandraCertificate(id, "isrevoked", true)
-//      deleteEsRecord(id)
+      deleteEsRecord(id)
     } catch {
       case ex: Exception =>
         logger.error("Old registry deletion failed | old id is not present :: identifier " + id+ " :: " + ex.getMessage)
@@ -193,10 +193,16 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
       case config.rcSearchApi =>
         val req: String = ScalaModuleJsonUtils.serialize(request)
         val searchUri = uri + "/search"
-        val httpResponse = httpUtil.post(searchUri, req)
+        val headers = Map[String, String](
+          "Content-Type" -> "application/json",
+          "Authorization" -> config.rcApiKey
+        )
+        val httpResponse = httpUtil.post(searchUri, req, headers)
         if(httpResponse.status == 200) {
           val resp = ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](httpResponse.body)
-          id = resp.head.getOrElse("osid", null).asInstanceOf[String]
+          if(resp.length > 0){
+            id = resp.head.getOrElse("osid", null).asInstanceOf[String]
+          } else id = ""
         }
         httpResponse.status
       case config.rcPKSearchApi =>
