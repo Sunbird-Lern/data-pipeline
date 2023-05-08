@@ -160,7 +160,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
       "status" -> "ACTIVE",
       "templateUrl" -> replacedUrl,
       "training" -> Training(event.related.getOrElse(config.COURSE_ID, "").asInstanceOf[String], event.courseName, "Course", event.related.getOrElse(config.BATCH_ID, "").asInstanceOf[String]),
-      "recipient" -> Recipient(certModel.identifier, certModel.recipientName, null),
+      "recipient" -> Recipient(certModel.identifier, certModel.recipientName, "user"),
       "issuer" -> Issuer(certModel.issuer.url, certModel.issuer.name, publicKeyId),
       "signatory" -> event.signatoryList,
       "issuedOn" -> event.issuedDate,
