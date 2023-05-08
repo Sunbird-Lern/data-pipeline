@@ -130,7 +130,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
   def getUserEnrolmentData(event: Event, rcCertId: String): UserEnrollmentData = {
     UserEnrollmentData(event.related.getOrElse(config.BATCH_ID, "").asInstanceOf[String], event.userId,
       event.related.getOrElse(config.COURSE_ID, "").asInstanceOf[String], event.courseName, event.templateId,
-      Certificate(rcCertId, event.name, "", formatter.format(new Date()), event.svgTemplate, config.rcEntity))
+      Certificate(rcCertId, event.name, "", event.issuedDate, event.svgTemplate, config.rcEntity))
   }
 
   def deleteOldRegistry(id: String) = {
