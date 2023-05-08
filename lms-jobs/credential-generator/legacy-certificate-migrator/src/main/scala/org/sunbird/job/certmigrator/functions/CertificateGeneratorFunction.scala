@@ -70,6 +70,12 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
       var stage = getStage(event)
       var rcCertId: String = ""
 
+      if(stage == "revoked") {
+        logger.info("Certificate migrator | migrated already | oldId: " + event.oldId)
+        metrics.incCounter(config.skippedEventCount)
+        return
+      }
+
       if(stage == "migration_started") {
         val req = Map("filters" -> Map("oldId"-> Map("eq"->certId)), "limit" -> 1.asInstanceOf[AnyRef])
         rcCertId = callCertificateRc(config.rcSearchApi, null, req)
@@ -97,6 +103,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         deleteOldRegistry(event.oldId)
         updateCassandraCertificate(certId, "reason", "revoked")
         logger.info("Certificate migrator | rc migration completed | oldId: " + event.oldId + ", RC ID: " + rcCertId)
+        metrics.incCounter(config.successEventCount)
       }
 
     } catch {
