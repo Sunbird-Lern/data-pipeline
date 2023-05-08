@@ -43,7 +43,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
     if(esUtil==null)
-      esUtil = new ElasticSearchUtil(config.esConnection, config.certIndex, "config.auditHistoryIndexType")
+      esUtil = new ElasticSearchUtil(config.esConnection, config.certIndex, config.certIndexType)
   }
 
   override def close(): Unit = {
