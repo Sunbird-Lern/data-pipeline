@@ -397,6 +397,58 @@ collection-certificate-generator:
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1
 
+
+legacy-certificate-migrator:
+  legacy-certificate-migrator: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = {{ kafka_topic_migrate_certificate_request }}
+      output.audit.topic = {{ kafka_topic_telemetry_raw }}
+      groupId = {{ kafka_group_certificate_migrator }}
+    }
+    task {
+      restart-strategy.attempts = {{ restart_attempts }} # max 3 restart attempts
+      restart-strategy.delay = 240000 # in milli-seconds # on max restarts (3) within 4 min the job will fail.
+      consumer.parallelism = {{ legacy_certificate_migrator_consumer_parallelism }}
+      parallelism = {{ legacy_certificate_migrator_parallelism }}
+    }
+    lms-cassandra {
+      keyspace = "{{ middleware_course_keyspace }}"
+      user_enrolments.table = "{{ middleware_user_enrolments_table }}"
+      course_batch.table = "{{ middleware_course_batch_table }}"
+      sbkeyspace = "{{ registry_sunbird_keyspace }}"
+      certreg.table ="{{ cert_registry_table }}"
+    }
+    cert_domain_url = "{{ cert_domain_url }}"
+    cert_container_name = "{{ cert_container_name }}"
+    cert_cloud_storage_type = "{{ cert_cloud_storage_type }}"
+    cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
+    cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
+    cloud_storage_base_url = "{{ cloud_storage_base_url }}"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder }}"
+    content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
+    cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
+    service {
+      certreg.basePath = "{{ cert_reg_service_base_url }}"
+      learner.basePath = "{{ learner_service_base_url }}"
+      enc.basePath = "{{ enc_service_base_url }}"
+      rc.basePath = "{{ cert_rc_base_url }}"
+      rc.entity = "{{ cert_rc_entity }}"
+      rc.rcApiKey = "{{ sunbird_api_auth_token }}"
+    }
+    enable.suppress.exception = {{ certificate_migrator_enable_suppress_exception | lower }}
+    enable.rc.certificate = {{ collection_certificate_generator_enable_rc_certificate | lower }}
+    task.rc.badcharlist = {{ collection_certificate_generator_rc_badcharlist }}
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['legacy-certificate-migrator'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['legacy-certificate-migrator'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['legacy-certificate-migrator'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
+
+
 merge-user-courses:
   merge-user-courses: |+
     include file("/data/flink/conf/base-config.conf")
