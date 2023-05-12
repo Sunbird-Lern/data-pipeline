@@ -148,7 +148,7 @@ kafka_topic_assessment_failed: "{{env_name}}.telemetry.assess.failed"
 kafka_topic_lms_notification: "{{env_name}}.lms.notification"
 kafka_topic_enrolment_reconciliation_failed: "{{env_name}}.enrolment.reconciliation.failed"
 kafka_topic_generate_certificate_failed: "{{env_name}}.generate.certificate.failed"
-kafka_topic_migrate_certificate_request: "{{env_name}}.rc.certificate.migrate"
+kafka_topic_migrate_certificate_request: "{{env_name}}.legacy.certificate.migrate"
 kafka_topic_programuser_info: "{{env_name}}.programuser.info"
 
 ## LERN BB specific kafka groups,have to be overridden in private devops repo to include BB Name for integrators.
