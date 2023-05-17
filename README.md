@@ -184,7 +184,7 @@ export cloud_storage_secret=
 export cloud_storage_container=
 ```
 
-### Notes:
+### Note:
 Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about the job data expectation, sample events and execution.
 
 ### Steps to start a job in debug or development mode using IntelliJ:
