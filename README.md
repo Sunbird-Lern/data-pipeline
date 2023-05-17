@@ -185,7 +185,7 @@ export cloud_storage_container=
 ```
 
 ### Note:
-Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about the job data expectation, sample events and execution.
+Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about the job data expectation, sample events and execution. You can run test cases in debug mode to check code flow if you are using IntelliJ for development (steps mentioned below). 
 
 ### Steps to start a job in debug or development mode using IntelliJ:
 1. Navigate to downloaded repository folder and run below command.
