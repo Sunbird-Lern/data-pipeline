@@ -186,7 +186,6 @@ export cloud_storage_secret=
 export cloud_storage_container=
 
 export content_youtube_apikey= #key to fetch metadata of youtube videos
-
 ```
 
 ### Notes:
