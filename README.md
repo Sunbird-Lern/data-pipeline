@@ -179,13 +179,9 @@ kafka-topics.sh --create --zookeeper zookeeper:2181 --replication-factor 1 --par
 Setup cloud storage specific variables as environment variables.
 ```shell
 export cloud_storage_type=  #values can be any cloud service provider
-
-For Cloud Storage connectivity: 
 export cloud_storage_key=
 export cloud_storage_secret=
 export cloud_storage_container=
-
-export content_youtube_apikey= #key to fetch metadata of youtube videos
 ```
 
 ### Notes:
