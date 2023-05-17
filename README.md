@@ -189,6 +189,9 @@ export content_youtube_apikey= #key to fetch metadata of youtube videos
 
 ```
 
+### Notes:
+Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about job data expectation and execution.
+
 ### Steps to start a job in debug or development mode using IntelliJ:
 1. Navigate to downloaded repository folder and run below command.
 ```shell
@@ -225,9 +228,6 @@ mvn clean install -DskipTests
 docker exec -it kafka_container_id sh
 kafka-console-producer.sh --broker-list kafka:9092 --topic sunbirddev.publish.job.request
 ```
-
-### Notes:
-Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about job data expectation and execution.
 
 ## Steps for running jobs in Flink locally:-
 ### Running flink :
