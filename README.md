@@ -175,6 +175,20 @@ Example:
 kafka-topics.sh --create --zookeeper zookeeper:2181 --replication-factor 1 --partitions 1 --topic test_topic 
 ```
 
+### Setting up Cloud storage connection:
+Setup cloud storage specific variables as environment variables.
+```shell
+export cloud_storage_type=  #values can be any cloud service provider
+
+For Cloud Storage connectivity: 
+export cloud_storage_key=
+export cloud_storage_secret=
+export cloud_storage_container=
+
+export content_youtube_apikey= #key to fetch metadata of youtube videos
+
+```
+
 ### Steps to start a job in debug or development mode using IntelliJ:
 1. Navigate to downloaded repository folder and run below command.
 ```shell
@@ -212,6 +226,8 @@ docker exec -it kafka_container_id sh
 kafka-console-producer.sh --broker-list kafka:9092 --topic sunbirddev.publish.job.request
 ```
 
+### Notes:
+Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about job data expectation and execution.
 
 ## Steps for running jobs in Flink locally:-
 ### Running flink :
@@ -233,19 +249,6 @@ cd flink-1.12.7
 localhost:8081
 ```
 
-### Setting up Cloud storage connection:
-Setup cloud storage specific variables as environment variables.
-```shell
-export cloud_storage_type=  #values can be any cloud service provider
-
-For Cloud Storage connectivity: 
-export cloud_storage_key=
-export cloud_storage_secret=
-export cloud_storage_container=
-
-export content_youtube_apikey= #key to fetch metadata of youtube videos
-
-```
 ### Running job in Flink:
 1. Navigate to the required job folder (Example: ../lern-pipeline-jobs/publish-pipeline/content-publish) and run the below maven command to build the application.
 ```shell
