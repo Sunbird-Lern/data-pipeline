@@ -73,7 +73,7 @@ neo4j:3.3.0
 >
 > By default, Neo4j requires authentication and requires us to first login with neo4j/neo4j and set a new password. We will skip this password reset by initializing the authentication none when we create the Docker container using the --env NEO4J_AUTH=none.
 
-3. Load seed data to neo4j using the instructions provided in the [link](master-data/loading-seed-data.md#loading-seed-data-to-neo4j-database)
+3. Load seed data to neo4j using the instructions provided in the [link](https://github.com/Sunbird-Knowlg/knowledge-platform/blob/master/master-data/loading-seed-data.md#loading-seed-data-to-neo4j-database)
 
 4. Verify whether neo4j is running or not by accessing neo4j browser(http://localhost:7474/browser).
 
@@ -95,6 +95,17 @@ docker run --name sunbird_redis -d -p 6379:6379 redis:6.0.8
 ```shell
 docker exec -it sunbird_redis bash
 ```
+
+4. Load Default licenses to cache using below commands.
+```shell
+redis-cli SADD edge_license "CC BY-NC-SA 4.0"
+redis-cli SADD edge_license "CC BY-NC 4.0"
+redis-cli SADD edge_license "CC BY-SA 4.0"
+redis-cli SADD edge_license "CC BY 4.0"
+redis-cli SADD edge_license "Standard Youtube License"
+redis-cli  smembers edge_license
+```
+
 ### cassandra database setup in docker:
 1. we need to get the cassandra image and can be done using the below command.
 ```shell
@@ -120,7 +131,7 @@ docker exec -it sunbird_cassandra cqlsh
 ```shell
 docker exec -it sunbird_cassandra /bin/bash
 ```
-5. Load seed data to cassandra using the instructions provided in the [link](master-data/loading-seed-data.md#loading-seed-data-to-cassandra-database)
+5. Load seed data to cassandra using the instructions provided in the [link](https://github.com/Sunbird-Lern/sunbird-utils/tree/release-5.3.0)
 
 ### Running kafka using docker:
 1. Kafka stores information about the cluster and consumers into Zookeeper. ZooKeeper acts as a coordinator between them. we need to run two services(zookeeper & kafka), Prepare your docker-compose.yml file using the following reference.

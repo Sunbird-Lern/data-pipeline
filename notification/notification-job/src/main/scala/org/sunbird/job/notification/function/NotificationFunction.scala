@@ -1,8 +1,5 @@
 package org.sunbird.job.notification.function
 
-import com.fasterxml.jackson.annotation.JsonInclude
-
-import java.util
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -10,12 +7,14 @@ import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.job.{BaseProcessKeyedFunction, Metrics}
-import org.sunbird.job.notification.task.NotificationConfig
 import org.sunbird.job.notification.domain.{Event, NotificationMessage, NotificationType, NotificationUtil}
+import org.sunbird.job.notification.task.NotificationConfig
 import org.sunbird.job.notification.util.datasecurity.OneWayHashing
+import org.sunbird.job.{BaseProcessKeyedFunction, Metrics}
 import org.sunbird.notification.beans.EmailRequest
 import org.sunbird.notification.utils.FCMResponse
+
+import java.util
 
 class NotificationFunction(config: NotificationConfig,  @transient var notificationUtil: NotificationUtil = null) extends BaseProcessKeyedFunction[String, Event, String](config) {
     
@@ -67,7 +66,6 @@ class NotificationFunction(config: NotificationConfig,  @transient var notificat
     
     override def processElement(event: Event,
                                 context: KeyedProcessFunction[String, Event, String]#Context, metrics: Metrics): Unit = {
-        import scala.collection.JavaConverters._
         println("Certificate data: " + event)
         metrics.incCounter(config.totalEventsCount)
         var requestHash: String = ""
