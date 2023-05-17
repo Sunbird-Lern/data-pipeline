@@ -189,7 +189,7 @@ export content_youtube_apikey= #key to fetch metadata of youtube videos
 ```
 
 ### Notes:
-Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about job data expectation and execution.
+Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about the job data expectation, sample events and execution.
 
 ### Steps to start a job in debug or development mode using IntelliJ:
 1. Navigate to downloaded repository folder and run below command.
