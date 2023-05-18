@@ -107,3 +107,6 @@ processing_lern_kafka_topics:
   - name: programuser.info
     num_of_partitions: 2
     replication_factor: 1
+  - name: prom.monitoring.metrics
+    num_of_partitions: 1
+    replication_factor: 1
