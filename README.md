@@ -17,27 +17,115 @@ export sunbird_dbs_path=~/sunbird-dbs
 ```
 
 
-### Elasticsearch database setup in docker:
+## Setting up Elastic Search in Docker
+
+To set up Elastic Search in Docker, follow the below steps:
+
+1. Obtain the Elastic Search image by executing the following command:
+
 ```shell
-docker run --name sunbird_es -d -p 9200:9200 -p 9300:9300 \
--v $sunbird_dbs_path/es/data:/usr/share/elasticsearch/data \
--v $sunbird_dbs_path/es/logs://usr/share/elasticsearch/logs \
--v $sunbird_dbs_path/es/backups:/opt/elasticsearch/backup \
- -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:6.8.22
+docker pull elasticsearch:6.8.11
+```
+
+For Mac M1 users follow the bellow command:
+```shell
+docker pull --platform=linux/amd64 elasticsearch:6.8.11
+```
+
+2. Create an Elastic Search instance by executing the following command to run it in a container:
+```shell
+docker run -p 9200:9200 --name sunbird_es -v 
+$sunbird_dbs_path/es/data:/usr/share/elasticsearch/data -v 
+$sunbird_dbs_path/es/logs://usr/share/elasticsearch/logs -v 
+$sunbird_dbs_path/es/backups:/opt/elasticsearch/backup 
+-e "discovery.type=single-node" --network sunbird_db_network 
+-d docker.elastic.co/elasticsearch/elasticsearch:6.8.11
+```
+For Mac M1 users follow the bellow command::
+```shell
+docker run --platform=linux/amd64 -p 9200:9200 --name sunbird_es -v 
+$sunbird_dbs_path/es/data:/usr/share/elasticsearch/data -v 
+$sunbird_dbs_path/es/logs://usr/share/elasticsearch/logs -v 
+$sunbird_dbs_path/es/backups:/opt/elasticsearch/backup 
+-e "discovery.type=single-node" --network sunbird_db_network 
+-d docker.elastic.co/elasticsearch/elasticsearch:6.8.11
+```
+
+The above command performs the following actions:
+- "-p 9200:9200" maps the host's port 9200 to the container's port 9200, allowing access to the Elasticsearch API.
+- "--name <container_name>" assigns a name to the container, which can be used to reference it in other Docker commands.
+- "-v <host_directory_path>/es/data:/usr/share/elasticsearch/data" mounts the host's directory "<host_directory_path>/es/data" as the Elasticsearch data directory inside the container.
+- "-v <host_directory_path>/es/logs://usr/share/elasticsearch/logs" mounts the host's directory "<host_directory_path>/es/logs" as the Elasticsearch logs directory inside the container.
+- "-v <host_directory_path>/es/backups:/opt/elasticsearch/backup" mounts the host's directory "<host_directory_path>/es/backups" as the Elasticsearch backups directory inside the container.
+- "-e "discovery.type=single-node"" sets an environment variable "discovery.type" with the value "single-node", which tells Elasticsearch to start as a single-node cluster.
+- "--network <network_name>" assigns the container to a Docker network, which is used to connect the container to other containers in the same network.
+- "-d" runs the container in detached mode, which allows it to run in the background.
+
+To verify the setup, execute the following command. It will display the elastic search status as up and running.
+```shell
+docker ps -a | grep es
+```
+
+If you are using an Ubuntu system, perform the following step to ensure that the necessary permissions are created for the folder:
+```shell
+chmod -R 777 sunbird-dbs/es
+```
+### elastic search Indices and mappings setup
+
+Create indices for,
+To create indices, follow these steps:
+
+1. Copy the JSON content of the index from the provided link below for each index.
+2. Replace `<indices_name>` with the name of the index for which you want to create the mapping.
+3. Replace `<respective_index_json_content>` with the JSON content you copied in step 1.
+
+Use the following api to create each index:
 
 ```
-> --name -  Name your container (avoids generic id)
->
-> -p - Specify container ports to expose
->
-> Using the -p option with ports 7474 and 7687 allows us to expose and listen for traffic on both the HTTP and Bolt ports. Having the HTTP port means we can connect to our database with Neo4j Browser, and the Bolt port means efficient and type-safe communication requests between other layers and the database.
->
-> -d - This detaches the container to run in the background, meaning we can access the container separately and see into all of its processes.
->
-> -v - The next several lines start with the -v option. These lines define volumes we want to bind in our local directory structure so we can access certain files locally.
->
-> --env - Set config as environment variables for Neo4j database
->
+PUT {{es_host}}/<indices_name>
+Body : <respective_index_json_content>
+```
+
+Here's an example curl command for creating the `course-batch` index:
+
+```
+curl --location --request PUT 'localhost:9200/course-batch' \
+--header 'Content-Type: application/json' \
+--data '<course-batch_json_content>'
+```
+
+Make sure to replace `course-batch_json_content` with the name of the index JSON file for the corresponding index.
+
+Here's the list of indices to create and their corresponding links:
+- [Course-batch](https://github.com/project-sunbird/sunbird-devops/blob/release-5.3.0-lern/ansible/roles/es-mapping/files/indices/course-batch.json)
+
+To create mappings for the listed indices, follow these steps:
+
+1. Copy the JSON content of the mapping from the provided link for each index.
+2. Replace `<indices_name>` with the name of the index for which you want to create the mapping.
+3. Replace `<respective_mapping_json_content>` with the JSON content you copied in step 1.
+
+Use the following api to create each mapping:
+
+```
+PUT {{es_host}}/<indices_name>/_mapping/_doc 
+Body: <respective_mapping_json_content>
+```
+
+Here's an example curl command for creating the mapping for the `course-batch` index:
+
+```
+curl --location --request PUT 'localhost:9200/course-batch/_mapping/_doc' \
+--header 'Content-Type: application/json' \
+--data '<course-batch_mapping_json_content>'
+```
+
+Make sure to replace `<course-batch_mapping_json_content>` with the name of the mapping JSON file for the corresponding index.
+
+Here's the list of mappings to create and their corresponding links:
+
+- [Course-batch](https://github.com/project-sunbird/sunbird-devops/blob/release-5.3.0-lern/ansible/roles/es-mapping/files/mappings/course-batch-mapping.json)
+
 
 
 ### Neo4j database setup in docker:
@@ -73,7 +161,7 @@ neo4j:3.3.0
 >
 > By default, Neo4j requires authentication and requires us to first login with neo4j/neo4j and set a new password. We will skip this password reset by initializing the authentication none when we create the Docker container using the --env NEO4J_AUTH=none.
 
-3. Load seed data to neo4j using the instructions provided in the [link](master-data/loading-seed-data.md#loading-seed-data-to-neo4j-database)
+3. Load seed data to neo4j using the instructions provided in the [link](https://github.com/Sunbird-Knowlg/knowledge-platform/blob/master/master-data/loading-seed-data.md#loading-seed-data-to-neo4j-database)
 
 4. Verify whether neo4j is running or not by accessing neo4j browser(http://localhost:7474/browser).
 
@@ -95,6 +183,17 @@ docker run --name sunbird_redis -d -p 6379:6379 redis:6.0.8
 ```shell
 docker exec -it sunbird_redis bash
 ```
+
+4. Load Default licenses to cache using below commands.
+```shell
+redis-cli SADD edge_license "CC BY-NC-SA 4.0"
+redis-cli SADD edge_license "CC BY-NC 4.0"
+redis-cli SADD edge_license "CC BY-SA 4.0"
+redis-cli SADD edge_license "CC BY 4.0"
+redis-cli SADD edge_license "Standard Youtube License"
+redis-cli  smembers edge_license
+```
+
 ### cassandra database setup in docker:
 1. we need to get the cassandra image and can be done using the below command.
 ```shell
@@ -120,7 +219,7 @@ docker exec -it sunbird_cassandra cqlsh
 ```shell
 docker exec -it sunbird_cassandra /bin/bash
 ```
-5. Load seed data to cassandra using the instructions provided in the [link](master-data/loading-seed-data.md#loading-seed-data-to-cassandra-database)
+5. Load seed data to cassandra using the instructions provided in the [link](https://github.com/Sunbird-Lern/sunbird-utils/tree/release-5.3.0)
 
 ### Running kafka using docker:
 1. Kafka stores information about the cluster and consumers into Zookeeper. ZooKeeper acts as a coordinator between them. we need to run two services(zookeeper & kafka), Prepare your docker-compose.yml file using the following reference.
@@ -164,6 +263,18 @@ Example:
 kafka-topics.sh --create --zookeeper zookeeper:2181 --replication-factor 1 --partitions 1 --topic test_topic 
 ```
 
+### Setting up Cloud storage connection:
+Setup cloud storage specific variables as environment variables.
+```shell
+export cloud_storage_type=  #values can be any cloud service provider
+export cloud_storage_key=
+export cloud_storage_secret=
+export cloud_storage_container=
+```
+
+### Note:
+Please go through test cases in Test/Spec file under 'test' folder of the targeted job to get brief idea about the job data expectation, sample events and execution. You can run test cases in debug mode to check code flow if you are using IntelliJ for development (steps mentioned below). 
+
 ### Steps to start a job in debug or development mode using IntelliJ:
 1. Navigate to downloaded repository folder and run below command.
 ```shell
@@ -201,7 +312,6 @@ docker exec -it kafka_container_id sh
 kafka-console-producer.sh --broker-list kafka:9092 --topic sunbirddev.publish.job.request
 ```
 
-
 ## Steps for running jobs in Flink locally:-
 ### Running flink :
 1. Download the Apache flink
@@ -222,19 +332,6 @@ cd flink-1.12.7
 localhost:8081
 ```
 
-### Setting up Cloud storage connection:
-Setup cloud storage specific variables as environment variables.
-```shell
-export cloud_storage_type=  #values can be any cloud service provider
-
-For Cloud Storage connectivity: 
-export cloud_storage_key=
-export cloud_storage_secret=
-export cloud_storage_container=
-
-export content_youtube_apikey= #key to fetch metadata of youtube videos
-
-```
 ### Running job in Flink:
 1. Navigate to the required job folder (Example: ../lern-pipeline-jobs/publish-pipeline/content-publish) and run the below maven command to build the application.
 ```shell

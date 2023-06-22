@@ -3,7 +3,7 @@ version: 2.0
 jobs:
   unit-tests:
     docker:
-      - image: circleci/openjdk:stretch
+      - image: cimg/openjdk:11.0.19
     resource_class: medium
     working_directory: ~/lern
     steps:
