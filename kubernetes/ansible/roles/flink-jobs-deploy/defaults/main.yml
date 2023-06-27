@@ -39,6 +39,12 @@ producer_max_request_size: 1572864
 producer_batch_size: 98304
 producer_linger_ms: 10
 redis_timeout: 30000
+### Release-5.4.0 LR-511
+redis_database_relation_cache_index: 10
+redis_database_content_cache_index: 5
+redis_meta_database_user_id: 12
+redis_dp_redis_database_index: 5
+redis_database_index: 10
 
 ### Activity Aggregate job related vars
 activity_agg_consumer_parallelism: 1
