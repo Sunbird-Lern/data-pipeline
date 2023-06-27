@@ -184,7 +184,7 @@ activity-aggregate-updater:
     }
     redis {
       database {
-        relationCache.id = {{ redis_database_relation_cache_index }}
+        relationCache.id = {{ redis_database_relation_cache_index | 10 }}
       }
     }
     dedup-redis {
@@ -231,12 +231,12 @@ relation-cache-updater:
           table = "{{ middleware_content_hierarchy_table }}"
     }
     redis {
-      database.index = {{ redis_database_index }}
+      database.index = {{ redis_database_index | 10 }}
     }
     dp-redis {
       host = {{ dp_redis_host }}
       port = 6379
-      database.index = {{ redis_dp_redis_database_index }}
+      database.index = {{ redis_dp_redis_database_index | 5 }}
     }
 
   flink-conf: |+
@@ -272,7 +272,7 @@ enrolment-reconciliation:
     }
     redis {
       database {
-        relationCache.id = {{ redis_database_relation_cache_index }}
+        relationCache.id = {{ redis_database_relation_cache_index | 10 }}
       }
     }
     threshold.batch.write.size = {{ enrolment_reconciliation_batch_write_size }}
@@ -508,8 +508,8 @@ assessment-aggregator:
     }
     redis {
       database {
-        relationCache.id = {{ redis_database_relation_cache_index }}
-        contentCache.id = {{ redis_database_content_cache_index }}
+        relationCache.id = {{ redis_database_relation_cache_index | 10 }}
+        contentCache.id = {{ redis_database_content_cache_index | 5 }}
       }
     }
     assessment.skip.missingRecords = true
@@ -580,7 +580,7 @@ user-cache-updater-v2:
     # redis-metadata
     redis-meta {
       database {
-        userstore.id = {{ redis_meta_database_user_id }}
+        userstore.id = {{ redis_meta_database_user_id | 12 }}
         key.expiry.seconds = 3600
       }
     }
