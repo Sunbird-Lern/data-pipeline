@@ -8,13 +8,13 @@ import org.sunbird.job.BaseJobConfig
 
 import java.util
 
-class CollectionCertPreProcessorConfig(override val config: Config) extends BaseJobConfig(config, "collection-cert-pre-processor") {
+class CollectionCertPreProcessorConfig(override val config: Config) extends BaseJobConfig(config, "'collection-cert-pre-processor'") {
 
     implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
     
     //Redis config
-    val collectionCacheStore: Int = 0
-    val contentCacheStore: Int = 5
+    val collectionCacheStore: Int = config.getInt("redis_collection_cache_index")
+    val contentCacheStore: Int = config.getInt("redis_database_content_cache_index")
     val metaRedisHost: String = config.getString("redis-meta.host")
     val metaRedisPort: Int = config.getInt("redis-meta.port")
 
