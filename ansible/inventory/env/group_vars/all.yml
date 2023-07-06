@@ -173,4 +173,6 @@ cloud_storage_project_id: ""
 cloud_storage_flink_bucketname: "flink-check-points-store"
 
 #(user read api details)
-user_read_api_endpoint: "/userorg/private/user/v1/read/"
+user_read_api_endpoint: "/learner/private/user/v1/read/"
+
+sunbird_api_auth_token: "{{ core_vault_sunbird_api_auth_token }}"
