@@ -580,7 +580,7 @@ user-cache-updater-v2:
     # redis-metadata
     redis-meta {
       database {
-        userstore.id = {{ redis_meta_database_user_id | default(12) }}
+        userstore.id = {{ redis_meta_database_user_index | default(12) }}
         key.expiry.seconds = 3600
       }
     }
