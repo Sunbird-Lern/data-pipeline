@@ -184,7 +184,7 @@ activity-aggregate-updater:
     }
     redis {
       database {
-        relationCache.id = {{ redis_database_relation_cache_index | 10 }}
+        relationCache.id = {{ redis_database_relation_cache_index | default(10) }}
       }
     }
     dedup-redis {
@@ -231,12 +231,12 @@ relation-cache-updater:
           table = "{{ middleware_content_hierarchy_table }}"
     }
     redis {
-      database.index = {{ redis_database_index | 10 }}
+      database.index = {{ redis_database_index | default(10) }}
     }
     dp-redis {
       host = {{ dp_redis_host }}
       port = 6379
-      database.index = {{ redis_dp_redis_database_index | 5 }}
+      database.index = {{ redis_dp_redis_database_index | default(5) }}
     }
 
   flink-conf: |+
@@ -272,7 +272,7 @@ enrolment-reconciliation:
     }
     redis {
       database {
-        relationCache.id = {{ redis_database_relation_cache_index | 10 }}
+        relationCache.id = {{ redis_database_relation_cache_index | default(10) }}
       }
     }
     threshold.batch.write.size = {{ enrolment_reconciliation_batch_write_size }}
@@ -346,7 +346,7 @@ collection-cert-pre-processor:
     parallelism.default: 1
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1
-    
+
 collection-certificate-generator:
   collection-certificate-generator: |+
     include file("/data/flink/conf/base-config.conf")
@@ -508,8 +508,8 @@ assessment-aggregator:
     }
     redis {
       database {
-        relationCache.id = {{ redis_database_relation_cache_index | 10 }}
-        contentCache.id = {{ redis_database_content_cache_index | 5 }}
+        relationCache.id = {{ redis_database_relation_cache_index | default(10) }}
+        contentCache.id = {{ redis_database_content_cache_index | default(5) }}
       }
     }
     assessment.skip.missingRecords = true
@@ -580,7 +580,7 @@ user-cache-updater-v2:
     # redis-metadata
     redis-meta {
       database {
-        userstore.id = {{ redis_meta_database_user_id | 12 }}
+        userstore.id = {{ redis_meta_database_user_index | default(12) }}
         key.expiry.seconds = 3600
       }
     }
