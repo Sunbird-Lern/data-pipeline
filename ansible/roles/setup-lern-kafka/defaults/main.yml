@@ -57,6 +57,9 @@ processing_lern_kafka_overriden_topics:
   - name: prom.monitoring.metrics
     retention_time: 172800000
     replication_factor: 1
+  - name: telemetry.audit
+    retention_time: 172800000
+    replication_factor: 1
 
 processing_lern_kafka_topics:
   - name: telemetry.assess
@@ -112,4 +115,7 @@ processing_lern_kafka_topics:
     replication_factor: 1
   - name: prom.monitoring.metrics
     num_of_partitions: 1
+    replication_factor: 1
+  - name: telemetry.audit
+    num_of_partitions: 2
     replication_factor: 1
