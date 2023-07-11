@@ -13,8 +13,8 @@ class CollectionCertPreProcessorConfig(override val config: Config) extends Base
     implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
     
     //Redis config
-    val collectionCacheStore: Int = config.getInt("redis_collection_cache_index")
-    val contentCacheStore: Int = config.getInt("redis_database_content_cache_index")
+    val collectionCacheStore: Int = config.getInt("redis.collectionCache.id")
+    val contentCacheStore: Int = config.getInt("redis.database.contentCache.id")
     val metaRedisHost: String = config.getString("redis-meta.host")
     val metaRedisPort: Int = config.getInt("redis-meta.port")
 
