@@ -321,7 +321,7 @@ collection-cert-pre-processor:
           database {
             contentCache.id = {{ redis_database_content_cache_index | default(5) }}
           }
-    collectionCache.id = {{ redis_collection_cache_index | default(0) }}
+        collectionCache.id = {{ redis_collection_cache_index | default(0) }}
     }
     cert_domain_url = "{{ cert_domain_url }}"
     user_read_api = "/private/user/v1/read"
