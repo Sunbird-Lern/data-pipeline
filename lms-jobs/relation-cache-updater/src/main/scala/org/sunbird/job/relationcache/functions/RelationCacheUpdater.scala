@@ -5,7 +5,6 @@ import org.apache.commons.collections.{CollectionUtils, MapUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
-//import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.fasterxml.jackson.core.JsonParser.Feature
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
@@ -28,7 +27,7 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
     private[this] val logger = LoggerFactory.getLogger(classOf[RelationCacheUpdater])
     private var dataCache: DataCache = _
     private var collectionCache: DataCache = _
-    lazy private val mapper: ObjectMapper = new ObjectMapper();
+    lazy private val mapper: ObjectMapper = new ObjectMapper()
     private val allowedActions = List("post-publish-process", "relation-cache-update")
 
 
