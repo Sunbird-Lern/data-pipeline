@@ -107,12 +107,14 @@ class ProgramUserInfoEventSource extends SourceFunction[Event] {
     val eventMap4 = JSONUtil.deserialize[util.HashMap[String, Any]](EventFixture.NO_DATA)
     val eventMap5 = JSONUtil.deserialize[util.HashMap[String, Any]](EventFixture.USERLOCATION_MISSING)
     val eventMap6 = JSONUtil.deserialize[util.HashMap[String, Any]](EventFixture.ROOTORG_MISSING)
+    val eventMap7 = JSONUtil.deserialize[util.HashMap[String, Any]](EventFixture.WHEN_SUBTYPE_HAVING_DUPLICATE_ENTRIES)
     ctx.collect(new Event(eventMap1))
     ctx.collect(new Event(eventMap2))
     ctx.collect(new Event(eventMap3))
     ctx.collect(new Event(eventMap4))
     ctx.collect(new Event(eventMap5))
     ctx.collect(new Event(eventMap6))
+    ctx.collect(new Event(eventMap7))
   }
 
   override def cancel() = {}
