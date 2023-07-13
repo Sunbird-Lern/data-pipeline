@@ -36,7 +36,6 @@ class ContentConsumptionDeDupFunction(config: ActivityAggregateUpdaterConfig)(im
   }
 
   override def processElement(event: util.Map[String, AnyRef], context: ProcessFunction[util.Map[String, AnyRef], String]#Context, metrics: Metrics): Unit = {
-    logger.info("events => "+event)
     metrics.incCounter(config.totalEventCount)
     val eData = event.get(config.eData).asInstanceOf[util.Map[String, AnyRef]].asScala
     val isBatchEnrollmentEvent: Boolean = StringUtils.equalsIgnoreCase(eData.getOrElse(config.action, "").asInstanceOf[String], config.batchEnrolmentUpdateCode)
@@ -46,24 +45,17 @@ class ContentConsumptionDeDupFunction(config: ActivityAggregateUpdaterConfig)(im
       if (filteredContents.size == 0)
         {
           metrics.incCounter(config.skipEventsCount)
-          logger.info(" <== SKIPPED in isBatchEnrollmentEvent if loop =>")
         }
       else
         {
           metrics.incCounter(config.batchEnrolmentUpdateEventCount)
-          logger.info(" <== PROCESSING =>")
         }
-//      filteredContents.map(c => {
-//        (eData + ("contents" -> List(Map("contentId" -> c.get("contentId"), "status" -> c.get("status"))))).toMap
-//      }).filter(e => discardDuplicates(e)).foreach(d => context.output(config.uniqueConsumptionOutput, d))
       val fc = filteredContents.map(c => {
         (eData + ("contents" -> List(Map("contentId" -> c.get("contentId"), "status" -> c.get("status"))))).toMap
       }).filter(e => discardDuplicates(e))
-      logger.info("filteredContents count:: "+ fc.size + " contents : " + filteredContents)
       fc.foreach(d => context.output(config.uniqueConsumptionOutput, d))
     } else
       {
-        logger.info(" <== SKIPPED in isBatchEnrollmentEvent else part =>")
         metrics.incCounter(config.skipEventsCount)
       }
   }

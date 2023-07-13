@@ -20,22 +20,15 @@ trait IssueCertificateHelper {
     def issueCertificate(event:Event, template: Map[String, String])(cassandraUtil: CassandraUtil, cache:DataCache, contentCache: DataCache, metrics: Metrics, config: CollectionCertPreProcessorConfig, httpUtil: HttpUtil): String = {
         //validCriteria
         logger.info("issueCertificate i/p event =>"+event)
-        logger.info("template in issueCertificate() =>"+template)
         val criteria = validateTemplate(template, event.batchId)(config)
-        logger.info("criteria in issueCertificate() =>"+criteria)
         //validateEnrolmentCriteria
         val certName = template.getOrElse(config.name, "")
-        logger.info("certName in issueCertificate() =>"+certName)
         val additionalProps: Map[String, List[String]] = ScalaJsonUtil.deserialize[Map[String, List[String]]](template.getOrElse("additionalProps", "{}"))
-        logger.info("additionalProps in issueCertificate() =>"+additionalProps)
         val enrolledUser: EnrolledUser = validateEnrolmentCriteria(event, criteria.getOrElse(config.enrollment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], certName, additionalProps)(metrics, cassandraUtil, config)
-        logger.info("enrolledUser in issueCertificate() =>"+enrolledUser)
         //validateAssessmentCriteria
         val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps)(metrics, cassandraUtil, contentCache, config)
-        logger.info("assessedUser in issueCertificate() =>"+assessedUser)
         //validateUserCriteria
         val userDetails = validateUser(assessedUser.userId, criteria.getOrElse(config.user, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], additionalProps)(metrics, config, httpUtil)
-        logger.info("userDetails in issueCertificate() =>"+userDetails)
 
         //generateCertificateEvent
         if(userDetails.nonEmpty) {
@@ -48,7 +41,6 @@ trait IssueCertificateHelper {
     
     def validateTemplate(template: Map[String, String], batchId: String)(config: CollectionCertPreProcessorConfig):Map[String, AnyRef] = {
         val criteria = ScalaJsonUtil.deserialize[Map[String, AnyRef]](template.getOrElse(config.criteria, "{}"))
-        logger.info("criteria in validateTemplate() ??? =>"+criteria)
         if(!template.getOrElse("url", "").isEmpty && !criteria.isEmpty && !criteria.keySet.intersect(Set(config.enrollment, config.assessment, config.users)).isEmpty) {
             criteria
         } else {
@@ -57,50 +49,39 @@ trait IssueCertificateHelper {
     }
 
     def validateEnrolmentCriteria(event: Event, enrollmentCriteria: Map[String, AnyRef], certName: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig): EnrolledUser = {
-        logger.info("enrollmentCriteria ??? =>"+enrollmentCriteria)
         if(!enrollmentCriteria.isEmpty) {
             val query = QueryBuilder.select().from(config.keyspace, config.userEnrolmentsTable)
               .where(QueryBuilder.eq(config.dbUserId, event.userId)).and(QueryBuilder.eq(config.dbCourseId, event.courseId))
               .and(QueryBuilder.eq(config.dbBatchId, event.batchId))
-            logger.info("query in validateEnrolmentCriteria ??? =>"+query)
             val row = cassandraUtil.findOne(query.toString)
-            logger.info("row in validateEnrolmentCriteria ??? =>"+row)
             metrics.incCounter(config.dbReadCount)
             val enrolmentAdditionProps = additionalProps.getOrElse(config.enrollment, List[String]())
-            logger.info("enrolmentAdditionProps in validateEnrolmentCriteria ??? =>"+enrolmentAdditionProps)
             if(null != row){
                 val active:Boolean = row.getBool(config.active)   
                 val issuedCertificates = row.getList(config.issuedCertificates, TypeTokens.mapOf(classOf[String], classOf[String])).asScala.toList
                 val isCertIssued = !issuedCertificates.isEmpty && !issuedCertificates.filter(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name,"").asInstanceOf[String])).isEmpty
                 val status = row.getInt(config.status)
                 val criteriaStatus = enrollmentCriteria.getOrElse(config.status, 2)
-                logger.info("criteriaStatus in validateEnrolmentCriteria ??? =>"+criteriaStatus)
                 val oldId = if(isCertIssued && event.reIssue) issuedCertificates.filter(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name,"").asInstanceOf[String]))
                   .map(cert => cert.getOrDefault(config.identifier, "")).head else ""
                 val userId = if(active && (criteriaStatus == status) && (!isCertIssued || event.reIssue)) event.userId else ""
                 val issuedOn = row.getTimestamp(config.completedOn)
                 val addProps = enrolmentAdditionProps.map(prop => (prop -> row.getObject(prop.toLowerCase))).toMap
-                logger.info("userId in validateEnrolmentCriteria ??? =>"+userId)
                 EnrolledUser(userId, oldId, issuedOn, {if(addProps.nonEmpty) Map[String, Any](config.enrollment -> addProps) else Map()})
             } else EnrolledUser("", "")
         } else EnrolledUser(event.userId, "") 
     }
 
     def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
-        logger.info("assessmentCriteria ??? =>"+assessmentCriteria)
-        logger.info("enrolledUser ???  =>"+enrolledUser)
         if(!assessmentCriteria.isEmpty && !enrolledUser.isEmpty) {
             val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
-            logger.info("filteredUserAssessments =>"+filteredUserAssessments)
             val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore)).toMap
-            logger.info("scoreMap =>"+scoreMap)
             val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
             val assessmentAdditionProps = additionalProps.getOrElse(config.assessment, List())
             val addProps = {
                 if (assessmentAdditionProps.nonEmpty && assessmentAdditionProps.contains("score")) Map("score" -> scoreMap)
                 else Map()
             }
-            logger.info("isValid =>"+isValidAssessCriteria(assessmentCriteria, score))
             if(isValidAssessCriteria(assessmentCriteria, score)) {
                 AssessedUser(enrolledUser, {if(addProps.nonEmpty) Map[String, Any](config.assessment -> addProps) else Map()})
             } else AssessedUser("")
@@ -108,13 +89,9 @@ trait IssueCertificateHelper {
     }
 
     def validateUser(userId: String, userCriteria: Map[String, AnyRef], additionalProps: Map[String, List[String]])(metrics:Metrics, config:CollectionCertPreProcessorConfig, httpUtil: HttpUtil) = {
-        logger.info("userId =>"+userId)
-
         if(!userId.isEmpty) {
             val url = config.learnerBasePath + config.userReadApi + "/" + userId + "?organisations,roles,locations,declarations,externalIds"
-            logger.info("url =>"+url)
             val result = getAPICall(url, "response")(config, httpUtil, metrics)
-            logger.info("result =>"+result)
             if(userCriteria.isEmpty || userCriteria.size == userCriteria.filter(uc => uc._2 == result.getOrElse(uc._1, null)).size) {
                 result
             } else Map[String, AnyRef]()
@@ -123,11 +100,9 @@ trait IssueCertificateHelper {
     
     def getMaxScore(event: Event)(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig, contentCache: DataCache):Map[String, Set[AssessmentUserAttempt]] = {
         val contextId = "cb:" + event.batchId
-        logger.info("contextId =>"+contextId)
         val query = QueryBuilder.select().column("aggregates").column("agg").from(config.keyspace, config.useActivityAggTable)
           .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
           .and(QueryBuilder.eq("user_id", event.userId)).and(QueryBuilder.eq("context_id", contextId))
-        logger.info("query =>"+query)
         val rows: java.util.List[Row] = cassandraUtil.find(query.toString)
         metrics.incCounter(config.dbReadCount)
         if(null != rows && !rows.isEmpty) {
@@ -140,17 +115,13 @@ trait IssueCertificateHelper {
             val userAssessments = aggs.keySet.filter(key => key.startsWith("score:")).map(
                 key => {
                     val id= key.replaceAll("score:", "")
-                    logger.info("id =>"+id)
                     AssessmentUserAttempt(id, aggs.getOrElse("score:" + id, 0d), aggs.getOrElse("max_score:" + id, 1d))
                 }).groupBy(f => f.contentId)
               
             val filteredUserAssessments = userAssessments.filterKeys(key => {
-                logger.info("key =>"+key)
                 val metadata = contentCache.getWithRetry(key)
-                logger.info("metadata =>"+metadata)
                 if (metadata.nonEmpty) {
                     val contentType = metadata.getOrElse("contenttype", "")
-                    logger.info("contentType =>"+contentType)
                     config.assessmentContentTypes.contains(contentType)
                 } else if(!metadata.nonEmpty && config.enableSuppressException){
                         logger.error("Suppressed exception: Metadata cache not available for: " + key)
