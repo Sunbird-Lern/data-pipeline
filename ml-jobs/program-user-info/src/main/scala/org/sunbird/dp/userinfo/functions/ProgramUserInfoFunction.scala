@@ -93,8 +93,8 @@ class ProgramUserInfoFunction(config: ProgramUserInfoConfig,
       val subTypeBuilder = new StringBuilder
       val subTypeSet = new util.HashSet[String]
       event.user_Types.forEach(f => {
-        userTypeData.put("type", Option(f.get("type")).map(_.toString).filter(_.nonEmpty).orNull)
-        val subType = Option(f.get("subType")).map(_.toString).filter(_.nonEmpty).orNull
+        userTypeData.put("type", Option(f.get("type")).map(_.toString).filter(_.nonEmpty).map(_.toLowerCase).orNull)
+        val subType = Option(f.get("subType")).map(_.toString).filter(_.nonEmpty).map(_.toUpperCase).orNull
         if (subType != null && !subTypeSet.contains(subType)) {
           if (subTypeBuilder.length() > 0) {
             subTypeBuilder.append(",")
