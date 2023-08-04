@@ -15,7 +15,7 @@ class StorageService(storageParams: StorageParams) extends Serializable {
   @throws[Exception]
   def getService: BaseStorageService = {
     if (null == storageService) {
-        storageService = StorageServiceFactory.getStorageService(StorageConfig(storageParams.cloudStorageType, storageParams.storageKey, storageParams.storageSecret))
+        storageService = StorageServiceFactory.getStorageService(StorageConfig(storageParams.cloudStorageType, storageParams.storageKey, storageParams.storageSecret,storageParams.storageEndpoint))
       } else {
         throw new ServerException("ERR_INVALID_CLOUD_STORAGE", "Error while initialising cloud storage")
       }
