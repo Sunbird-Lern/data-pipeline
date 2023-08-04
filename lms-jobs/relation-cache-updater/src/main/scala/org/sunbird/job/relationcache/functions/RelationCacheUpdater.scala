@@ -5,7 +5,9 @@ import org.apache.commons.collections.{CollectionUtils, MapUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.json.JsonReadFeature
+import com.fasterxml.jackson.core.JsonParser.Feature
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
 import org.sunbird.job.cache.{DataCache, RedisConnect}
@@ -87,7 +89,10 @@ class RelationCacheUpdater(config: RelationCacheUpdaterConfig)
 
     private def getHierarchy(identifier: String)(implicit metrics: Metrics): java.util.Map[String, AnyRef] = {
         val hierarchy = readHierarchyFromDb(identifier)
+
         metrics.incCounter(config.dbReadCount)
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        mapper.configure(Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true)
         if (StringUtils.isNotBlank(hierarchy))
             mapper.readValue(hierarchy, classOf[java.util.Map[String, AnyRef]])
         else new java.util.HashMap[String, AnyRef]()

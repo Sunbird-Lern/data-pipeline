@@ -75,9 +75,7 @@ trait IssueCertificateHelper {
     def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
         if(!assessmentCriteria.isEmpty && !enrolledUser.isEmpty) {
             val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
-            
             val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore)).toMap
-            
             val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
             val assessmentAdditionProps = additionalProps.getOrElse(config.assessment, List())
             val addProps = {
@@ -105,7 +103,6 @@ trait IssueCertificateHelper {
         val query = QueryBuilder.select().column("aggregates").column("agg").from(config.keyspace, config.useActivityAggTable)
           .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
           .and(QueryBuilder.eq("user_id", event.userId)).and(QueryBuilder.eq("context_id", contextId))
-
         val rows: java.util.List[Row] = cassandraUtil.find(query.toString)
         metrics.incCounter(config.dbReadCount)
         if(null != rows && !rows.isEmpty) {

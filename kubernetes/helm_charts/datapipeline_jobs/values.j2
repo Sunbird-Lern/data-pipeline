@@ -4,8 +4,8 @@ dockerhub: {{ dockerhub }}
 repository: {{flink_repository|default('data-pipeline')}}
 image_tag: {{ image_tag }}
 checkpoint_store_type: {{ checkpoint_store_type }}
-cloud_storage_key: {{ cloud_private_storage_accountname }}
-cloud_storage_secret: {{ cloud_private_storage_secret }}
+cloud_storage_key: {{ cloud_storage_key }}
+cloud_storage_secret: {{ cloud_storage_secret }}
 cloud_storage_endpoint: {{ cloud_private_storage_endpoint }}
 cloud_storage_path_style_access: {{ cloud_storage_pathstyle_access }}
 cloud_storage_project_id: {{ cloud_private_storage_project }}
@@ -100,7 +100,7 @@ base_config: |
 {% if checkpoint_store_type == "azure" %}
         base.url = "wasbs://"${job.statebackend.blob.storage.container}"@"${job.statebackend.blob.storage.account}"/"${job.statebackend.blob.storage.checkpointing.dir}
 {% elif checkpoint_store_type == "s3" %}
-        base.url = "s3://"${job.statebackend.blob.storage.account}"/"${job.statebackend.blob.storage.container}"/"${job.statebackend.blob.storage.checkpointing.dir}
+        base.url = "s3://"${job.statebackend.blob.storage.container}"/"${job.statebackend.blob.storage.checkpointing.dir}
 {% endif %}
       }
     }
@@ -324,8 +324,11 @@ collection-cert-pre-processor:
       port = 6379
     }
     assessment.metrics.supported.contenttype = ["SelfAssess"]
+    cert_cloud_storage_type = "{{ cert_cloud_storage_type }}"
+    cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
+    cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
     cloud_storage_base_url = "{{ cloud_storage_base_url }}"
-    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder }}"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder | default('CLOUD_BASE_PATH')}}"
     content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
 
@@ -364,7 +367,7 @@ collection-certificate-generator:
     cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
     cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
     cloud_storage_base_url = "{{ cloud_storage_base_url }}"
-    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder }}"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder | default('CLOUD_BASE_PATH')}}"
     content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {

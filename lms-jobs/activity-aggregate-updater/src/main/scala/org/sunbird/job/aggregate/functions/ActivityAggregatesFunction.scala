@@ -67,7 +67,7 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
         val courseId = value.head(config.courseId).toString
         val userConsumedContents = value.head(config.contents).asInstanceOf[List[Map[String, AnyRef]]]
         val enrichedContents = getContentStatusFromEvent(userConsumedContents)
-        UserContentConsumption(userId = userId, batchId = batchId, courseId = courseId, enrichedContents)
+      UserContentConsumption(userId = userId, batchId = batchId, courseId = courseId, enrichedContents)
       }).toList
 
     // Fetch the content status from the table in batch format
