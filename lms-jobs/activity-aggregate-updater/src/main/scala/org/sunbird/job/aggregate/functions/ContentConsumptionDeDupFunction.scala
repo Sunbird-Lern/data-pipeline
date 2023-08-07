@@ -43,13 +43,21 @@ class ContentConsumptionDeDupFunction(config: ActivityAggregateUpdaterConfig)(im
       val contents = eData.getOrElse(config.contents, new util.ArrayList[java.util.Map[String, AnyRef]]()).asInstanceOf[util.List[java.util.Map[String, AnyRef]]].asScala
       val filteredContents = contents.filter(x => x.get("status") == 2).toList
       if (filteredContents.size == 0)
-        metrics.incCounter(config.skipEventsCount)
+        {
+          metrics.incCounter(config.skipEventsCount)
+        }
       else
-        metrics.incCounter(config.batchEnrolmentUpdateEventCount)
-      filteredContents.map(c => {
+        {
+          metrics.incCounter(config.batchEnrolmentUpdateEventCount)
+        }
+      val fc = filteredContents.map(c => {
         (eData + ("contents" -> List(Map("contentId" -> c.get("contentId"), "status" -> c.get("status"))))).toMap
-      }).filter(e => discardDuplicates(e)).foreach(d => context.output(config.uniqueConsumptionOutput, d))
-    } else metrics.incCounter(config.skipEventsCount)
+      }).filter(e => discardDuplicates(e))
+      fc.foreach(d => context.output(config.uniqueConsumptionOutput, d))
+    } else
+      {
+        metrics.incCounter(config.skipEventsCount)
+      }
   }
 
   override def metricsList(): List[String] = {
