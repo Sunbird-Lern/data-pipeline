@@ -8,7 +8,13 @@
         <version>1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
+    <properties>
+        <encoding>UTF-8</encoding>
+        <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
+        <CLOUD_STORE_GROUP_ID>org.sunbird</CLOUD_STORE_GROUP_ID>
+        <CLOUD_STORE_ARTIFACT_ID>cloud-store-sdk_${scala.version}</CLOUD_STORE_ARTIFACT_ID>
+        <CLOUD_STORE_VERSION>1.4.6</CLOUD_STORE_VERSION>
+    </properties>
     <artifactId>certificate-processor</artifactId>
     <dependencies>
         <dependency>
@@ -18,9 +24,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.sunbird</groupId>
-            <artifactId>cloud-store-sdk_${scala.version}</artifactId>
-            <version>1.4.3</version>
+            <groupId>${CLOUD_STORE_GROUP_ID}</groupId>
+            <artifactId>${CLOUD_STORE_ARTIFACT_ID}</artifactId>
+            <version>${CLOUD_STORE_VERSION}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -77,10 +83,6 @@
         </dependency>
     </dependencies>
 
-    <properties>
-        <encoding>UTF-8</encoding>
-        <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
-    </properties>
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
