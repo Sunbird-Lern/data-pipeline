@@ -20,7 +20,7 @@ jobs:
       - run:
           name: Execute coverage report
           command: |
-            mvn clean scoverage:report
+            mvn clean scoverage:report -DCLOUD_STORE_GROUP_ID=$CLOUD_STORE_GROUP_ID -DCLOUD_STORE_ARTIFACT_ID=$CLOUD_STORE_ARTIFACT_ID -DCLOUD_STORE_VERSION=$CLOUD_STORE_VERSION
       - run:
           name: Save test results
           command: |
@@ -36,7 +36,7 @@ jobs:
       - run:
            name: sonar
            command: |
-             mvn verify -DskipTests=true sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.java.binaries=$(find . -path '*/build/classes/java' | xargs | tr ' ' ',') -Dsonar.coverage.exclusions=**/notification-sdk/**,**/notification/domain/** -Dsonar.test.exclusions=**/notification-sdk/** -Dsonar.exclusions=**/**.java -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
+             mvn verify -DskipTests=true sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.java.binaries=$(find . -path '*/build/classes/java' | xargs | tr ' ' ',') -Dsonar.coverage.exclusions=**/notification-sdk/**,**/notification/domain/** -Dsonar.test.exclusions=**/notification-sdk/** -Dsonar.exclusions=**/**.java -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml -DCLOUD_STORE_GROUP_ID=$CLOUD_STORE_GROUP_ID -DCLOUD_STORE_ARTIFACT_ID=$CLOUD_STORE_ARTIFACT_ID -DCLOUD_STORE_VERSION=$CLOUD_STORE_VERSION
 
 workflows:
   version: 2
