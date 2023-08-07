@@ -1,13 +1,12 @@
 package org.sunbird.job.relationcache.functions
 
 import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.fasterxml.jackson.core.JsonParser.Feature
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
 import org.apache.commons.collections.{CollectionUtils, MapUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
-import com.fasterxml.jackson.core.json.JsonReadFeature
-import com.fasterxml.jackson.core.JsonParser.Feature
-import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
 import org.sunbird.job.cache.{DataCache, RedisConnect}
