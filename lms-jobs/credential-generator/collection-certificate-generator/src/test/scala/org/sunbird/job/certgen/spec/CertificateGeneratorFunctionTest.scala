@@ -34,7 +34,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
   lazy val jobConfig: CertificateGeneratorConfig = new CertificateGeneratorConfig(config)
   val httpUtil: HttpUtil = new HttpUtil
   val mockHttpUtil = mock[HttpUtil](Mockito.withSettings().serializable())
-  val storageParams: StorageParams = StorageParams(jobConfig.storageType, jobConfig.storageKey, jobConfig.storageSecret, jobConfig.containerName)
+  val storageParams: StorageParams = StorageParams(jobConfig.storageType, jobConfig.storageKey, jobConfig.storageSecret, jobConfig.containerName, Option(jobConfig.storageEndpoint))
   val storageService: StorageService = new StorageService(storageParams)
   val metricJson = s"""{"${jobConfig.enrollmentDbReadCount}": 0, "${jobConfig.skippedEventCount}": 0}"""
   val mockMetrics = mock[Metrics](Mockito.withSettings().serializable())
