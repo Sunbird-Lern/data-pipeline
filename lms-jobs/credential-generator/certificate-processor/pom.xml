@@ -12,8 +12,8 @@
         <encoding>UTF-8</encoding>
         <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
         <CLOUD_STORE_GROUP_ID>org.sunbird</CLOUD_STORE_GROUP_ID>
-        <CLOUD_STORE_ARTIFACT_ID>cloud-store-sdk_2.12</CLOUD_STORE_ARTIFACT_ID>
-        <CLOUD_STORE_VERSION>1.4.3</CLOUD_STORE_VERSION>
+        <CLOUD_STORE_ARTIFACT_ID>cloud-store-sdk_${scala.version}</CLOUD_STORE_ARTIFACT_ID>
+        <CLOUD_STORE_VERSION>1.4.6</CLOUD_STORE_VERSION>
     </properties>
     <artifactId>certificate-processor</artifactId>
     <dependencies>
