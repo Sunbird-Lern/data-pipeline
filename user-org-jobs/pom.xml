@@ -16,6 +16,7 @@
 
     <modules>
         <module>user-cache-updater-2.0</module>
+        <module>user-ownership-transfer</module>
     </modules>
 
     <build>
