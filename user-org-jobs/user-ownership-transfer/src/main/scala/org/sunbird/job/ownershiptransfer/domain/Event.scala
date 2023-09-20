@@ -14,11 +14,6 @@ class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
     did()
   }
 
-  def getId: String = {
-    Option(objectType()).map({ t => if (t.equalsIgnoreCase("User")) objectID() else null
-    }).orNull
-  }
-
   def fromUserId: String = {
     telemetry.read[String]("edata.fromUserId").orNull
   }
