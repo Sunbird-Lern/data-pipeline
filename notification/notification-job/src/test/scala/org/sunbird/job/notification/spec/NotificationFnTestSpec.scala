@@ -1,34 +1,23 @@
-package org.sunbird.job.notification.spec1
+package org.sunbird.job.notification.spec
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.junit.runner.RunWith
 import org.mockito.{ArgumentMatchers, Mockito}
-import org.mockito.Mockito.{doNothing, doReturn, when}
-import org.powermock.api.mockito.PowerMockito
-import org.powermock.api.mockito.PowerMockito.{doReturn, when}
 import org.powermock.core.classloader.annotations.{PowerMockIgnore, PrepareForTest}
 import org.powermock.modules.junit4.PowerMockRunner
 import org.sunbird.job.Metrics
-import org.sunbird.job.cache.{DataCache, RedisConnect}
-import org.sunbird.job.notification.task.NotificationConfig
-import org.sunbird.job.util._
-import org.sunbird.spec.BaseTestSpec
-import redis.clients.jedis.Jedis
 import org.sunbird.job.notification.domain.{Event, NotificationUtil}
 import org.sunbird.job.notification.fixture.EventFixture
 import org.sunbird.job.notification.function.NotificationFunction
-import org.sunbird.notification.beans.{EmailConfig, EmailRequest, SMSConfig}
+import org.sunbird.job.notification.task.NotificationConfig
+import org.sunbird.job.util._
+import org.sunbird.notification.beans.{EmailConfig, EmailRequest}
 import org.sunbird.notification.email.service.{IEmailFactory, IEmailService}
 import org.sunbird.notification.fcm.provider.{IFCMNotificationService, NotificationFactory}
-import org.sunbird.notification.fcm.providerImpl.FCMHttpNotificationServiceImpl
 import org.sunbird.notification.sms.provider.ISmsProvider
-import org.sunbird.notification.sms.providerimpl.{Msg91SmsProviderFactory, Msg91SmsProviderImpl}
-import org.sunbird.notification.utils.{PropertiesCache, SMSFactory}
-
-import scala.collection.JavaConverters._
+import org.sunbird.spec.BaseTestSpec
 
 @RunWith(classOf[PowerMockRunner])
 @PowerMockIgnore(Array("javax.management.*", "javax.net.ssl.*", "javax.security.*"))

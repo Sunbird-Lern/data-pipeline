@@ -19,7 +19,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
   private[this] val logger = LoggerFactory.getLogger(classOf[UserOwnershipTransferFunction])
 
   override def metricsList(): List[String] = {
-    List(config.userOwnershipTransferHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount)
+    List(config.userOwnershipTransferHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
   }
 
   override def open(parameters: Configuration): Unit = {
@@ -51,7 +51,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
         val response = httpUtil.post(config.lmsServiceBasePath + config.batchSearchApi, requestBody)
         if (response.status == 200) {
           val responseBody = JSONUtil.deserialize[util.HashMap[String, AnyRef]](response.body)
-          val result = responseBody.getOrDefault("result", new java.util.HashMap[String, AnyRef]()).asInstanceOf[java.util.Map[String, AnyRef]]
+          val result = responseBody.getOrDefault("result", new java.util.HashMap[String, AnyRef]()).asInstanceOf[java.util.Map[String, AnyRef]].getOrDefault("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
           val count = result.getOrDefault("count", 0.asInstanceOf[Number]).asInstanceOf[Number].intValue()
           if (count > 0) {
             val batchesList = result.getOrDefault("content", new java.util.ArrayList[java.util.Map[String, AnyRef]]()).asInstanceOf[java.util.List[java.util.Map[String, AnyRef]]]
@@ -68,7 +68,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
         val mentorRequestBody = s"""{
                              |    "request": {
                              |        "filters": {
-                             |            "mentors": "${event.fromUserId}",
+                             |            "mentors": ["${event.fromUserId}"],
                              |            "status": [0,1]
                              |        },
                              |        "fields": ["identifier", "createdFor","batchId","courseId","startDate","enrollmentType","mentors]
@@ -78,7 +78,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
         val mentorResponse = httpUtil.post(config.lmsServiceBasePath + config.batchSearchApi, mentorRequestBody)
         if (mentorResponse.status == 200) {
           val mentorResponseBody = JSONUtil.deserialize[util.HashMap[String, AnyRef]](mentorResponse.body)
-          val result = mentorResponseBody.getOrDefault("result", new java.util.HashMap[String, AnyRef]()).asInstanceOf[java.util.Map[String, AnyRef]]
+          val result = mentorResponseBody.getOrDefault("result", new java.util.HashMap[String, AnyRef]()).asInstanceOf[java.util.Map[String, AnyRef]].getOrDefault("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
           val count = result.getOrDefault("count", 0.asInstanceOf[Number]).asInstanceOf[Number].intValue()
           if (count > 0) {
             val batchesList = result.getOrDefault("content", new java.util.ArrayList[java.util.Map[String, AnyRef]]()).asInstanceOf[java.util.List[java.util.Map[String, AnyRef]]]
@@ -91,8 +91,6 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
           logger.info("search-service error: " + response.body)
           throw new Exception("search-service not returning error:" + response.status)
         }
-
-
       } catch {
         case ex: Exception =>
           ex.printStackTrace()
