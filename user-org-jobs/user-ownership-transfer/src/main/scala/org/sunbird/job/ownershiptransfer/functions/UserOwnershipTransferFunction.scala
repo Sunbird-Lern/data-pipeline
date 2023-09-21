@@ -1,12 +1,13 @@
 package org.sunbird.job.ownershiptransfer.functions
 
 import com.datastax.driver.core.querybuilder.{QueryBuilder, Update}
+import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
 import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.{CassandraUtil, HttpUtil, JSONUtil}
+import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
 import org.sunbird.job.ownershiptransfer.domain.Event
 import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
 
@@ -17,6 +18,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
   extends BaseProcessFunction[Event, Event](config) {
 
   private[this] val logger = LoggerFactory.getLogger(classOf[UserOwnershipTransferFunction])
+  implicit var esUtil: ElasticSearchUtil = null
 
   override def metricsList(): List[String] = {
     List(config.userOwnershipTransferHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
@@ -25,11 +27,14 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
+    if(esUtil==null)
+      esUtil = new ElasticSearchUtil(config.esConnection, config.compositeSearchIndex, config.courseBatchIndexType)
   }
 
   override def close(): Unit = {
-    super.close()
     cassandraUtil.close()
+    if(esUtil!=null) esUtil.close()
+    super.close()
   }
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
@@ -59,6 +64,17 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             // course_batch update with createdBy to toUserId.
             val batchCreatedByQueries = getCreatedByUpdateQueries(batchesList, event.toUserId)
             updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
+
+            // update ES
+            batchesList.asScala.foreach(batchInfo => {
+              val batchId = batchInfo.getOrDefault("batchId","").asInstanceOf[String]
+              if(batchId.nonEmpty) {
+                val esBatchDoc = esUtil.getDocumentAsString(batchId)
+                val updatedESBatchDoc = StringUtils.replace(esBatchDoc, event.fromUserId, event.toUserId)
+                esUtil.updateDocument(batchId, updatedESBatchDoc)
+              }
+            })
+
           } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)
@@ -86,6 +102,16 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             // course_batch update with mentors to toUserId.
             val batchCreatedByQueries = getMentorsUpdateQueries(batchesList, event.fromUserId, event.toUserId)
             updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
+
+            // update ES
+            batchesList.asScala.foreach(batchInfo => {
+              val batchId = batchInfo.getOrDefault("batchId","").asInstanceOf[String]
+              if(batchId.nonEmpty) {
+                val esBatchDoc = esUtil.getDocumentAsString(batchId)
+                val updatedESBatchDoc = StringUtils.replace(esBatchDoc, event.fromUserId, event.toUserId)
+                esUtil.updateDocument(batchId, updatedESBatchDoc)
+              }
+            })
           } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)

@@ -31,6 +31,10 @@ class UserOwnershipTransferConfig(override val config: Config) extends BaseJobCo
 
   val userOwnershipTransferParallelism: Int = config.getInt("task.user.ownership.transfer.parallelism")
 
+  //ES configuration
+  val esConnection: String = config.getString("es.basePath")
+  val compositeSearchIndex: String = "composite-search"
+  val courseBatchIndexType: String = "course-batch"
 
   //Thresholds
   val thresholdBatchWriteSize: Int = config.getInt("threshold.batch.write.size")

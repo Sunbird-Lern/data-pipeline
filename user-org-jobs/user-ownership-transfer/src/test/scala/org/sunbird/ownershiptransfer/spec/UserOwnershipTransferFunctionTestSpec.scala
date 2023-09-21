@@ -10,7 +10,7 @@ import org.cassandraunit.CQLDataLoader
 import org.cassandraunit.dataset.cql.FileCQLDataSet
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.mockito.Mockito
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{reset, when}
 import org.sunbird.dp.core.job.FlinkKafkaConnector
 import org.sunbird.dp.core.util.{CassandraUtil, HTTPResponse, HttpUtil}
 import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
@@ -168,11 +168,12 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
   }
 
   "UserOwnershipTransferStreamTaskProcessor " should "validate metrics " in {
-    initialize()
-    when(mockHttpUtil.get("/02c4e0dc-3e25-4f7d-b811-242c73e24a01?identifier,rootOrgId")).thenReturn(HTTPResponse(200, """{"id": "api.user.read.4cd4c690-eab6-4938-855a-447c7b1b8ea9","ver": "v5","ts": "2023-09-05 14:07:47:872+0000","params": {"resmsgid": "1281c745-830c-421c-8245-dd5b2b795842","msgid": "1281c745-830c-421c-8245-dd5b2b795842","err": null,"status": "SUCCESS","errmsg": null},"responseCode": "OK","result": {"response": {"identifier": "02c4e0dc-3e25-4f7d-b811-242c73e24a01","rootOrgId": "01309282781705830427"}}}"""))
-    when(mockHttpUtil.get("/fca2925f-1eee-4654-9177-fece3fd6afc9?identifier,rootOrgId")).thenReturn(HTTPResponse(200, """{"id": "api.user.read.4cd4c690-eab6-4938-855a-447c7b1b8ea9","ver": "v5","ts": "2023-09-05 14:07:47:872+0000","params": {"resmsgid": "1281c745-830c-421c-8245-dd5b2b795842","msgid": "1281c745-830c-421c-8245-dd5b2b795842","err": null,"status": "SUCCESS","errmsg": null},"responseCode": "OK","result": {"response": {"identifier": "fca2925f-1eee-4654-9177-fece3fd6afc9","rootOrgId": "01309282781705830427"}}}"""))
+    reset(mockHttpUtil)
+    when(mockHttpUtil.get(jobConfig.userOrgServiceBasePath + jobConfig.userReadApi +"/02c4e0dc-3e25-4f7d-b811-242c73e24a01?identifier,rootOrgId")).thenReturn(HTTPResponse(200, """{"id": "api.user.read.4cd4c690-eab6-4938-855a-447c7b1b8ea9","ver": "v5","ts": "2023-09-05 14:07:47:872+0000","params": {"resmsgid": "1281c745-830c-421c-8245-dd5b2b795842","msgid": "1281c745-830c-421c-8245-dd5b2b795842","err": null,"status": "SUCCESS","errmsg": null},"responseCode": "OK","result": {"response": {"identifier": "02c4e0dc-3e25-4f7d-b811-242c73e24a01","rootOrgId": "01309282781705830427"}}}"""))
+    when(mockHttpUtil.get(jobConfig.userOrgServiceBasePath + jobConfig.userReadApi +"/fca2925f-1eee-4654-9177-fece3fd6afc9?identifier,rootOrgId")).thenReturn(HTTPResponse(200, """{"id": "api.user.read.4cd4c690-eab6-4938-855a-447c7b1b8ea9","ver": "v5","ts": "2023-09-05 14:07:47:872+0000","params": {"resmsgid": "1281c745-830c-421c-8245-dd5b2b795842","msgid": "1281c745-830c-421c-8245-dd5b2b795842","err": null,"status": "SUCCESS","errmsg": null},"responseCode": "OK","result": {"response": {"identifier": "fca2925f-1eee-4654-9177-fece3fd6afc9","rootOrgId": "01309282781705830427"}}}"""))
     when(mockHttpUtil.post(jobConfig.lmsServiceBasePath + jobConfig.batchSearchApi, createdByRequestBody)).thenReturn(HTTPResponse(200, createdBySearchResponse))
     when(mockHttpUtil.post(jobConfig.lmsServiceBasePath + jobConfig.batchSearchApi, mentorRequestBody)).thenReturn(HTTPResponse(200, mentorSearchResponse))
+    initialize()
     new UserOwnershipTransferStreamTask(jobConfig, mockKafkaUtil, mockHttpUtil).process()
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(1)
   }
