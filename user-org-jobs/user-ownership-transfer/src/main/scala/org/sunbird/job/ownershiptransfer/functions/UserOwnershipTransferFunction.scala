@@ -14,11 +14,10 @@ import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
 import scala.collection.JavaConverters._
 import java.util
 
-class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, @transient var cassandraUtil: CassandraUtil = null)(implicit val mapTypeInfo: TypeInformation[Event])
+class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil, @transient var cassandraUtil: CassandraUtil = null)(implicit val mapTypeInfo: TypeInformation[Event])
   extends BaseProcessFunction[Event, Event](config) {
 
   private[this] val logger = LoggerFactory.getLogger(classOf[UserOwnershipTransferFunction])
-  implicit var esUtil: ElasticSearchUtil = null
 
   override def metricsList(): List[String] = {
     List(config.userOwnershipTransferHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
@@ -27,8 +26,6 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
-    if(esUtil==null)
-      esUtil = new ElasticSearchUtil(config.esConnection, config.compositeSearchIndex, config.courseBatchIndexType)
   }
 
   override def close(): Unit = {

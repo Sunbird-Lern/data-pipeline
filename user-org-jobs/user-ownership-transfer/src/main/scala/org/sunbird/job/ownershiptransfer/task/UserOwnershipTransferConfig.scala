@@ -33,7 +33,7 @@ class UserOwnershipTransferConfig(override val config: Config) extends BaseJobCo
 
   //ES configuration
   val esConnection: String = config.getString("es.basePath")
-  val compositeSearchIndex: String = "composite-search"
+  val compositeSearchIndex: String = "compositesearch"
   val courseBatchIndexType: String = "course-batch"
 
   //Thresholds
