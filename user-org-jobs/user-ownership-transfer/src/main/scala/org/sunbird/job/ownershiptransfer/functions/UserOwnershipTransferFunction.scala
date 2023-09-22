@@ -62,14 +62,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
 
             // update ES
-            batchesList.asScala.foreach(batchInfo => {
-              val batchId = batchInfo.getOrDefault("batchId","").asInstanceOf[String]
-              if(batchId.nonEmpty) {
-                val esBatchDoc = esUtil.getDocumentAsString(batchId)
-                val updatedESBatchDoc = StringUtils.replace(esBatchDoc, event.fromUserId, event.toUserId)
-                esUtil.updateDocument(batchId, updatedESBatchDoc)
-              }
-            })
+            updateEs(batchesList, event)
 
           } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
         } else {
@@ -100,14 +93,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
 
             // update ES
-            batchesList.asScala.foreach(batchInfo => {
-              val batchId = batchInfo.getOrDefault("batchId","").asInstanceOf[String]
-              if(batchId.nonEmpty) {
-                val esBatchDoc = esUtil.getDocumentAsString(batchId)
-                val updatedESBatchDoc = StringUtils.replace(esBatchDoc, event.fromUserId, event.toUserId)
-                esUtil.updateDocument(batchId, updatedESBatchDoc)
-              }
-            })
+            updateEs(batchesList, event)
           } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)
@@ -160,6 +146,17 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
         .`with`(QueryBuilder.set(config.mentors, batchMentors))
         .where(QueryBuilder.eq(config.batchId.toLowerCase(), batchInfo.getOrDefault("batchId","").asInstanceOf[String]))
         .and(QueryBuilder.eq(config.courseId.toLowerCase(), batchInfo.getOrDefault("courseId","").asInstanceOf[String]))
+    })
+  }
+
+  def updateEs(batchesList: java.util.List[java.util.Map[String, AnyRef]], event: Event): Unit = {
+    batchesList.asScala.foreach(batchInfo => {
+      val batchId = batchInfo.getOrDefault("batchId","").asInstanceOf[String]
+      if(batchId.nonEmpty) {
+        val esBatchDoc = esUtil.getDocumentAsString(batchId)
+        val updatedESBatchDoc = StringUtils.replace(esBatchDoc, event.fromUserId, event.toUserId)
+        esUtil.updateDocument(batchId, updatedESBatchDoc)
+      }
     })
   }
 }
