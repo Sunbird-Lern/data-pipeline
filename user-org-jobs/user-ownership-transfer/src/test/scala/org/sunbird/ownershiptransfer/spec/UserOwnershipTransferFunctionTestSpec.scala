@@ -1,6 +1,5 @@
 package org.sunbird.ownershiptransfer.spec
 
-import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
@@ -11,7 +10,7 @@ import org.cassandraunit.dataset.cql.FileCQLDataSet
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito
-import org.mockito.Mockito.{doNothing, reset, when}
+import org.mockito.Mockito.{doNothing, when}
 import org.sunbird.dp.core.job.FlinkKafkaConnector
 import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HTTPResponse, HttpUtil}
 import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
@@ -31,11 +30,11 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
     .build)
 
   val mockKafkaUtil: FlinkKafkaConnector = mock[FlinkKafkaConnector](Mockito.withSettings().serializable())
-  val gson = new Gson()
+
   val config: Config = ConfigFactory.load("test.conf")
   val jobConfig: UserOwnershipTransferConfig = new UserOwnershipTransferConfig(config)
-  val mockHttpUtil: HttpUtil = mock[HttpUtil](Mockito.withSettings().serializable())
-  val mockEsUtil: ElasticSearchUtil = mock[ElasticSearchUtil](Mockito.withSettings().serializable())
+  var mockHttpUtil: HttpUtil = mock[HttpUtil](Mockito.withSettings().serializable())
+  var mockEsUtil: ElasticSearchUtil = mock[ElasticSearchUtil](Mockito.withSettings().serializable())
   var cassandraUtil: CassandraUtil = _
 
   val createdByRequestBody: String = s"""{
@@ -147,7 +146,7 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
 
     val dataLoader = new CQLDataLoader(session)
     dataLoader.load(new FileCQLDataSet(getClass.getResource("/test.cql").getPath, true, true))
-    // Clear the metrics
+
     testCassandraUtil(cassandraUtil)
     // Clear the metrics
     BaseMetricsReporter.gaugeMetrics.clear()
@@ -169,10 +168,6 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
   }
 
   "UserOwnershipTransferStreamTaskProcessor " should "validate metrics " in {
-    reset(mockHttpUtil)
-    when(mockEsUtil.getDocumentAsString(anyString())).thenReturn("01295417094601113627")
-    when(mockEsUtil.getDocumentAsString(anyString())).thenReturn("01289599909937152015")
-    when(mockEsUtil.getDocumentAsString(anyString())).thenReturn("0129555223509401604")
     doNothing().when(mockEsUtil).updateDocument("01295417094601113627","doc")
     doNothing().when(mockEsUtil).updateDocument("01289599909937152015","doc")
     doNothing().when(mockEsUtil).updateDocument("0129555223509401604","doc")
@@ -180,8 +175,11 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
     when(mockHttpUtil.get(jobConfig.userOrgServiceBasePath + jobConfig.userReadApi +"/fca2925f-1eee-4654-9177-fece3fd6afc9?identifier,rootOrgId")).thenReturn(HTTPResponse(200, """{"id": "api.user.read.4cd4c690-eab6-4938-855a-447c7b1b8ea9","ver": "v5","ts": "2023-09-05 14:07:47:872+0000","params": {"resmsgid": "1281c745-830c-421c-8245-dd5b2b795842","msgid": "1281c745-830c-421c-8245-dd5b2b795842","err": null,"status": "SUCCESS","errmsg": null},"responseCode": "OK","result": {"response": {"identifier": "fca2925f-1eee-4654-9177-fece3fd6afc9","rootOrgId": "01309282781705830427"}}}"""))
     when(mockHttpUtil.post(jobConfig.lmsServiceBasePath + jobConfig.batchSearchApi, createdByRequestBody)).thenReturn(HTTPResponse(200, createdBySearchResponse))
     when(mockHttpUtil.post(jobConfig.lmsServiceBasePath + jobConfig.batchSearchApi, mentorRequestBody)).thenReturn(HTTPResponse(200, mentorSearchResponse))
+    when(mockEsUtil.getDocumentAsString(anyString())).thenReturn("01295417094601113627")
+    when(mockEsUtil.getDocumentAsString(anyString())).thenReturn("01289599909937152015")
+    when(mockEsUtil.getDocumentAsString(anyString())).thenReturn("0129555223509401604")
     initialize()
-    new UserOwnershipTransferStreamTask(jobConfig, mockKafkaUtil, mockHttpUtil, mockEsUtil).process()
+    new UserOwnershipTransferStreamTask(jobConfig, mockHttpUtil, mockEsUtil, mockKafkaUtil).process()
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(1)
   }
 

@@ -14,7 +14,7 @@ import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
 import scala.collection.JavaConverters._
 import java.util
 
-class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil, @transient var cassandraUtil: CassandraUtil = null)(implicit val mapTypeInfo: TypeInformation[Event])
+class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil)(implicit val mapTypeInfo: TypeInformation[Event], @transient var cassandraUtil: CassandraUtil = null)
   extends BaseProcessFunction[Event, Event](config) {
 
   private[this] val logger = LoggerFactory.getLogger(classOf[UserOwnershipTransferFunction])
@@ -30,13 +30,12 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
   override def close(): Unit = {
     cassandraUtil.close()
-    if(esUtil!=null) esUtil.close()
     super.close()
   }
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
-    metrics.incCounter(config.totalEventsCount)
     logger.info(s"Processing ownership transfer event from user: ${event.fromUserId} to user: ${event.toUserId}")
+    metrics.incCounter(config.totalEventsCount)
     if(event.isValid()(metrics, config, httpUtil)) {
       try {
         // search for batches of the From_user. (and also mentor)

@@ -11,7 +11,7 @@ import org.sunbird.dp.core.util.{ElasticSearchUtil, FlinkUtil, HttpUtil}
 import org.sunbird.job.ownershiptransfer.domain.Event
 import org.sunbird.job.ownershiptransfer.functions.UserOwnershipTransferFunction
 
-class UserOwnershipTransferStreamTask(config: UserOwnershipTransferConfig, kafkaConnector: FlinkKafkaConnector, httpUtil: HttpUtil, esUtil: ElasticSearchUtil) {
+class UserOwnershipTransferStreamTask(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil, kafkaConnector: FlinkKafkaConnector) {
 
   def process(): Unit = {
 
@@ -36,10 +36,10 @@ object UserOwnershipTransferStreamTask {
       path => ConfigFactory.parseFile(new File(path)).resolve()
     }.getOrElse(ConfigFactory.load("user-ownership-transfer.conf").withFallback(ConfigFactory.systemEnvironment()))
     val userOwnershipTransferConfig = new UserOwnershipTransferConfig(config)
-    val kafkaUtil = new FlinkKafkaConnector(userOwnershipTransferConfig)
     val httpUtil = new HttpUtil
     val esUtil: ElasticSearchUtil = new ElasticSearchUtil(userOwnershipTransferConfig.esConnection, userOwnershipTransferConfig.compositeSearchIndex, userOwnershipTransferConfig.courseBatchIndexType)
-    val task = new UserOwnershipTransferStreamTask(userOwnershipTransferConfig, kafkaUtil, httpUtil, esUtil)
+    val kafkaUtil = new FlinkKafkaConnector(userOwnershipTransferConfig)
+    val task = new UserOwnershipTransferStreamTask(userOwnershipTransferConfig, httpUtil, esUtil, kafkaUtil)
     task.process()
   }
 }
