@@ -155,6 +155,8 @@ base_config: |
       isMultiDCEnabled = {{ cassandra_isMultiDCEnabled | lower }}
     }
 
+    sunbird_instance_name = "{{ sunbird_installation | default('Sunbird')}}"
+
 activity-aggregate-updater:
   activity-aggregate-updater: |+
     include file("/data/flink/conf/base-config.conf")
