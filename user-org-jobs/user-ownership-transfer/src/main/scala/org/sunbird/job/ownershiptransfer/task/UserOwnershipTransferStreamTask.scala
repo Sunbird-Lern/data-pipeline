@@ -37,7 +37,7 @@ object UserOwnershipTransferStreamTask {
     }.getOrElse(ConfigFactory.load("user-ownership-transfer.conf").withFallback(ConfigFactory.systemEnvironment()))
     val userOwnershipTransferConfig = new UserOwnershipTransferConfig(config)
     val httpUtil = new HttpUtil
-    val esUtil: ElasticSearchUtil = new ElasticSearchUtil(userOwnershipTransferConfig.esConnection, userOwnershipTransferConfig.compositeSearchIndex, userOwnershipTransferConfig.courseBatchIndexType)
+    val esUtil: ElasticSearchUtil = new ElasticSearchUtil(userOwnershipTransferConfig.esConnection, userOwnershipTransferConfig.searchIndex, userOwnershipTransferConfig.courseBatchIndexType)
     val kafkaUtil = new FlinkKafkaConnector(userOwnershipTransferConfig)
     val task = new UserOwnershipTransferStreamTask(userOwnershipTransferConfig, httpUtil, esUtil, kafkaUtil)
     task.process()
