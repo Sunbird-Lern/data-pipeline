@@ -62,7 +62,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
 
             // update ES
-            updateEs(batchesList, event)
+            updateES(batchesList, event)
 
           } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
         } else {
@@ -93,7 +93,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
 
             // update ES
-            updateEs(batchesList, event)
+            updateES(batchesList, event)
           } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)
@@ -149,7 +149,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
     })
   }
 
-  def updateEs(batchesList: java.util.List[java.util.Map[String, AnyRef]], event: Event): Unit = {
+  def updateES(batchesList: java.util.List[java.util.Map[String, AnyRef]], event: Event): Unit = {
     batchesList.asScala.foreach(batchInfo => {
       val batchId = batchInfo.getOrDefault("batchId","").asInstanceOf[String]
       if(batchId.nonEmpty) {
