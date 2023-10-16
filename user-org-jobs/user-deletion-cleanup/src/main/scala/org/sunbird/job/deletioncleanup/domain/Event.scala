@@ -30,21 +30,13 @@ class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
     telemetry.read[util.ArrayList[String]]("edata.managed_users").orNull
   }
 
-  def isValid()(metrics: Metrics, config:UserDeletionCleanupConfig, httpUtil: HttpUtil): Boolean = {
-    userId.nonEmpty && validateUser(userId, organisation)(metrics, config, httpUtil)
+  def isValid(userDetails: util.HashMap[String, AnyRef]): Boolean = {
+    userId.nonEmpty && validateUser(userDetails, userId, organisation)
   }
 
-  def validateUser(userId: String, organisation: String)(metrics: Metrics, config:UserDeletionCleanupConfig, httpUtil: HttpUtil): Boolean = {
+  def validateUser(userDetails: util.HashMap[String, AnyRef], userId: String, organisation: String): Boolean = {
     if(userId.nonEmpty) {
-      val url = config.userOrgServiceBasePath + config.userReadApi + "/" + userId + "?identifier,rootOrgId"
-      val userReadResp = httpUtil.get(url)
-
-      if (200 == userReadResp.status) {
-        metrics.incCounter(config.apiReadSuccessCount)
-        val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
-        val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
         userDetails.getOrElse("identifier", "").asInstanceOf[String].equalsIgnoreCase(userId) && userDetails.getOrElse("rootOrgId","").asInstanceOf[String].equalsIgnoreCase(organisation)
       } else false
-    } else false
   }
 }

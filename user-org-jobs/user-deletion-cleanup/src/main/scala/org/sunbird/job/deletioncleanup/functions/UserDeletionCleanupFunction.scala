@@ -15,8 +15,10 @@ import org.sunbird.job.deletioncleanup.task.UserDeletionCleanupConfig
 import org.sunbird.job.deletioncleanup.util.KeyCloakConnectionProvider
 
 import java.text.SimpleDateFormat
+import java.util
 import java.util.Date
 import scala.collection.JavaConverters._
+import scala.collection.convert.ImplicitConversions.`map AsScala`
 import scala.collection.mutable.ListBuffer
 
 class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil)(implicit val mapTypeInfo: TypeInformation[Event], @transient var cassandraUtil: CassandraUtil = null)
@@ -41,42 +43,52 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
     logger.info(s"Processing deletion cleanup event from user: ${event.userId}")
     metrics.incCounter(config.totalEventsCount)
-    if(event.isValid()(metrics, config, httpUtil)) {
-      try {
-        val userDBMap: Map[String, AnyRef] = getUserProfileById(event.userId)(config, cassandraUtil)
 
-        // update organisation table
-        updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
+    val url = config.userOrgServiceBasePath + config.userReadApi + "/" + event.userId + "?identifier,rootOrgId"
+    val userReadResp = httpUtil.get(url)
 
-        if(userDBMap.getOrElse(config.STATUS, 0).asInstanceOf[Int] != config.DELETION_STATUS) {
-          // remove user credentials from keycloak if exists
-          removeEntryFromKeycloak(event.userId)(config)
+    if (200 == userReadResp.status) {
+      metrics.incCounter(config.apiReadSuccessCount)
+      val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
+      val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
 
-          // remove user entries from lookup table
-          removeEntryFromUserLookUp(userDBMap)(config, cassandraUtil)
+      if(event.isValid(userDetails)) {
+        try {
+          val userDBMap: Map[String, AnyRef] = getUserProfileById(event.userId)(config, cassandraUtil)
 
-          // update user entry in user table
-          updateUser(event.userId)(config, cassandraUtil)
+          // update organisation table
+          updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
 
-          // remove user entries from externalId table
-          val dbUserExternalIds: List[Map[String, String]] = getUserExternalIds(event.userId)(config, cassandraUtil)
-          if(dbUserExternalIds.nonEmpty) deleteUserExternalIds(dbUserExternalIds)(config, cassandraUtil)
-        }
+          if(userDBMap.getOrElse(config.STATUS, 0).asInstanceOf[Int] != config.DELETION_STATUS) {
+            // remove user credentials from keycloak if exists
+            removeEntryFromKeycloak(event.userId)(config)
 
-        // delete managed users
-        if(event.managedUsers != null && !event.managedUsers.isEmpty) {
-          event.managedUsers.forEach(managedUser => {
+            // remove user entries from lookup table
+            removeEntryFromUserLookUp(userDetails)(config, cassandraUtil)
+
             // update user entry in user table
-            updateUser(managedUser)(config, cassandraUtil)
-          })
-        }
+            updateUser(event.userId)(config, cassandraUtil)
 
-      } catch {
-        case ex: Exception =>
-          ex.printStackTrace()
-          logger.info("Event throwing exception: ", JSONUtil.serialize(event))
-          throw ex
-      }
+            // remove user entries from externalId table
+            val dbUserExternalIds: List[Map[String, String]] = getUserExternalIds(event.userId)(config, cassandraUtil)
+            if(dbUserExternalIds.nonEmpty) deleteUserExternalIds(dbUserExternalIds)(config, cassandraUtil)
+          }
+
+          // delete managed users
+          if(event.managedUsers != null && !event.managedUsers.isEmpty) {
+            event.managedUsers.forEach(managedUser => {
+              // update user entry in user table
+              updateUser(managedUser)(config, cassandraUtil)
+            })
+          }
+
+        } catch {
+          case ex: Exception =>
+            ex.printStackTrace()
+            logger.info("Event throwing exception: ", JSONUtil.serialize(event))
+            throw ex
+        }
+      } else metrics.incCounter(config.skipCount)
     } else metrics.incCounter(config.skipCount)
   }
 
@@ -94,22 +106,26 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
   def getFederatedUserId(userId: String): String = String.join(":", "f", config.SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID, userId)
 
-  def removeEntryFromUserLookUp(userDbMap: Map[String, AnyRef]) (config: UserDeletionCleanupConfig, cassandraUtil: CassandraUtil): Unit = {
-    val identifiers: List[String] = List[String](config.EMAIL, config.PHONE, config.USER_LOOKUP_FILED_EXTERNAL_ID)
-    logger.debug("UserDeletionCleanupFunction:removeEntryFromUserLookUp remove following identifiers from lookUp table " + identifiers)
+  def removeEntryFromUserLookUp(userDetails: util.HashMap[String, AnyRef]) (config: UserDeletionCleanupConfig, cassandraUtil: CassandraUtil): Unit = {
     val reqMap: ListBuffer[Map[String, String]] = new ListBuffer[Map[String, String]]()
 
-    if (identifiers.contains(config.EMAIL) && StringUtils.isNotBlank(userDbMap.get(config.EMAIL).asInstanceOf[String])) {
-      val deleteLookUp = Map[String, String] (config.TYPE -> config.EMAIL, config.VALUE -> userDbMap.get(config.EMAIL).asInstanceOf[String])
+    if (StringUtils.isNotBlank(userDetails.getOrElse(config.EMAIL, "").asInstanceOf[String])) {
+      val deleteLookUp = Map[String, String] (config.TYPE -> config.EMAIL, config.VALUE -> userDetails.getOrElse(config.EMAIL, "").asInstanceOf[String])
       reqMap+=deleteLookUp
     }
-    if (identifiers.contains(config.PHONE) && StringUtils.isNotBlank(userDbMap.get(config.PHONE).asInstanceOf[String])) {
-      val deleteLookUp = Map[String, String] (config.TYPE -> config.PHONE, config.VALUE -> userDbMap.get(config.PHONE).asInstanceOf[String])
+    if (StringUtils.isNotBlank(userDetails.getOrElse(config.PHONE, "").asInstanceOf[String])) {
+      val deleteLookUp = Map[String, String] (config.TYPE -> config.PHONE, config.VALUE -> userDetails.getOrElse(config.PHONE, "").asInstanceOf[String])
       reqMap+=deleteLookUp
     }
-    if (identifiers.contains(config.USER_LOOKUP_FILED_EXTERNAL_ID) && StringUtils.isNotBlank(userDbMap.get(config.EXTERNAL_ID).asInstanceOf[String])) {
-      val deleteLookUp = Map[String, String] (config.TYPE -> config.USER_LOOKUP_FILED_EXTERNAL_ID, config.VALUE -> userDbMap.get(config.EXTERNAL_ID).asInstanceOf[String])
-      reqMap+=deleteLookUp
+
+    if (StringUtils.isNotBlank(userDetails.getOrElse(config.EXTERNAL_ID, "").asInstanceOf[String])) {
+      val deleteLookUp = Map[String, String](config.TYPE -> config.USER_LOOKUP_FILED_EXTERNAL_ID, config.VALUE -> userDetails.getOrElse(config.EXTERNAL_ID, "").asInstanceOf[String])
+      reqMap += deleteLookUp
+    }
+
+    if (StringUtils.isNotBlank(userDetails.getOrElse(config.USERNAME, "").asInstanceOf[String])) {
+      val deleteLookUp = Map[String, String](config.TYPE -> config.USERNAME, config.VALUE -> userDetails.getOrElse(config.USERNAME, "").asInstanceOf[String])
+      reqMap += deleteLookUp
     }
 
     if (reqMap.nonEmpty) deleteUserLookUp(reqMap.toList)(config, cassandraUtil)
@@ -135,7 +151,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   }
 
   def getUserExternalIds(userId: String)(config: UserDeletionCleanupConfig, cassandraUtil: CassandraUtil): List[Map[String, String]] = {
-    val query = QueryBuilder.select().all()
+    val query = QueryBuilder.select().column("provider").column("idtype").column("userid")
       .from(config.userKeyspace, config.userExternalIdentityTable).
       where(QueryBuilder.eq("userid", userId)).toString
 
@@ -151,8 +167,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   def deleteUserExternalIds(reqMap: List[Map[String, String]])(config: UserDeletionCleanupConfig, cassandraUtil: CassandraUtil): Unit = {
     logger.info("UserDeletionCleanupFunction:: UserLookUp:: deleteRecords removing " + reqMap.size + " external Ids from table")
     reqMap.foreach(dataMap => {
-      val keymap = dataMap.-("createdby","createdon","lastupdatedby","lastupdatedon","originalexternalid","originalidtype","originalprovider","userid")
-      cassandraUtil.deleteRecordByCompositeKey(config.userKeyspace, config.userLookUpTable, keymap)
+      cassandraUtil.deleteRecordByCompositeKey(config.userKeyspace, config.userExternalIdentityTable, dataMap)
     })
   }
 
