@@ -1,9 +1,9 @@
-package org.sunbird.job.ownershiptransfer.domain
+package org.sunbird.job.deletioncleanup.domain
 
 import org.sunbird.dp.core.domain.Events
 import org.sunbird.dp.core.job.Metrics
 import org.sunbird.dp.core.util.{HttpUtil, JSONUtil}
-import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
+import org.sunbird.job.deletioncleanup.task.UserDeletionCleanupConfig
 
 import java.util
 import scala.collection.convert.ImplicitConversions.`map AsScala`
@@ -14,23 +14,27 @@ class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
     did()
   }
 
-  def fromUserId: String = {
-    telemetry.read[String]("edata.fromUserId").orNull
-  }
-
-  def toUserId: String = {
-    telemetry.read[String]("edata.toUserId").orNull
+  def userId: String = {
+    telemetry.read[String]("edata.userId").orNull
   }
 
   def organisation: String = {
     telemetry.read[String]("edata.organisationId").orNull
   }
 
-  def isValid()(metrics: Metrics, config:UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
-    fromUserId.nonEmpty && toUserId.nonEmpty && validateUser(fromUserId, organisation)(metrics, config, httpUtil) && validateUser(toUserId, organisation)(metrics, config, httpUtil)
+  def suggestedUsers: util.ArrayList[util.Map[String, AnyRef]] = {
+    telemetry.read[util.ArrayList[util.Map[String, AnyRef]]]("edata.suggested_users").orNull
   }
 
-  def validateUser(userId: String, organisation: String)(metrics: Metrics, config:UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
+  def managedUsers: util.ArrayList[String] = {
+    telemetry.read[util.ArrayList[String]]("edata.managed_users").orNull
+  }
+
+  def isValid()(metrics: Metrics, config:UserDeletionCleanupConfig, httpUtil: HttpUtil): Boolean = {
+    userId.nonEmpty && validateUser(userId, organisation)(metrics, config, httpUtil)
+  }
+
+  def validateUser(userId: String, organisation: String)(metrics: Metrics, config:UserDeletionCleanupConfig, httpUtil: HttpUtil): Boolean = {
     if(userId.nonEmpty) {
       val url = config.userOrgServiceBasePath + config.userReadApi + "/" + userId + "?identifier,rootOrgId"
       val userReadResp = httpUtil.get(url)

@@ -1,16 +1,18 @@
 package org.sunbird.dp.core.util
 
-import java.util
 import com.datastax.driver.core._
 import com.datastax.driver.core.exceptions.DriverException
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy
-import org.slf4j.LoggerFactory
+import com.datastax.driver.core.querybuilder.{Delete, QueryBuilder}
+import org.slf4j.{Logger, LoggerFactory}
+
+import java.util
 
 class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
 
-  val logger = LoggerFactory.getLogger("CassandraUtil")
+  val logger: Logger = LoggerFactory.getLogger("CassandraUtil")
   val options : QueryOptions = new QueryOptions()
-  var cluster = {
+  var cluster: Cluster = {
     val cb = Cluster.builder()
       .addContactPoint(host)
       .withPort(port)
@@ -23,7 +25,7 @@ class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
     cb.build()
   }
 
-  var session = cluster.connect()
+  var session: Session = cluster.connect()
 
   def findOne(query: String): Row = {
     val rs: ResultSet = session.execute(query)
@@ -36,7 +38,7 @@ class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
       rs.all
     } catch {
       case ex: DriverException =>
-        logger.info(s"Failed cassandra query is ${query}")
+        logger.info(s"Failed cassandra query is $query")
         ex.printStackTrace()
         throw ex
         // this.reconnect()
@@ -59,6 +61,23 @@ class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
 
   def close(): Unit = {
     this.session.close()
+  }
+
+  def deleteRecordByCompositeKey(keyspaceName: String, tableName: String, compositeKeyMap: Map[String, String]): Boolean = {
+    logger.debug( "CassandraUtil: deleteRecord start:: " + compositeKeyMap)
+    try {
+      val delete: Delete = QueryBuilder.delete.from(keyspaceName, tableName)
+      compositeKeyMap.foreach(x => {
+        delete.where().and(QueryBuilder.eq(x._1, x._2))
+      })
+      logger.info("CassandraUtil: delete query:: " + delete.getQueryString)
+      val rs: ResultSet = session.execute(delete)
+      rs.wasApplied
+    } catch {
+      case e: Exception =>
+        logger.error("CassandraUtil: deleteRecord by composite key. " +  tableName + " : " + e.getMessage, e)
+        throw e
+    }
   }
 
 }
