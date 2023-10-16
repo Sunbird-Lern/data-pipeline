@@ -97,14 +97,14 @@ base_config: |
       statebackend {
         blob {
           storage {
-            account = "{% if checkpoint_store_type == "azure" %}{{ cloud_storage_key }}.blob.core.windows.net{% elif checkpoint_store_type == "s3" %}{{ flink_dp_storage_container }}{% endif %}"
+            account = "{% if checkpoint_store_type == "azure" %}{{ cloud_storage_key }}.blob.core.windows.net{% elif checkpoint_store_type in ["s3", "oci"] %}{{ flink_dp_storage_container }}{% endif %}"
             container = "{{ cloud_storage_flink_bucketname }}"
             checkpointing.dir = "checkpoint"
           }
         }
 {% if checkpoint_store_type == "azure" %}
         base.url = "wasbs://"${job.statebackend.blob.storage.container}"@"${job.statebackend.blob.storage.account}"/"${job.statebackend.blob.storage.checkpointing.dir}
-{% elif checkpoint_store_type == "s3" %}
+{% elif checkpoint_store_type in ["s3", "oci"] %}
         base.url = "s3://"${job.statebackend.blob.storage.container}"/"${job.statebackend.blob.storage.checkpointing.dir}
 {% endif %}
       }
