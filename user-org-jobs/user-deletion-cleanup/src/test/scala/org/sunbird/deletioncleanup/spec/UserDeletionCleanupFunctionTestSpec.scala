@@ -11,7 +11,7 @@ import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.sunbird.dp.core.job.FlinkKafkaConnector
-import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HttpUtil}
+import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HTTPResponse, HttpUtil}
 import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
 import org.sunbird.job.deletioncleanup.domain.Event
 import org.sunbird.job.deletioncleanup.task.{UserDeletionCleanupConfig, UserDeletionCleanupStreamTask}
@@ -68,6 +68,7 @@ class UserDeletionCleanupFunctionTestSpec extends BaseTestSpec {
   }
 
   "UserDeletionCleanupStreamTaskProcessor " should "validate metrics " in {
+    when(mockHttpUtil.get(jobConfig.userOrgServiceBasePath + jobConfig.userReadApi + "/02c4e0dc-3e25-4f7d-b811-242c73e24a01" + "?identifier,rootOrgId")).thenReturn(HTTPResponse(200, """{"id": "api.user.read.4cd4c690-eab6-4938-855a-447c7b1b8ea9","ver": "v5","ts": "2023-09-05 14:07:47:872+0000","params": {"resmsgid": "1281c745-830c-421c-8245-dd5b2b795842","msgid": "1281c745-830c-421c-8245-dd5b2b795842","err": null,"status": "SUCCESS","errmsg": null},"responseCode": "OK","result": {"response": {"identifier": "02c4e0dc-3e25-4f7d-b811-242c73e24a01","rootOrgId": "01309282781705830427","status": "1"}}}"""))
     initialize()
     new UserDeletionCleanupStreamTask(jobConfig, mockHttpUtil, mockEsUtil, mockKafkaUtil).process()
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(1)

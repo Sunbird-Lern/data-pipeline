@@ -175,7 +175,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   }
 
   def updateUserOrg(userId: String, organisationId: String)(config: UserDeletionCleanupConfig, cassandraUtil: CassandraUtil): Unit = {
-    val updateUserQuery = QueryBuilder.update(config.userKeyspace, config.userTable)
+    val updateUserQuery = QueryBuilder.update(config.userKeyspace, config.userOrgTable)
       .`with`(QueryBuilder.set(config.IS_DELETED, true))
       .and(QueryBuilder.set(config.ORG_LEFT_DATE, getDateFormatter.format(new Date)))
       .where(QueryBuilder.eq(config.USERID, userId))

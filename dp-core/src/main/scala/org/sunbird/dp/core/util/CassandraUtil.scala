@@ -70,7 +70,7 @@ class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
       compositeKeyMap.foreach(x => {
         delete.where().and(QueryBuilder.eq(x._1, x._2))
       })
-      logger.info("CassandraUtil: delete query:: " + delete.getQueryString)
+
       val rs: ResultSet = session.execute(delete)
       rs.wasApplied
     } catch {

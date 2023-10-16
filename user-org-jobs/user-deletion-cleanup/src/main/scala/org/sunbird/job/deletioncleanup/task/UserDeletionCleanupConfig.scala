@@ -75,6 +75,7 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val batchSearchApi: String = config.getString("batch_search_api")
 
   val userKeyspace: String = config.getString("user.keyspace")
+  val userOrgTable: String = config.getString("user.org.table")
   val userLookUpTable: String = config.getString("user.lookup.table")
   val userTable: String = config.getString("user.table")
   val userExternalIdentityTable: String = config.getString("user.externalIdentity.table")
