@@ -114,6 +114,6 @@ INSERT INTO sunbird.user (id, userid, locationids, firstname, lastname, usertype
    VALUES ('02c4e0dc-3e25-4f7d-b811-242c73e24a01', '02c4e0dc-3e25-4f7d-b811-242c73e24a01', ['0dd2b51d-baa2-4403-bf1e-012a970b323f', 'f8228633-7742-454b-8f61-519c6a875809', 'f8228633-7742-454b-8f61-519c6a875810', 'f8228633-7742-454b-8f61-519c6a875811'], 'localuser118f', 'localuser118l','teacher', 'principal','PEhQxQlaMdJEXOzShY0NAiKg4LqC2xUDE4InNodhG/fJMhq69iAPzseEdYAlMPWegxJaAnH+tJwc\nZuqPxJCtJkiGfwlCUEj5B41z4/RjH/7XowwzRVZXH0jth3IW4Ik8TQtMGOn7lhkDdxs1iV8l8A==','1wsQrmy8Q1T4gFa+MOJsirdQC2yhyJsm2Rgj229s2b5Hk/JLNNnHMz6ywhgzYpgcQ6QILjcTLl7z\n7s4aRbsrWw==', '012500530695766016224', 'tn', False, '[{"type":"state","id":"0dd2b51d-baa2-4403-bf1e-012a970b323f"}, {"type":"district","id":"f8228633-7742-454b-8f61-519c6a875809"}, {"type":"block","id":"f8228633-7742-454b-8f61-519c6a875810"}, {"type":"cluster","id":"f8228633-7742-454b-8f61-519c6a875811"}]', 1);
 
 
-INSERT INTO sunbird.user_organisation (id,userid,organisationid) VALUES ('000000000001', '56c2d9a3-fae9-4341-9862-4eeeead2e9a1','org4');
+INSERT INTO sunbird.user_organisation (id,userid,organisationid, isdeleted) VALUES ('000000000001', '02c4e0dc-3e25-4f7d-b811-242c73e24a01','012500530695766016224', False);
 
-INSERT INTO sunbird.usr_external_identity (userid, idtype, provider, originalexternalid, originalprovider ) VALUES('56c2d9a3-fae9-4341-9862-4eeeead2e9a1', 'tn', 'tn', 'usrext1', 'tn');
+INSERT INTO sunbird.usr_external_identity (userid, idtype, provider, originalexternalid, originalprovider ) VALUES('02c4e0dc-3e25-4f7d-b811-242c73e24a01', 'tn', 'tn', 'usrext1', 'tn');

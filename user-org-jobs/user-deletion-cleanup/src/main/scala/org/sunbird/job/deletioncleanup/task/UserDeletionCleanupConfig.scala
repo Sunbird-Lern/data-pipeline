@@ -24,8 +24,6 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val apiReadMissCount = "api-read-miss-count"
   val totalEventsCount ="total-transfer-events-count"
 
-  val dbCourseBatchTable: String = config.getString("lms-cassandra.course_batch.table")
-  val dbKeyspace: String = config.getString("lms-cassandra.keyspace")
   val dbHost: String = config.getString("lms-cassandra.host")
   val dbPort: Int = config.getInt("lms-cassandra.port")
 
