@@ -7,6 +7,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.keycloak.admin.client.resource.UserResource
+import org.keycloak.representations.idm.UserRepresentation
 import org.slf4j.LoggerFactory
 import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
 import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
@@ -94,13 +95,21 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
   def removeEntryFromKeycloak(userId: String)(implicit config: UserDeletionCleanupConfig): Unit = {
     val keycloak = new KeyCloakConnectionProvider().getConnection
+    val fedUserId = getFederatedUserId(userId)
+    val resource: UserResource = keycloak.realm(System.getenv("SUNBIRD_SSO_RELAM")).users.get(fedUserId)
+
     try {
-      val fedUserId = getFederatedUserId(userId)
-      val resource: UserResource = keycloak.realm(System.getenv("SUNBIRD_SSO_RELAM")).users.get(fedUserId)
       if (null != resource) resource.remove()
     } catch {
       case ex: Exception =>
         logger.error("Error occurred : ", ex)
+       val userRep: UserRepresentation = resource.toRepresentation
+        userRep.setEmail("")
+        userRep.setEmailVerified(false)
+        userRep.setEnabled(false)
+        userRep.setFirstName("")
+        userRep.setLastName("")
+        resource.update(userRep)
     }
   }
 
