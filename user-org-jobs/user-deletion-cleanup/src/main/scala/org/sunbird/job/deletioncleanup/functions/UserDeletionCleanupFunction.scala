@@ -61,8 +61,13 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
           updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
 
           if(userDBMap.getOrElse(config.STATUS, 0).asInstanceOf[Int] != config.DELETION_STATUS) {
-            // remove user credentials from keycloak if exists
-            removeEntryFromKeycloak(event.userId)(config)
+            try {
+              // remove user credentials from keycloak if exists
+              removeEntryFromKeycloak(event.userId)(config)
+            } catch {
+              case ex: Exception =>
+                logger.error("Error occurred : ", ex)
+            }
 
             // remove user entries from lookup table
             removeEntryFromUserLookUp(userDetails)(config, cassandraUtil)
@@ -85,7 +90,6 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
         } catch {
           case ex: Exception =>
-            ex.printStackTrace()
             logger.info("Event throwing exception: ", JSONUtil.serialize(event))
             throw ex
         }
@@ -96,14 +100,16 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   def removeEntryFromKeycloak(userId: String)(implicit config: UserDeletionCleanupConfig): Unit = {
     val keycloak = new KeyCloakConnectionProvider().getConnection
     val fedUserId = getFederatedUserId(userId)
-    val resource: UserResource = keycloak.realm(System.getenv("SUNBIRD_SSO_RELAM")).users.get(fedUserId)
 
     try {
+      val resource: UserResource = keycloak.realm(System.getenv("SUNBIRD_SSO_RELAM")).users.get(fedUserId)
       if (null != resource) resource.remove()
     } catch {
       case ex: Exception =>
         logger.error("Error occurred : ", ex)
-       val userRep: UserRepresentation = resource.toRepresentation
+
+        val resource: UserResource = keycloak.realm(System.getenv("SUNBIRD_SSO_RELAM")).users.get(fedUserId)
+        val userRep: UserRepresentation = resource.toRepresentation
         userRep.setEmail("")
         userRep.setEmailVerified(false)
         userRep.setEnabled(false)
