@@ -63,7 +63,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
           updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
 
           if(userDBMap.getOrElse(config.STATUS, 0).asInstanceOf[Int] != config.DELETION_STATUS) {
-            var deletionStatus = Map[String, AnyRef]("keycloakCredentials" -> false, "userLookUpTable" -> false, "userExternalIdTable" -> false, "userTable" -> false)
+            var deletionStatus: Map[String, Boolean] = Map[String, Boolean]("keycloakCredentials" -> false, "userLookUpTable" -> false, "userExternalIdTable" -> false, "userTable" -> false)
 
             try {
               // remove user credentials from keycloak if exists
