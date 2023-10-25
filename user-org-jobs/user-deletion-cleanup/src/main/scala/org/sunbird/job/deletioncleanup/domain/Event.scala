@@ -1,9 +1,6 @@
 package org.sunbird.job.deletioncleanup.domain
 
 import org.sunbird.dp.core.domain.Events
-import org.sunbird.dp.core.job.Metrics
-import org.sunbird.dp.core.util.{HttpUtil, JSONUtil}
-import org.sunbird.job.deletioncleanup.task.UserDeletionCleanupConfig
 
 import java.util
 import scala.collection.convert.ImplicitConversions.`map AsScala`

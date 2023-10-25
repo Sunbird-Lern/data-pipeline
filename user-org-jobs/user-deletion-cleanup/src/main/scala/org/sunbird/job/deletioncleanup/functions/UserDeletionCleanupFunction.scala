@@ -2,6 +2,7 @@ package org.sunbird.job.deletioncleanup.functions
 
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.google.gson.Gson
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
@@ -11,7 +12,7 @@ import org.keycloak.representations.idm.UserRepresentation
 import org.slf4j.LoggerFactory
 import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
 import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
-import org.sunbird.job.deletioncleanup.domain.Event
+import org.sunbird.job.deletioncleanup.domain.{ActorObject, Event, EventContext, EventData, EventObject, TelemetryEvent}
 import org.sunbird.job.deletioncleanup.task.UserDeletionCleanupConfig
 import org.sunbird.job.deletioncleanup.util.KeyCloakConnectionProvider
 
@@ -26,6 +27,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   extends BaseProcessFunction[Event, Event](config) {
 
   private[this] val logger = LoggerFactory.getLogger(classOf[UserDeletionCleanupFunction])
+  lazy private val gson = new Gson()
 
   override def metricsList(): List[String] = {
     List(config.userDeletionCleanupHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
@@ -61,9 +63,12 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
           updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
 
           if(userDBMap.getOrElse(config.STATUS, 0).asInstanceOf[Int] != config.DELETION_STATUS) {
+            var deletionStatus = Map[String, AnyRef]("keycloakCredentials" -> false, "userLookUpTable" -> false, "userExternalIdTable" -> false, "userTable" -> false)
+
             try {
               // remove user credentials from keycloak if exists
               removeEntryFromKeycloak(event.userId)(config)
+              deletionStatus + ("keycloakCredentials" -> true)
             } catch {
               case ex: Exception =>
                 logger.error("Error occurred : ", ex)
@@ -71,13 +76,21 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
             // remove user entries from lookup table
             removeEntryFromUserLookUp(userDetails)(config, cassandraUtil)
+            deletionStatus + ("userLookUpTable" -> true)
 
             // update user entry in user table
             updateUser(event.userId)(config, cassandraUtil)
+            deletionStatus + ("userTable" -> true)
 
             // remove user entries from externalId table
             val dbUserExternalIds: List[Map[String, String]] = getUserExternalIds(event.userId)(config, cassandraUtil)
             if(dbUserExternalIds.nonEmpty) deleteUserExternalIds(dbUserExternalIds)(config, cassandraUtil)
+            deletionStatus + ("userExternalIdTable" -> true)
+
+
+            //Generate AUDIT telemetry event
+            val props = deletionStatus.map{case (k, v) => k + ":" + v}.mkString("{", ", ", "}")
+            generateAuditEvent(Map[String,AnyRef]("userId" -> event.userId, "channel" -> event.organisation, "props" -> props), context) (config)
           }
 
           // delete managed users
@@ -87,6 +100,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
               updateUser(managedUser)(config, cassandraUtil)
             })
           }
+
 
         } catch {
           case ex: Exception =>
@@ -197,6 +211,8 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
       .and(QueryBuilder.set(config.FIRST_NAME, ""))
       .and(QueryBuilder.set(config.LAST_NAME, ""))
       .and(QueryBuilder.set(config.DOB, ""))
+      .and(QueryBuilder.set(config.EMAIL, ""))
+      .and(QueryBuilder.set(config.PHONE, ""))
       .where(QueryBuilder.eq(config.ID, id))
 
     cassandraUtil.upsert(updateUserQuery.toString)
@@ -217,6 +233,20 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
     simpleDateFormat.setLenient(false)
     simpleDateFormat
   }
+
+
+  def generateAuditEvent(data: Map[String, AnyRef], context: ProcessFunction[Event, Event]#Context)(config: UserDeletionCleanupConfig) = {
+    val auditEvent = TelemetryEvent(
+      actor = ActorObject(id = data.getOrElse("userId","").asInstanceOf[String]),
+      edata = EventData(props = Array(data.getOrElse("props","").asInstanceOf[String]), `type` = "DeleteUserStatus", status="Delete"),
+      context = EventContext(channel = data.getOrElse("channel","").asInstanceOf[String], cdata = Array(Map("type" -> "User", "id" -> data.getOrElse("userId","").asInstanceOf[String]).asJava)),
+      `object` = EventObject(id = data.getOrElse("userId","").asInstanceOf[String], `type` = "User")
+    )
+    logger.info("audit event =>"+gson.toJson(auditEvent))
+    context.output(config.auditEventOutputTag, gson.toJson(auditEvent))
+
+  }
+
 
 }
 
