@@ -3,7 +3,7 @@ imagepullsecrets: {{ imagepullsecrets }}
 dockerhub: {{ dockerhub }}
 repository: {{flink_repository|default('data-pipeline')}}
 image_tag: {{ image_tag }}
-checkpoint_store_type: {{ checkpoint_store_type }}
+cloud_service_provider: {{ cloud_service_provider }}
 cloud_storage_key: {{ cloud_storage_key }}
 cloud_storage_secret: {{ cloud_storage_secret }}
 cloud_storage_endpoint: {{ cloud_private_storage_endpoint }}
@@ -97,15 +97,15 @@ base_config: |
       statebackend {
         blob {
           storage {
-            account = "{% if checkpoint_store_type == "azure" %}{{ cloud_storage_key }}.blob.core.windows.net{% elif checkpoint_store_type == "s3" %}{{ flink_dp_storage_container }}{% endif %}"
+            account = "{% if cloud_service_provider == "azure" %}{{ cloud_storage_key }}.blob.core.windows.net{% elif cloud_service_provider in ["aws", "oci"] %}{{ cloud_storage_flink_bucketname }}{% endif %}"
             container = "{{ cloud_storage_flink_bucketname }}"
             checkpointing.dir = "checkpoint"
           }
         }
-{% if checkpoint_store_type == "azure" %}
+{% if cloud_service_provider == "azure" %}
         base.url = "wasbs://"${job.statebackend.blob.storage.container}"@"${job.statebackend.blob.storage.account}"/"${job.statebackend.blob.storage.checkpointing.dir}
-{% elif checkpoint_store_type == "s3" %}
-        base.url = "s3://"${job.statebackend.blob.storage.account}"/"${job.statebackend.blob.storage.container}"/"${job.statebackend.blob.storage.checkpointing.dir}
+{% elif cloud_service_provider in ["aws", "oci"] %}
+        base.url = "s3://"${job.statebackend.blob.storage.container}"/"${job.statebackend.blob.storage.checkpointing.dir}
 {% endif %}
       }
     }
@@ -184,7 +184,7 @@ activity-aggregate-updater:
     }
     redis {
       database {
-        relationCache.id = 10
+        relationCache.id = {{ redis_database_relation_cache_index | default(10) }}
       }
     }
     dedup-redis {
@@ -231,12 +231,12 @@ relation-cache-updater:
           table = "{{ middleware_content_hierarchy_table }}"
     }
     redis {
-      database.index = 10
+      database.index = {{ redis_database_index | default(10) }}
     }
     dp-redis {
       host = {{ dp_redis_host }}
       port = 6379
-      database.index = 5
+      database.index = {{ redis_dp_redis_database_index | default(5) }}
     }
 
   flink-conf: |+
@@ -272,7 +272,7 @@ enrolment-reconciliation:
     }
     redis {
       database {
-        relationCache.id = 10
+        relationCache.id = {{ redis_database_relation_cache_index | default(10) }}
       }
     }
     threshold.batch.write.size = {{ enrolment_reconciliation_batch_write_size }}
@@ -317,6 +317,12 @@ collection-cert-pre-processor:
       assessment_aggregator.table = "{{ middleware_assessment_aggregator_table }}"
       user_activity_agg.table = "{{ middleware_user_activity_agg_table }}"
     }
+    redis {
+          database {
+            contentCache.id = {{ redis_database_content_cache_index | default(5) }}
+            collectionCache.id = {{ redis_collection_cache_index | default(0) }}
+          }
+    }
     cert_domain_url = "{{ cert_domain_url }}"
     user_read_api = "/private/user/v1/read"
     content_read_api = "/content/v3/read"
@@ -334,8 +340,11 @@ collection-cert-pre-processor:
       port = 6379
     }
     assessment.metrics.supported.contenttype = ["SelfAssess"]
+    cert_cloud_storage_type = "{{ cert_cloud_storage_type }}"
+    cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
+    cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
     cloud_storage_base_url = "{{ cloud_storage_base_url }}"
-    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder }}"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder | default('CLOUD_BASE_PATH')}}"
     content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
 
@@ -346,7 +355,7 @@ collection-cert-pre-processor:
     parallelism.default: 1
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1
-    
+
 collection-certificate-generator:
   collection-certificate-generator: |+
     include file("/data/flink/conf/base-config.conf")
@@ -372,9 +381,10 @@ collection-certificate-generator:
     cert_container_name = "{{ cert_container_name }}"
     cert_cloud_storage_type = "{{ cert_cloud_storage_type }}"
     cert_cloud_storage_secret = "{{ cert_cloud_storage_secret }}"
+    cert_cloud_storage_endpoint = "{{cert_cloud_storage_endpoint}}"
     cert_cloud_storage_key = "{{ cert_cloud_storage_key }}"
     cloud_storage_base_url = "{{ cloud_storage_base_url }}"
-    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder }}"
+    cloud_store_base_path_placeholder = "{{ cloud_store_base_path_placeholder | default('CLOUD_BASE_PATH')}}"
     content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
@@ -508,8 +518,8 @@ assessment-aggregator:
     }
     redis {
       database {
-        relationCache.id = 10
-        contentCache.id = 5
+        relationCache.id = {{ redis_database_relation_cache_index | default(10) }}
+        contentCache.id = {{ redis_database_content_cache_index | default(5) }}
       }
     }
     assessment.skip.missingRecords = true
@@ -580,7 +590,7 @@ user-cache-updater-v2:
     # redis-metadata
     redis-meta {
       database {
-        userstore.id = 12
+        userstore.id = {{ redis_meta_database_user_index | default(12) }}
         key.expiry.seconds = 3600
       }
     }

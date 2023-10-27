@@ -89,11 +89,21 @@ class ProgramUserInfoFunction(config: ProgramUserInfoConfig,
      * To get the key-values related to user type
      */
     val userTypeData = new util.HashMap[String, String]
-    if(event.user_Types!= null && event.user_Types.isEmpty==false) {
+    if (event.user_Types != null && event.user_Types.isEmpty == false) {
+      val subTypeBuilder = new StringBuilder
+      val subTypeSet = new util.HashSet[String]
       event.user_Types.forEach(f => {
-        userTypeData.put("type", Option(f.get("type")).map(_.toString).filter(_.nonEmpty).orNull)
-        userTypeData.put("sub_type", Option(f.get("subType")).map(_.toString).filter(_.nonEmpty).orNull)
+        userTypeData.put("type", Option(f.get("type")).map(_.toString).filter(_.nonEmpty).map(_.toLowerCase).orNull)
+        val subType = Option(f.get("subType")).map(_.toString).filter(_.nonEmpty).map(_.toUpperCase).orNull
+        if (subType != null && !subTypeSet.contains(subType)) {
+          if (subTypeBuilder.length() > 0) {
+            subTypeBuilder.append(",")
+          }
+          subTypeBuilder.append(subType)
+          subTypeSet.add(subType)
+        }
       })
+      userTypeData.put("sub_type", if (subTypeBuilder.toString().isBlank) null else subTypeBuilder.toString())
     }
 
     /**

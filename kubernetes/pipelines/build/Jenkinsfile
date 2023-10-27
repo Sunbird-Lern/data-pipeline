@@ -25,8 +25,8 @@ node('build-slave') {
                     env.NODE_ENV = "build"
                     print "Environment will be : ${env.NODE_ENV}"
                     sh '/opt/apache-maven-3.6.3/bin/mvn3.6 -v'
-                    sh '/opt/apache-maven-3.6.3/bin/mvn3.6 clean install -DskipTests'
-                  
+                    sh "/opt/apache-maven-3.6.3/bin/mvn3.6 clean install -DskipTests -DCLOUD_STORE_GROUP_ID=${params.cloud_store_group_id} -DCLOUD_STORE_ARTIFACT_ID=${params.cloud_store_artifact_id} -DCLOUD_STORE_VERSION=${params.cloud_store_version}"
+
                 }
 
                 stage('Package') {

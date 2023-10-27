@@ -110,16 +110,16 @@ spec:
         command: ["/opt/flink/bin/standalone-job.sh"]
         args: ["start-foreground",
                "--job-classname={{ .Values.job_classname }}",
-{{- if eq .Values.checkpoint_store_type "azure" }}
+{{- if eq .Values.cloud_service_provider "azure" }}
                "-Dfs.azure.account.key.{{ .Values.cloud_storage_key }}.blob.core.windows.net={{ .Values.cloud_storage_secret }}",
 {{- end }}
-{{- if eq .Values.checkpoint_store_type "s3" }}
-               "-Ds3.access-key={{ .Values.cloud_storage_key }}",
-               "-Ds3.secret-key={{ .Values.cloud_storage_secret }}",
-               "-Ds3.endpoint={{ .Values.cloud_storage_endpoint }}",
-               "-Ds3.path.style.access={{ .Values.cloud_storage_path_style_access }}",
+{{- if or (eq .Values.cloud_service_provider "aws") (eq .Values.cloud_service_provider "oci") }}
+               "-Dpresto.s3.access-key={{ .Values.cloud_storage_key }}",
+               "-Dpresto.s3.secret-key={{ .Values.cloud_storage_secret }}",
+               "-Dpresto.s3.endpoint={{ .Values.cloud_storage_endpoint }}",
+               "-Dpresto.s3.path.style.access={{ .Values.cloud_storage_path_style_access }}",
 {{- end }}
-{{- if eq .Values.checkpoint_store_type "gcloud" }}
+{{- if eq .Values.cloud_service_provider "gcloud" }}
                "-Dfs.gs.auth.client.id={{ .Values.cloud_storage_key }}",
                "-Dfs.gs.auth.client.secret={{ .Values.cloud_storage_secret }}",
                "-Dfs.gs.project.id={{ .Values.cloud_storage_project_id }}",
@@ -196,16 +196,16 @@ spec:
         workingDir: {{ .Values.taskmanager.flink_work_dir }}
         command: ["/opt/flink/bin/taskmanager.sh"]
         args: ["start-foreground",
-{{- if eq .Values.checkpoint_store_type "azure" }}
+{{- if eq .Values.cloud_service_provider "azure" }}
           "-Dfs.azure.account.key.{{ .Values.cloud_storage_key }}.blob.core.windows.net={{ .Values.cloud_storage_secret }}",
 {{- end }}
-{{- if eq .Values.checkpoint_store_type "s3" }}
-          "-Ds3.access-key={{ .Values.cloud_storage_key }}",
-          "-Ds3.secret-key={{ .Values.cloud_storage_secret }}",
-          "-Ds3.endpoint={{ .Values.cloud_storage_endpoint }}",
-          "-Ds3.path.style.access={{ .Values.cloud_storage_path_style_access }}",
+{{- if or (eq .Values.cloud_service_provider "aws") (eq .Values.cloud_service_provider "oci") }}
+          "-Dpresto.s3.access-key={{ .Values.cloud_storage_key }}",
+          "-Dpresto.s3.secret-key={{ .Values.cloud_storage_secret }}",
+          "-Dpresto.s3.endpoint={{ .Values.cloud_storage_endpoint }}",
+          "-Dpresto.s3.path.style.access={{ .Values.cloud_storage_path_style_access }}",
 {{- end }}
-{{- if eq .Values.checkpoint_store_type "gcloud" }}
+{{- if eq .Values.cloud_service_provider "gcloud" }}
           "-Dfs.gs.auth.client.id={{ .Values.cloud_storage_key }}",
           "-Dfs.gs.auth.client.secret={{ .Values.cloud_storage_secret }}",
           "-Dfs.gs.project.id={{ .Values.cloud_storage_project_id }}",
