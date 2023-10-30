@@ -1,4 +1,4 @@
-package org.sunbird.job.collectioncert.function.spec
+package org.sunbird.job.notification.spec
 
 import java.util
 
@@ -12,7 +12,7 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.mockito.Mockito.when
-import org.mockito.{ Mockito}
+import org.mockito.Mockito
 import org.scalatest.DoNotDiscover
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.notification.domain.Event
