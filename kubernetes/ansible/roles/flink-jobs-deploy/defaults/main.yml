@@ -122,6 +122,10 @@ middleware_cassandra_user_activity_agg_table: user_activity_agg
 user_cache_updater_job_consumer_parallelism: 1
 user_cache_updater_job_parallelism: 1
 
+###  User-deletion-cleanup Job related Vars
+user_deletion_cleanup_job_consumer_parallelism: 1
+user_deletion_cleanup_job_parallelism: 1
+
 ### Program-User-Info Job vars
 programuserinfo_consumer_parallelism: 1
 programuserinfo_downstream_parallelism: 1
