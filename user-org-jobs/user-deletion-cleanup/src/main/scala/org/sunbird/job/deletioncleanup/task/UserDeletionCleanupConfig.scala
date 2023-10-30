@@ -38,14 +38,7 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val searchIndex: String = "course-batch"
   val courseBatchIndexType: String = "_doc"
 
-  //Thresholds
-  val thresholdBatchWriteSize: Int = config.getInt("threshold.batch.write.size")
-
   // constants
-  val courseId = "courseid"
-  val batchId = "batchid"
-  val createdBy = "createdby"
-  val mentors = "mentors"
   val EMAIL = "email"
   val PHONE = "phone"
   val USER_LOOKUP_FILED_EXTERNAL_ID = "externalid"
