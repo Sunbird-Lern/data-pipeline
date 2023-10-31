@@ -224,6 +224,11 @@ flink_job_names:
     taskslots: 1
     cpu_requests: 0.3
     scale_enabled: false
+  user-deletion-cleanup:
+    job_class_name: 'org.sunbird.job.deletioncleanup.task.UserDeletionCleanupStreamTask.scala'
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
 
 
 ### Global vars
