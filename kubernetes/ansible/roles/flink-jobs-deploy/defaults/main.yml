@@ -230,6 +230,7 @@ flink_job_names:
     jobmanager_memory: 1024m
     taskmanager_memory: 1024m
     taskslots: 1
+    cpu_requests: 0.3
 
 
 ### Global vars
