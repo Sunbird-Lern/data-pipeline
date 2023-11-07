@@ -40,6 +40,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
   val gson = new Gson()
   var jedis: Jedis = _
   var server = new MockWebServer()
+  var fwServer = new MockWebServer()
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
@@ -55,6 +56,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     super.afterAll()
     redisServer.stop()
     server.close()
+    fwServer.close()
     flinkCluster.after()
   }
 
@@ -104,6 +106,22 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
 
   }
 
+  def setupFrameworkMockWebServer(): Unit = {
+    val igotFramework = """{"id":"api.framework.read","ver":"1.0","ts":"2023-11-07T10:24:21.073Z","params":{"resmsgid":"d09e5c10-7d57-11ee-9536-81786392a376","msgid":"d09c8750-7d57-11ee-8359-37cd2dcc94dd","status":"successful","err":null,"errmsg":null},"responseCode":"OK","result":{"framework":{"identifier":"igot_health","code":"igot_health","name":"IGOT-Health","description":"IGOT-Health","categories":[{"identifier":"igot_health_board","code":"board","terms":[],"translations":null,"name":"Board","description":"Board","index":1,"status":"Live"},{"identifier":"igot_health_medium","code":"medium","terms":[],"translations":null,"name":"Medium","description":"Medium","index":2,"status":"Live"},{"identifier":"igot_health_gradelevel","code":"gradeLevel","terms":[],"translations":null,"name":"Grade","description":"Grade","index":3,"status":"Live"},{"identifier":"igot_health_subject","code":"subject","terms":[],"translations":null,"name":"Subject","description":"Subject","index":4,"status":"Live"},{"identifier":"igot_health_topic","code":"topic","translations":null,"name":"Concept","description":"Concept","index":5,"status":"Live"}],"type":"K-12","objectType":"Framework"}}}"""
+
+    try
+      fwServer.start(3100)
+    catch {
+      case e: IOException =>
+        System.out.println("Exception" + e)
+    }
+
+    fwServer.enqueue(new MockResponse().setBody(igotFramework))
+    fwServer.url("http://127.0.0.1:3100/framework/v1/read/igot_health")
+    fwServer.enqueue(new MockResponse().setBody(igotFramework))
+    fwServer.url("http://127.0.0.1:3100/framework/v1/read/tn")
+  }
+
   def setupRestUtilDataWithErrors(): Unit = {
 
     val user1 = """{"id":".private.user.v1.read.123456","ver":"private","ts":"2021-03-09 11:33:42:061+0530","params":{"resmsgid":null,"msgid":"06ff91d6-043e-4714-b002-6f8b90a04723","err":null,"status":"success","errmsg":null},"responseCode":"OK","result":{"response":{"webPages":[],"maskedPhone":null,"subject":[],"channel":"root2","language":["English"],"updatedDate":null,"password":null,"managedBy":null,"flagsValue":2,"id":"a962a4ff-b5b5-46ad-a9fa-f54edf1bcccb","recoveryEmail":"","identifier":"a962a4ff-b5b5-46ad-a9fa-f54edf1bcccb","thumbnail":null,"updatedBy":null,"accesscode":null,"locationIds":["8db3345c-1bfc-4276-aef1-7ea0f3183211","d087424e-18cb-49b0-865c-98f265c73ed3","13087424e-18cb-49b0-865c-98f265c73ed3","43087424e-18cb-49b0-865c-98f265c73ed3"],"externalIds":[{"idType":"root2","provider":"root2","id":"123456"}],"registryId":null,"rootOrgId":"0127738024883077121","prevUsedEmail":"","firstName":"Utkarsha","tncAcceptedOn":null,"allTncAccepted":{},"phone":"","dob":null,"grade":[],"currentLoginTime":null,"userType":null,"status":1,"lastName":"Kapoor","tncLatestVersion":"v1","gender":null,"roles":["PUBLIC"],"prevUsedPhone":"","stateValidated":false,"isDeleted":false,"organisations":[{"organisationId":"0127738024883077121","updatedBy":null,"addedByName":null,"addedBy":null,"roles":["PUBLIC"],"approvedBy":null,"updatedDate":null,"userId":"a962a4ff-b5b5-46ad-a9fa-f54edf1bcccb","approvaldate":null,"isDeleted":false,"hashTagId":"0127738024883077121","isRejected":null,"id":"0132322953313320960","position":null,"isApproved":null,"orgjoindate":"2021-03-09 11:31:31:930+0530","orgLeftDate":null}],"profileUserType":{"type":"administrator","subType":"deo"},"profileUserTypes":[{"type":"administrator","subType":"hm"},{"type":"teacher"},{"type":"administrator","subType":"crp"},{"type":"other"},{"type":"parent"}],"userLocations":[{"code":"21","name":"Odisha","id":"8db3345c-1bfc-4276-aef1-7ea0f3183211","type":"state","parentId":null},{"code":"2112","name":"CUTTACK","id":"d087424e-18cb-49b0-865c-98f265c73ed3","type":"district","parentId":"8db3345c-1bfc-4276-aef1-7ea0f3183211"},{"code":"211","name":"BLOCK1","id":"13087424e-18cb-49b0-865c-98f265c73ed3","type":"block","parentId":"8db3345c-1bfc-4276-aef1-7ea0f3183211"},{"code":"211","name":"CLUSTER1","id":"43087424e-18cb-49b0-865c-98f265c73ed3","type":"cluster","parentId":"8db3345c-1bfc-4276-aef1-7ea0f3183211"},{"name":"DPS, MATHURA","id":"63087424e-18cb-49b0-865c-98f265c73ed3","type":"school","code":"3183211"}],"countryCode":null,"tncLatestVersionUrl":"https://dev-sunbird-temp.azureedge.net/portal/terms-and-conditions-v1.html","maskedEmail":"am******@yopmail.com","tempPassword":null,"email":"am******@yopmail.com","rootOrg":{"dateTime":null,"preferredLanguage":"English","keys":{},"approvedBy":null,"channel":"root2","description":"Root Org2","updatedDate":null,"addressId":null,"orgType":null,"provider":null,"locationId":null,"orgCode":null,"theme":null,"id":"0127738024883077121","communityId":null,"isApproved":null,"email":null,"slug":"root2","isSSOEnabled":null,"thumbnail":null,"orgName":"Root Org2","updatedBy":null,"locationIds":[],"externalId":null,"isRootOrg":true,"rootOrgId":"0127738024883077121","approvedDate":null,"imgUrl":null,"homeUrl":null,"orgTypeId":null,"isDefault":null,"createdDate":"2019-05-31 16:41:29:485+0530","createdBy":null,"parentOrgId":null,"hashTagId":"0127738024883077121","noOfMembers":null,"status":1},"phoneVerified":false,"profileSummary":null,"recoveryPhone":"","avatar":null,"userName":"creatortest_72yz","userId":"a962a4ff-b5b5-46ad-a9fa-f54edf1bcccb","userSubType":null,"promptTnC":true,"emailVerified":true,"lastLoginTime":null,"createdDate":"2021-03-09 11:31:23:189+0530","framework":{"board":["IGOT-Health"],"gradeLevel":["Volunteers"],"id":["igot_health"],"medium":["English"],"subject":["IRCS"]},"createdBy":null,"location":null,"tncAcceptedVersion":null}}}"""
@@ -136,6 +154,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
 
   "UserCacheUpdater" should "be able to add user to cache with all information" in {
     setupRestUtilData()
+    setupFrameworkMockWebServer()
     when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new InputSource)
 
     val task = new UserCacheUpdaterStreamTaskV2(userCacheConfig, mockKafkaUtil)
@@ -166,12 +185,12 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     userInfo.get("schoolname") should be ("DPS, MATHURA")
     userInfo.get("usertype") should be ("administrator,teacher,other,parent")
     userInfo.get("usersubtype") should be ("hm,crp")
-    userInfo.get("board") should be ("IGOT-Health")
+    userInfo.get("board") should be ("""["IGOT-Health"]""")
     userInfo.get("rootorgid") should be ("0127738024883077121")
     userInfo.get("orgname") should be ("Root Org2")
     userInfo.get("subject") should be ("""["IRCS"]""")
     userInfo.get("language") should be ("""["English"]""")
-    userInfo.get("grade") should be ("""["Volunteers"]""")
+    userInfo.get("gradeLevel") should be ("""["Volunteers"]""")
     userInfo.get("framework") should be ("igot_health")
     userInfo.get("medium") should be ("""["English"]""")
     userInfo.get("profileusertypes") should be ("""\[{"subType":"hm","type":"administrator"},{"type":"teacher"},{"subType":"crp","type":"administrator"},{"type":"other"},{"type":"parent"}\]""")
@@ -201,7 +220,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     userInfo.get("board") should be (null)
     userInfo.get("subject") should be (null)
     userInfo.get("language") should be ("""[]""")
-    userInfo.get("grade") should be (null)
+    userInfo.get("gradeLevel") should be (null)
     userInfo.get("framework") should be (null)
     userInfo.get("medium") should be (null)
     userInfo.get("profileusertypes") should be ("""\[{"subType":"deo","type":"administrator"}\]""")
@@ -221,14 +240,14 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     userInfo.get("schoolname") should be (null)
     userInfo.get("usertype") should be ("teacher")
     userInfo.get("usersubtype") should be ("")
-    userInfo.get("board") should be ("")
+    userInfo.get("board") should be (null)
     userInfo.get("rootorgid") should be ("0127738024883077121")
     userInfo.get("orgname") should be ("Root Org2")
-    userInfo.get("subject") should be ("""[]""")
+    userInfo.get("subject") should be (null)
     userInfo.get("language") should be ("")
-    userInfo.get("grade") should be ("""["Volunteers"]""")
-    userInfo.get("framework") should be ("")
-    userInfo.get("medium") should be ("""["English"]""")
+    userInfo.get("gradeLevel") should be (null)
+    userInfo.get("framework") should be (null)
+    userInfo.get("medium") should be (null)
     userInfo.get("phone") should be ("LednrgEat6NcG8DX3ue89T7osrjR76AWYqtSYzAvg1jvx1a4lZn6KssNuPP4UeiGoVPQ24MeJbTing10uKJND1TrTfg+K3pGBxLTV+B2SKBxLdBdWzwFOkCsEv53x7bP4T6a+wzaAmCWueMEdPmZuRg==")
     userInfo.get("email") should be ("LednrgEat6NcG8DX3ue89T7osrjR76AWYqtSYzAvg1jvx1a4lZn6KssNuPP4UeiGoVPQ24MeJbTing10uKJND1TrTfg+K3pGBxLTV+B2SKBxLdBdWzwFOkCsEv53x7bP4T6a+wzaAmCWueMEdPmZuRg==")
     userInfo.get("profileusertypes") should be ("""\[{"type":"teacher"}\]""")
@@ -255,12 +274,12 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     userInfo.get("schoolname") should be ("""\[RPMMAT M.S UDHADIH""")
     userInfo.get("usertype") should be ("administrator")
     userInfo.get("usersubtype") should be ("")
-    userInfo.get("board") should be ("IGOT-Health")
+    userInfo.get("board") should be ("""["IGOT-Health"]""")
     userInfo.get("rootorgid") should be ("0127738024883077121")
     userInfo.get("orgname") should be ("Root Org2")
     userInfo.get("subject") should be ("""["IRCS"]""")
     userInfo.get("language") should be ("""["English"]""")
-    userInfo.get("grade") should be ("""["Volunteers"]""")
+    userInfo.get("gradeLevel") should be ("""["Volunteers"]""")
     userInfo.get("framework") should be ("igot_health")
     userInfo.get("medium") should be ("""["English"]""")
     userInfo.get("profileusertypes") should be ("""\[{"type":"administrator"}\]""")
@@ -301,6 +320,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
 
   "UserCacheUpdater" should "throw exception" in intercept[Exception] {
     setupRestUtilDataWithErrors
+    setupFrameworkMockWebServer()
     when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new InputSource)
 
     val task = new UserCacheUpdaterStreamTaskV2(userCacheConfig, mockKafkaUtil)

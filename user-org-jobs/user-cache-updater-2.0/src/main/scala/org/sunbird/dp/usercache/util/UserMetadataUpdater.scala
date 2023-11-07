@@ -23,11 +23,11 @@ object UserMetadataUpdater {
 
   val logger = LoggerFactory.getLogger("UserMetadataUpdater")
 
-  def execute(userId: String, event: Event, metrics: Metrics, config: UserCacheUpdaterConfigV2, dataCache: DataCache, restUtil: RestUtil): mutable.Map[String, AnyRef] = {
+  def execute(userId: String, event: Event, metrics: Metrics, config: UserCacheUpdaterConfigV2, dataCache: DataCache, restUtil: RestUtil, fwCache: FrameworkCacheHandler): mutable.Map[String, AnyRef] = {
 
     val generalInfo = getGeneralInfo(userId, event, metrics, config, dataCache);
     val regdInfo = if (config.regdUserProducerPid.equals(event.producerPid())) {
-      getRegisteredUserInfo(userId, event, metrics, config, dataCache, restUtil)
+      getRegisteredUserInfo(userId, event, metrics, config, dataCache, restUtil, fwCache)
     } else mutable.Map[String, String]()
     generalInfo.++:(regdInfo);
   }
@@ -50,7 +50,7 @@ object UserMetadataUpdater {
 
   @throws(classOf[Exception])
   def getRegisteredUserInfo(userId: String, event: Event, metrics: Metrics, config: UserCacheUpdaterConfigV2, dataCache: DataCache,
-                            restUtil: RestUtil): mutable.Map[String, AnyRef] = {
+                            restUtil: RestUtil, fwCache: FrameworkCacheHandler): mutable.Map[String, AnyRef] = {
     var userCacheData: mutable.Map[String, AnyRef] = mutable.Map[String, AnyRef]()
 
     //?fields=locations is appended in url to get userLocation in API response
@@ -61,22 +61,23 @@ object UserMetadataUpdater {
 
       val response = gson.fromJson[Response](gson.toJson(userReadRes.result.get("response")), classOf[Response])
       val framework = response.framework
-      //flatten BGMS value
+
+      //flatten Framework Categories value
       /**
-        * Assumption: Board and Framework-id is single valued
+        * Assumption: Framework-id is single valued
         */
       if (!framework.isEmpty) {
-        val userFrameworkFields = config.userFrameworkFields
-        for ((key,value) <- userFrameworkFields) {
-          val valueParams = value.split(":")
-          val cacheKey = valueParams.head
-          val frValue = framework.getOrDefault(key, List().asJava)
-          if(valueParams.last == "string"){
-            val frValueString = if (!frValue.isEmpty) frValue.get(0) else ""
-            userCacheData.+=(cacheKey-> frValueString)
-          } else {
-            userCacheData.+=(cacheKey->frValue)
-          }
+        val fwIDList = framework.getOrDefault("id", List().asJava)
+
+        if (!fwIDList.isEmpty){
+          val fwID = fwIDList.get(0)
+          userCacheData.+=("framework"-> fwID)
+
+          val userFrameworkFields = fwCache.getFwCategories(fwID)
+          userFrameworkFields.map(key =>{
+            val frValue = framework.getOrDefault(key, List().asJava)
+            userCacheData.+=(key->frValue)
+          })
         }
       }
 

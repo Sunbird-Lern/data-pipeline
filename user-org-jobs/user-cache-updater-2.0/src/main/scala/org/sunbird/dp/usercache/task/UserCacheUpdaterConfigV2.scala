@@ -81,5 +81,6 @@ class UserCacheUpdaterConfigV2(override val config: Config) extends BaseJobConfi
 
   val userAccBlockedErrCode = "UOS_USRRED0006"
 
-  val userFrameworkFields = config.getAnyRef("userFrameworkFields").asInstanceOf[java.util.HashMap[String, String]].asScala
+  // Framework Read API
+  val fwReadApiUrl = config.getString("framework.api.url")
 }
