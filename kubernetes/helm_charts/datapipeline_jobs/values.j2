@@ -596,6 +596,7 @@ user-cache-updater-v2:
     }
     #(user read api details)
     user-read.api.url = "http://{{private_ingressgateway_ip}}{{ user_read_api_endpoint }}"
+    userFrameworkFields = {{user_framework_fields}}
 
 
   flink-conf: |+
