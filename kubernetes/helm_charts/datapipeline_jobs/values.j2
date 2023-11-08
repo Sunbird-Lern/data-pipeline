@@ -596,9 +596,9 @@ user-cache-updater-v2:
     }
     #(user read api details)
     user_read_api = "/private/user/v1/read/"
-    framework_read_api = "/framework/v3/read/"
+    framework_read_api = "/api/framework/v1/read/"
     service {
-      taxonomy.basePath = "{{ taxonomy_service_base_url }}"
+      taxonomy.basePath = "{{ domain_url }}"
       userorg.basePath = "{{ userorg_service_base_url }}"
     }
 
