@@ -98,9 +98,10 @@ kp_print_service_base_url: "http://{{private_ingressgateway_ip}}/print"
 cert_reg_service_base_url: "http://{{private_ingressgateway_ip}}/certreg"
 kp_search_service_base_url: "http://{{private_ingressgateway_ip}}/search"
 lms_service_base_url: "http://{{private_ingressgateway_ip}}/lms"
-learner_service_base_url: "http://{{private_ingressgateway_ip}}/userorg"
+userorg_service_base_url: "http://{{private_ingressgateway_ip}}/userorg"
 sourcing_content_service_base_url: "http://{{dock_private_ingressgateway_ip | default('localhost') }}/content"
 content_service_base_url: "http://{{private_ingressgateway_ip}}/content"
+taxonomy_service_base_url: "http://{{private_ingressgateway_ip}}/taxonomy"
 kp_content_service_base_url: "http://{{private_ingressgateway_ip}}/content"
 cert_service_base_url: "http://{{private_ingressgateway_ip}}/cert"
 enc_service_base_url: "http://{{private_ingressgateway_ip}}/enc"
@@ -118,6 +119,7 @@ content_read_api_host: "{{content_read_api_host}}"
 content_read_api_endpoint: "{{content_read_api_endpoint}}"
 content_cloud_storage_container: "{{cloud_storage_content_bucketname}}"
 cloud_store_base_path_placeholder: "CLOUD_BASE_PATH"
+
 
 default_channel: "org.sunbird"
 download_neo4j: true
@@ -170,8 +172,5 @@ cloud_storage_endpoint: ""
 cloud_storage_path_style_access: ""
 cloud_storage_project_id: ""
 cloud_storage_flink_bucketname: "flink-check-points-store"
-
-#(user read api details)
-user_read_api_endpoint: "/learner/private/user/v1/read/"
 
 sunbird_api_auth_token: "{{ core_vault_sunbird_api_auth_token }}"

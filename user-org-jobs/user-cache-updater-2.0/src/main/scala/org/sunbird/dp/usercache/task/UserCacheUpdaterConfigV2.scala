@@ -75,12 +75,12 @@ class UserCacheUpdaterConfigV2(override val config: Config) extends BaseJobConfi
   val userCacheUpdaterFunction = "UserCacheUpdaterFunctionV2"
 
   //User Read API
-  val userReadApiUrl = config.getString("user-read.api.url")
+  val userReadApiUrl = config.getString("service.userorg.basePath") + config.getString("user_read_api")
   val userReadApiFields = config.getString("user.read.url.fields")
   val userReadApiErrors: JList[String] = config.getStringList("user.read.api.error")
 
   val userAccBlockedErrCode = "UOS_USRRED0006"
 
   // Framework Read API
-  val fwReadApiUrl = config.getString("framework.api.url")
+  val fwReadApiUrl = config.getString("service.taxonomy.basePath") + config.getString("framework_read_api")
 }

@@ -328,7 +328,7 @@ collection-cert-pre-processor:
     content_read_api = "/content/v3/read"
     service {
       content.basePath = "{{ content_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
     }
     enable.suppress.exception = {{ collection_certificate_pre_processor_enable_suppress_exception | lower }}
     redis-meta {
@@ -389,7 +389,7 @@ collection-certificate-generator:
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"
@@ -440,7 +440,7 @@ legacy-certificate-migrator:
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"
@@ -595,8 +595,12 @@ user-cache-updater-v2:
       }
     }
     #(user read api details)
-    user-read.api.url = "http://{{private_ingressgateway_ip}}{{ user_read_api_endpoint }}"
-    userFrameworkFields = {{user_framework_fields}}
+    user_read_api = "/private/user/v1/read/"
+    framework_read_api = "/framework/v3/read/"
+    service {
+      taxonomy.basePath = "{{ taxonomy_service_base_url }}"
+      userorg.basePath = "{{ userorg_service_base_url }}"
+    }
 
 
   flink-conf: |+
@@ -654,7 +658,7 @@ user-deletion-cleanup:
             basePath = "{{ lms_service_base_url }}"
         }
         userorg {
-            basePath = "{{ learner_service_base_url }}"
+            basePath = "{{ userorg_service_base_url }}"
         }
     }
 
