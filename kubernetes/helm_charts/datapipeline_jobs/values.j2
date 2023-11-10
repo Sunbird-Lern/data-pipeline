@@ -570,8 +570,8 @@ user-cache-updater-v2:
   user-cache-updater-v2: |+
     include file("/data/flink/conf/base-config.conf")
     kafka {
-      input.topic = ${job.env}".telemetry.audit"
-      groupId = ${job.env}"-user-cache-updater-group"
+      input.topic = {{ kafka_topic_telemetry_audit }}
+      groupId = {{ kafka_group_user_cache_updater }}
     }
     task {
       restart-strategy.attempts = {{ restart_attempts }} # max 3 restart attempts
