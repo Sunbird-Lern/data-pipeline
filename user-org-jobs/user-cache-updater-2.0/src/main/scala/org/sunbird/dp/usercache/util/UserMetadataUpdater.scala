@@ -71,12 +71,12 @@ object UserMetadataUpdater {
 
         if (!fwIDList.isEmpty){
           val fwID = fwIDList.get(0)
-          userCacheData.+=("framework"-> fwID)
+          userCacheData.+=("framework_id" -> fwID)
 
           val userFrameworkFields = fwCache.getFwCategories(fwID)
           userFrameworkFields.map(key =>{
             val frValue = framework.getOrDefault(key, List().asJava)
-            userCacheData.+=(key->frValue)
+            userCacheData.+=("framework_" + key -> frValue)
           })
         }
       }
