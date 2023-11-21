@@ -1,9 +1,10 @@
 package org.sunbird.dp.userinfo.task
 
-import org.sunbird.dp.core.job.FlinkKafkaConnector
 import com.typesafe.config.ConfigFactory
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
+import org.sunbird.dp.core.job.FlinkKafkaConnector
 import org.sunbird.dp.core.util.FlinkUtil
 import org.sunbird.dp.userinfo.domain.Event
 import org.sunbird.dp.userinfo.functions.ProgramUserInfoFunction
@@ -19,7 +20,7 @@ class ProgramUserInfoStreamTask(config: ProgramUserInfoConfig, kafkaConnector: F
       implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
       val source = kafkaConnector.kafkaEventSource[Event](config.kafkaInputTopic)
 
-      env.addSource(source, config.programUserConsumer)
+      env.fromSource(source, WatermarkStrategy.noWatermarks[Event](), config.programUserConsumer)
         .uid(config.programUserConsumer).setParallelism(config.kafkaConsumerParallelism).rebalance()
         .process(new ProgramUserInfoFunction(config))
         .name(config.programUserInfoFunction).uid(config.programUserInfoFunction)

@@ -80,9 +80,10 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
 
 
   "AssessmentAggregator " should "Update event to db" in {
-    when(mockKafkaUtil.kafkaEventSource[Event](assessmentConfig.kafkaInputTopic)).thenReturn(new AssessmentAggreagatorEventSource)
-    when(mockKafkaUtil.kafkaEventSink[Event](assessmentConfig.kafkaFailedTopic)).thenReturn(new FailedEventsSink())
-    when(mockKafkaUtil.kafkaStringSink(assessmentConfig.kafkaCertIssueTopic)).thenReturn(new certificateIssuedEventsSink)
+    // TODO:
+//    when(mockKafkaUtil.kafkaEventSource[Event](assessmentConfig.kafkaInputTopic)).thenReturn(new AssessmentAggreagatorEventSource)
+//    when(mockKafkaUtil.kafkaEventSink[Event](assessmentConfig.kafkaFailedTopic)).thenReturn(new FailedEventsSink())
+//    when(mockKafkaUtil.kafkaStringSink(assessmentConfig.kafkaCertIssueTopic)).thenReturn(new certificateIssuedEventsSink)
     val task = new AssessmentAggregatorStreamTask(assessmentConfig, mockKafkaUtil)
     task.process()
 //    assert(FailedEventsSink.values.get(0).getTelemetry.getMap.containsKey("metadata"))

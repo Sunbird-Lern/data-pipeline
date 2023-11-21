@@ -1,11 +1,10 @@
 package org.sunbird.spec
 
-import java.util
-
 import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
-import net.manub.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
 import net.manub.embeddedkafka.EmbeddedKafka._
+import net.manub.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala._
@@ -14,8 +13,9 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import org.scalatest.Matchers
 import org.sunbird.dp.core.job.FlinkKafkaConnector
 import org.sunbird.dp.core.util.FlinkUtil
-import scala.concurrent.duration._
 
+import java.util
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -116,31 +116,32 @@ class BaseProcessFunctionTestSpec extends BaseSpec with Matchers {
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(bsConfig)
 
     val eventStream =
-      env.addSource(kafkaConnector.kafkaEventSource[Event](bsConfig.kafkaEventInputTopic), "event-schema-consumer")
+      env.fromSource(kafkaConnector.kafkaEventSource[Event](bsConfig.kafkaEventInputTopic), WatermarkStrategy.noWatermarks[Event](), "event-schema-consumer")
       .process[Event](new TestEventStreamFunc(bsConfig)).name("TestTelemetryEventStream")
 
     eventStream.getSideOutput(bsConfig.eventOutputTag)
-      .addSink(kafkaConnector.kafkaEventSink[Event](bsConfig.kafkaEventOutputTopic))
+      .sinkTo(kafkaConnector.kafkaEventSink[Event](bsConfig.kafkaEventOutputTopic))
       .name("Event-Producer")
 
     eventStream.getSideOutput(bsConfig.duplicateEventOutputTag)
-      .addSink(kafkaConnector.kafkaEventSink[Event](bsConfig.kafkaEventDuplicateTopic))
+      .sinkTo(kafkaConnector.kafkaEventSink[Event](bsConfig.kafkaEventDuplicateTopic))
       .name("Duplicate-Event-Producer")
 
     val mapStream =
-      env.addSource(kafkaConnector.kafkaMapSource(bsConfig.kafkaMapInputTopic), "map-event-consumer")
+      env.fromSource(kafkaConnector.kafkaMapSource(bsConfig.kafkaMapInputTopic), WatermarkStrategy.noWatermarks[mutable.Map[String, AnyRef]](),
+          "map-event-consumer")
         .process(new TestMapStreamFunc(bsConfig)).name("TestMapEventStream")
 
     mapStream.getSideOutput(bsConfig.mapOutputTag)
-      .addSink(kafkaConnector.kafkaMapSink(bsConfig.kafkaMapOutputTopic))
+      .sinkTo(kafkaConnector.kafkaMapSink(bsConfig.kafkaMapOutputTopic))
       .name("Map-Event-Producer")
 
     val stringStream =
-      env.addSource(kafkaConnector.kafkaStringSource(bsConfig.kafkaStringInputTopic), "string-event-consumer")
+      env.fromSource(kafkaConnector.kafkaStringSource(bsConfig.kafkaStringInputTopic), WatermarkStrategy.noWatermarks[String](), "string-event-consumer")
       .process(new TestStringStreamFunc(bsConfig)).name("TestStringEventStream")
 
     stringStream.getSideOutput(bsConfig.stringOutputTag)
-      .addSink(kafkaConnector.kafkaStringSink(bsConfig.kafkaStringOutputTopic))
+      .sinkTo(kafkaConnector.kafkaStringSink(bsConfig.kafkaStringOutputTopic))
       .name("String-Producer")
 
     Future {

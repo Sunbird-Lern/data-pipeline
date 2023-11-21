@@ -1,24 +1,23 @@
 package org.sunbird.job.aggregate.functions
 
-import java.lang.reflect.Type
-import java.security.MessageDigest
-import java.util
-
 import com.google.gson.reflect.TypeToken
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.job.cache.RedisConnect
 import org.sunbird.job.aggregate.common.DeDupHelper
+import org.sunbird.job.aggregate.task.ActivityAggregateUpdaterConfig
+import org.sunbird.job.cache.RedisConnect
 import org.sunbird.job.dedup.DeDupEngine
 import org.sunbird.job.{BaseProcessFunction, Metrics}
-import org.sunbird.job.aggregate.task.ActivityAggregateUpdaterConfig
 
+import java.lang.reflect.Type
+import java.util
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
-class ContentConsumptionDeDupFunction(config: ActivityAggregateUpdaterConfig)(implicit val stringTypeInfo: TypeInformation[String]) extends BaseProcessFunction[util.Map[String, AnyRef], String](config) {
+class ContentConsumptionDeDupFunction(config: ActivityAggregateUpdaterConfig)(implicit val stringTypeInfo: TypeInformation[String]) extends BaseProcessFunction[mutable.Map[String, AnyRef], String](config) {
 
   val mapType: Type = new TypeToken[Map[String, AnyRef]]() {}.getType
   private[this] val logger = LoggerFactory.getLogger(classOf[ContentConsumptionDeDupFunction])
@@ -35,7 +34,7 @@ class ContentConsumptionDeDupFunction(config: ActivityAggregateUpdaterConfig)(im
     super.close()
   }
 
-  override def processElement(event: util.Map[String, AnyRef], context: ProcessFunction[util.Map[String, AnyRef], String]#Context, metrics: Metrics): Unit = {
+  override def processElement(event: mutable.Map[String, AnyRef], context: ProcessFunction[mutable.Map[String, AnyRef], String]#Context, metrics: Metrics): Unit = {
     metrics.incCounter(config.totalEventCount)
     val eData = event.get(config.eData).asInstanceOf[util.Map[String, AnyRef]].asScala
     val isBatchEnrollmentEvent: Boolean = StringUtils.equalsIgnoreCase(eData.getOrElse(config.action, "").asInstanceOf[String], config.batchEnrolmentUpdateCode)

@@ -1,18 +1,17 @@
 package org.sunbird.job.notification.spec
 
-import java.util
-
 import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
+import org.apache.flink.connector.kafka.source.KafkaSource
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
 import org.apache.flink.test.util.MiniClusterWithClientResource
-import org.mockito.Mockito.when
 import org.mockito.Mockito
+import org.mockito.Mockito.when
 import org.scalatest.DoNotDiscover
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.notification.domain.Event
@@ -20,6 +19,8 @@ import org.sunbird.job.notification.fixture.EventFixture
 import org.sunbird.job.notification.task.{NotificationConfig, NotificationStreamTask}
 import org.sunbird.job.util.{CassandraUtil, JSONUtil}
 import org.sunbird.spec.{BaseMetricsReporter, BaseTestSpec}
+
+import java.util
 
 @DoNotDiscover
 class NotificationFunctionTaskTestSpec extends BaseTestSpec {
@@ -55,10 +56,11 @@ class NotificationFunctionTaskTestSpec extends BaseTestSpec {
     }
 
     def initialize() {
-        when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.kafkaInputTopic))
-            .thenReturn(new NotificationEventSource)
-        when(mockKafkaUtil.kafkaStringSink(jobConfig.kafkaInputTopic)).thenReturn(new GenerateNotificationSink)
+//        when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.kafkaInputTopic))
+//            .thenReturn(new NotificationEventSource)
+//        when(mockKafkaUtil.kafkaStringSink(jobConfig.kafkaInputTopic)).thenReturn(new GenerateNotificationSink)
     }
+
     "NotificationStreamTaskProcessor " should "validate metrics " in {
         initialize()
         new NotificationStreamTask(jobConfig, mockKafkaUtil).process()
@@ -73,6 +75,10 @@ class NotificationEventSource extends SourceFunction[Event] {
     }
     override def cancel(): Unit = {}
 }
+
+//class NotificationEventKafkaSource extends KafkaSource[Event] {
+//
+//}
 
 class GenerateNotificationSink extends SinkFunction[String] {
     override def invoke(value: String): Unit = {

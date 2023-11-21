@@ -1,7 +1,7 @@
 package org.sunbird.job.ownershiptransfer.task
 
-import java.io.File
 import com.typesafe.config.ConfigFactory
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
@@ -11,6 +11,8 @@ import org.sunbird.dp.core.util.{ElasticSearchUtil, FlinkUtil, HttpUtil}
 import org.sunbird.job.ownershiptransfer.domain.Event
 import org.sunbird.job.ownershiptransfer.functions.UserOwnershipTransferFunction
 
+import java.io.File
+
 class UserOwnershipTransferStreamTask(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil, kafkaConnector: FlinkKafkaConnector) {
 
   def process(): Unit = {
@@ -18,8 +20,9 @@ class UserOwnershipTransferStreamTask(config: UserOwnershipTransferConfig, httpU
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
     implicit val mapTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     val source = kafkaConnector.kafkaEventSource[Event](config.inputTopic)
-    env.addSource(source, config.userOwnershipTransferConsumer).uid(config.userOwnershipTransferConsumer).
-      setParallelism(config.userOwnershipTransferParallelism).rebalance()
+    env.fromSource(source, WatermarkStrategy.noWatermarks[Event](), config.userOwnershipTransferConsumer)
+      .uid(config.userOwnershipTransferConsumer)
+      .setParallelism(config.userOwnershipTransferParallelism).rebalance()
       .process(new UserOwnershipTransferFunction(config, httpUtil, esUtil))
       .name(config.userOwnershipTransferFunction).uid(config.userOwnershipTransferFunction)
     env.execute(config.jobName)

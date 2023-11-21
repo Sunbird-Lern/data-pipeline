@@ -1,7 +1,7 @@
 package org.sunbird.dp.usercache.task
 
-import java.io.File
 import com.typesafe.config.ConfigFactory
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
@@ -10,6 +10,8 @@ import org.sunbird.dp.core.job.FlinkKafkaConnector
 import org.sunbird.dp.core.util.FlinkUtil
 import org.sunbird.dp.usercache.domain.Event
 import org.sunbird.dp.usercache.functions.UserCacheUpdaterFunctionV2
+
+import java.io.File
 
 class UserCacheUpdaterStreamTaskV2(config: UserCacheUpdaterConfigV2, kafkaConnector: FlinkKafkaConnector) {
 
@@ -20,7 +22,7 @@ class UserCacheUpdaterStreamTaskV2(config: UserCacheUpdaterConfigV2, kafkaConnec
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
     implicit val mapTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     val source = kafkaConnector.kafkaEventSource[Event](config.inputTopic)
-    env.addSource(source, config.userCacheConsumer).uid(config.userCacheConsumer).
+    env.fromSource(source, WatermarkStrategy.noWatermarks[Event](), config.userCacheConsumer).uid(config.userCacheConsumer).
       setParallelism(config.userCacheParallelism).rebalance()
       .process(new UserCacheUpdaterFunctionV2(config))
       .name(config.userCacheUpdaterFunction).uid(config.userCacheUpdaterFunction)

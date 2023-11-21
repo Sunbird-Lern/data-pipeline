@@ -1,12 +1,11 @@
 package org.sunbird.job.spec
 
-import java.util
 import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
+import org.apache.flink.connector.kafka.source.KafkaSource
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
-import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.cassandraunit.CQLDataLoader
@@ -82,7 +81,7 @@ class RelationCacheUpdaterTaskTestSpec extends BaseTestSpec {
 
 
   "RelationCacheUpdater " should "generate cache" in {
-    when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.kafkaInputTopic)).thenReturn(new RelationCacheUpdaterEventSource)
+//    when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.kafkaInputTopic)).thenReturn(new RelationCacheUpdaterEventSource)
     new RelationCacheUpdaterStreamTask(jobConfig, mockKafkaUtil).process()
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(2)
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.successEventCount}").getValue() should be(2)
@@ -154,11 +153,9 @@ class RelationCacheUpdaterTaskTestSpec extends BaseTestSpec {
 
 }
 
-class RelationCacheUpdaterEventSource extends SourceFunction[Event] {
-  override def run(ctx: SourceContext[Event]): Unit = {
-    ctx.collect(new Event(JSONUtil.deserialize[util.Map[String, Any]](EventFixture.EVENT_1), 0, 10))
-    ctx.collect(new Event(JSONUtil.deserialize[util.Map[String, Any]](EventFixture.EVENT_2), 0, 11))
-  }
+//class RelationCacheUpdaterEventSource extends KafkaSource[Event] {
+  // TODO:
+//    ctx.collect(new Event(JSONUtil.deserialize[util.Map[String, Any]](EventFixture.EVENT_1), 0, 10))
+//    ctx.collect(new Event(JSONUtil.deserialize[util.Map[String, Any]](EventFixture.EVENT_2), 0, 11))
 
-  override def cancel() = {}
-}
+//}

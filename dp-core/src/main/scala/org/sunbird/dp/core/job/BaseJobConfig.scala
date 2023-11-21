@@ -1,17 +1,15 @@
 package org.sunbird.dp.core.job
 
-import java.util.Properties
-import java.io.Serializable
-
 import com.typesafe.config.Config
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.producer.ProducerConfig
+
+import java.io.Serializable
+import java.util.Properties
 
 class BaseJobConfig(val config: Config, val jobName: String) extends Serializable {
-
-  private val serialVersionUID = - 4515020556926788923L
 
   implicit val metricTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
 

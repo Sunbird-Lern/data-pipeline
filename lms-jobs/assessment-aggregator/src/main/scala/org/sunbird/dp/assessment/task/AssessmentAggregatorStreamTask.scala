@@ -1,8 +1,8 @@
 package org.sunbird.dp.assessment.task
 
 import java.io.File
-
 import com.typesafe.config.ConfigFactory
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
@@ -48,7 +48,7 @@ class AssessmentAggregatorStreamTask(config: AssessmentAggregatorConfig, kafkaCo
         val source = kafkaConnector.kafkaEventSource[Event](config.kafkaInputTopic)
 
         val aggregatorStream =
-            env.addSource(source, config.assessmentAggConsumer)
+            env.fromSource(source, WatermarkStrategy.noWatermarks[Event](), config.assessmentAggConsumer)
               .uid(config.assessmentAggConsumer).setParallelism(config.kafkaConsumerParallelism).rebalance()
               .process(new AssessmentAggregatorFunction(config))
               .name(config.assessmentAggregatorFunction).uid(config.assessmentAggregatorFunction)
@@ -57,11 +57,11 @@ class AssessmentAggregatorStreamTask(config: AssessmentAggregatorConfig, kafkaCo
         val userScoreAggregateTask = aggregatorStream.getSideOutput(config.scoreAggregateTag).process(new UserScoreAggregateFunction(config))
           .name(config.userScoreAggregateFn).uid(config.userScoreAggregateFn).setParallelism(config.scoreAggregatorParallelism)
 
-        aggregatorStream.getSideOutput(config.failedEventsOutputTag).addSink(kafkaConnector.kafkaEventSink[Event](config.kafkaFailedTopic))
+        aggregatorStream.getSideOutput(config.failedEventsOutputTag).sinkTo(kafkaConnector.kafkaEventSink[Event](config.kafkaFailedTopic))
           .name(config.assessFailedEventsSink).uid(config.assessFailedEventsSink)
           .setParallelism(config.downstreamOperatorsParallelism)
 
-        userScoreAggregateTask.getSideOutput(config.certIssueOutputTag).addSink(kafkaConnector.kafkaStringSink(config.kafkaCertIssueTopic))
+        userScoreAggregateTask.getSideOutput(config.certIssueOutputTag).sinkTo(kafkaConnector.kafkaStringSink(config.kafkaCertIssueTopic))
           .name(config.certIssueEventSink).uid(config.certIssueEventSink)
           .setParallelism(config.downstreamOperatorsParallelism)
 

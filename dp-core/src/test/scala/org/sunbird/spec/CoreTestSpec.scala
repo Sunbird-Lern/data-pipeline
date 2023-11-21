@@ -1,13 +1,14 @@
 package org.sunbird.spec
 
 import java.util
-
 import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
+import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala.OutputTag
+import org.apache.flink.util.Collector
 import org.scalatest.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.sunbird.dp.core.util.RestUtil
@@ -18,6 +19,8 @@ import org.sunbird.dp.core.serde._
 import org.sunbird.dp.core.util.FlinkUtil
 import org.sunbird.fixture.EventFixture
 import redis.clients.jedis.exceptions.{JedisDataException, JedisException}
+
+import scala.collection.mutable
 
 class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
 
@@ -95,22 +98,29 @@ class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
     val value: Array[Byte] = Array[Byte](1)
     val stringDeSerialization = new StringDeserializationSchema()
     val stringSerialization = new StringSerializationSchema(topic, Some("kafka-key"))
-    val eventSerialization = new EventSerializationSchema[Events](topic)
-    val eventDeSerialization = new EventDeserializationSchema[Events]
     val mapSerialization: MapSerializationSchema = new MapSerializationSchema(topic, Some("kafka-key"))
     val mapDeSerialization = new MapDeserializationSchema()
     import org.apache.kafka.clients.consumer.ConsumerRecord
     val cRecord: ConsumerRecord[Array[Byte], Array[Byte]] = new ConsumerRecord[Array[Byte], Array[Byte]](topic, partition, offset, key, value)
-    stringDeSerialization.deserialize(cRecord)
+    val out: Collector[String] = new Collector[String] {
+      override def collect(t: String): Unit = ???
+
+      override def close(): Unit = ???
+    }
+    stringDeSerialization.deserialize(cRecord, out)
     val event = new Event(new Gson().fromJson(EventFixture.SAMPLE_EVENT_1, new util.LinkedHashMap[String, AnyRef]().getClass))
-    eventSerialization.serialize(event, System.currentTimeMillis())
-    eventDeSerialization.getProducedType
-    stringSerialization.serialize("test", System.currentTimeMillis())
-    stringDeSerialization.isEndOfStream("") should be(false)
-    val map = new util.HashMap[String, AnyRef]()
+    val context: KafkaRecordSerializationSchema.KafkaSinkContext = new KafkaRecordSerializationSchema.KafkaSinkContext() {
+      override def getParallelInstanceId: Int = ???
+
+      override def getNumberOfParallelInstances: Int = ???
+
+      override def getPartitionsForTopic(s: String): Array[Int] = ???
+    }
+    stringSerialization.serialize("test", context, System.currentTimeMillis())
+    val map = new mutable.HashMap[String, AnyRef]()
     map.put("country_code", "IN")
     map.put("country", "INDIA")
-    mapSerialization.serialize(map, System.currentTimeMillis())
+    mapSerialization.serialize(map, context, System.currentTimeMillis())
   }
 
   "DataCache" should "be able to add the data into redis" in intercept[JedisDataException]{

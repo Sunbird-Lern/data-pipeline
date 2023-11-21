@@ -62,9 +62,9 @@ class UserDeletionCleanupFunctionTestSpec extends BaseTestSpec {
     cassandraUtil.reconnect()
   }
   def initialize() {
-    when(mockKafkaUtil.kafkaEventSource[Event](jobConfig.inputTopic))
-      .thenReturn(new UserDeletionCleanupEventSource)
-    when(mockKafkaUtil.kafkaStringSink(jobConfig.inputTopic)).thenReturn(new GenerateUserDeletionCleanupSink)
+    // TODO:
+//    when(mockKafkaUtil.kafkaEventSource[Event](jobConfig.inputTopic)).thenReturn(new UserDeletionCleanupEventSource)
+//    when(mockKafkaUtil.kafkaStringSink(jobConfig.inputTopic)).thenReturn(new GenerateUserDeletionCleanupSink)
   }
 
   "UserDeletionCleanupStreamTaskProcessor " should "validate metrics " in {

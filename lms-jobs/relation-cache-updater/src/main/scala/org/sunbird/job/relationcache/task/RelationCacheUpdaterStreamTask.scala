@@ -1,16 +1,18 @@
 package org.sunbird.job.relationcache.task
 
-import java.io.File
-import java.util
 import com.typesafe.config.ConfigFactory
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.relationcache.domain.Event
 import org.sunbird.job.relationcache.functions.RelationCacheUpdater
 import org.sunbird.job.util.FlinkUtil
+
+import java.io.File
+import java.util
 
 
 class RelationCacheUpdaterStreamTask(config: RelationCacheUpdaterConfig, kafkaConnector: FlinkKafkaConnector) {
@@ -21,7 +23,7 @@ class RelationCacheUpdaterStreamTask(config: RelationCacheUpdaterConfig, kafkaCo
     implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
     val source = kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic)
 
-    env.addSource(source).name(config.relationCacheConsumer)
+    env.fromSource(source, WatermarkStrategy.noWatermarks[Event](),config.relationCacheConsumer)
       .uid(config.relationCacheConsumer).setParallelism(config.kafkaConsumerParallelism)
       .rebalance
       .process(new RelationCacheUpdater(config))

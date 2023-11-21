@@ -136,7 +136,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
 
   "UserCacheUpdater" should "be able to add user to cache with all information" in {
     setupRestUtilData()
-    when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new InputSource)
+// TODO:   when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new InputSource)
 
     val task = new UserCacheUpdaterStreamTaskV2(userCacheConfig, mockKafkaUtil)
     task.process()
@@ -268,7 +268,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
 
   "UserCacheUpdater" should "be able to add and update user record with different producer ids" in {
     setupRestUtilData()
-    when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new LeanerInputSource)
+    // TODO: when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new LeanerInputSource)
 
     val task = new UserCacheUpdaterStreamTaskV2(userCacheConfig, mockKafkaUtil)
     task.process()
@@ -286,7 +286,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     userInfo.get("cluster") should be ("CLUSTER1")
     userInfo.getOrDefault(userCacheConfig.userLoginTypeKey, null) should be (null)
 
-    when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new AppInputSource)
+    // TODO: when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new AppInputSource)
     task.process()
 
     userInfo = jedis.hgetAll(userCacheConfig.userStoreKeyPrefix +  "user-1")
@@ -301,7 +301,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
 
   "UserCacheUpdater" should "throw exception" in intercept[Exception] {
     setupRestUtilDataWithErrors
-    when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new InputSource)
+    // TODO: when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new InputSource)
 
     val task = new UserCacheUpdaterStreamTaskV2(userCacheConfig, mockKafkaUtil)
     task.process()

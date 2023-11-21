@@ -1,16 +1,18 @@
 package org.sunbird.job.collectioncert.task
 
-import java.io.File
 import com.typesafe.config.ConfigFactory
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.sunbird.job.collectioncert.domain.Event
 import org.sunbird.job.collectioncert.functions.CollectionCertPreProcessorFn
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.util.{FlinkUtil, HttpUtil}
+
+import java.io.File
 
 class CollectionCertPreProcessorTask(config: CollectionCertPreProcessorConfig, kafkaConnector: FlinkKafkaConnector, httpUtil: HttpUtil) {
     def process(): Unit = {
@@ -20,7 +22,7 @@ class CollectionCertPreProcessorTask(config: CollectionCertPreProcessorConfig, k
         val source = kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic)
 
         val progressStream =
-            env.addSource(source).name(config.certificatePreProcessorConsumer)
+            env.fromSource(source, WatermarkStrategy.noWatermarks[Event](), config.certificatePreProcessorConsumer)
               .uid(config.certificatePreProcessorConsumer).setParallelism(config.kafkaConsumerParallelism)
               .rebalance
               .keyBy(new CollectionCertPreProcessorKeySelector())
@@ -28,7 +30,7 @@ class CollectionCertPreProcessorTask(config: CollectionCertPreProcessorConfig, k
               .name("collection-cert-pre-processor").uid("collection-cert-pre-processor")
               .setParallelism(config.parallelism)
 
-        progressStream.getSideOutput(config.generateCertificateOutputTag).addSink(kafkaConnector.kafkaStringSink(config.kafkaOutputTopic))
+        progressStream.getSideOutput(config.generateCertificateOutputTag).sinkTo(kafkaConnector.kafkaStringSink(config.kafkaOutputTopic))
           .name(config.generateCertificateProducer).uid(config.generateCertificateProducer).setParallelism(config.generateCertificateParallelism)
         env.execute(config.jobName)
     }
