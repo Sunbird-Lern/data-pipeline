@@ -1,12 +1,9 @@
 package org.sunbird.job.serde
 
-import java.nio.charset.StandardCharsets
-import com.google.gson.Gson
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema
-import org.apache.flink.streaming.connectors.kafka.{KafkaDeserializationSchema, KafkaSerializationSchema}
 import org.apache.flink.util.Collector
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -14,6 +11,7 @@ import org.slf4j.LoggerFactory
 import org.sunbird.job.domain.reader.JobRequest
 import org.sunbird.job.util.JSONUtil
 
+import java.nio.charset.StandardCharsets
 import scala.reflect.{ClassTag, classTag}
 
 class JobRequestDeserializationSchema[T <: JobRequest](implicit ct: ClassTag[T]) extends KafkaRecordDeserializationSchema[T]  {

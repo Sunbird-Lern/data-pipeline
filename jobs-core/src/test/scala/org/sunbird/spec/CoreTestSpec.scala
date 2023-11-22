@@ -1,7 +1,5 @@
 package org.sunbird.spec
 
-import java.util
-
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.scalatest.Matchers
@@ -12,6 +10,8 @@ import org.sunbird.job.cache.{DataCache, RedisConnect}
 import org.sunbird.job.serde.{MapDeserializationSchema, MapSerializationSchema, StringDeserializationSchema, StringSerializationSchema}
 import org.sunbird.job.util.FlinkUtil
 import redis.clients.jedis.exceptions.JedisDataException
+
+import java.util
 
 class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
 

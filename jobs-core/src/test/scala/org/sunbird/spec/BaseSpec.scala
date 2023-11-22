@@ -8,7 +8,7 @@ class BaseSpec extends FlatSpec with BeforeAndAfterAll {
 
   override def beforeAll() {
     super.beforeAll()
-    redisServer = new RedisServer(6340)
+    redisServer = RedisServer.newRedisServer().port(6340).build()
     redisServer.start()
     //EmbeddedPostgres.builder.setPort(5430).start() // Use the same port 5430 which is defined in the base-test.conf
   }
