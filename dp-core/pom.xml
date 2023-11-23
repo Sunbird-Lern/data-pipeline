@@ -140,6 +140,26 @@
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
             <version>6.8.22</version>
         </dependency>
+        <dependency>
+            <groupId>org.mongodb.scala</groupId>
+            <artifactId>mongo-scala-bson_${scala.version}</artifactId>
+            <version>4.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb.scala</groupId>
+            <artifactId>mongo-scala-driver_${scala.version}</artifactId>
+            <version>4.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-reactivestreams</artifactId>
+            <version>4.10.1</version>
+        </dependency>
     </dependencies>
 
     <build>
