@@ -102,11 +102,7 @@ class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
     val mapDeSerialization = new MapDeserializationSchema()
     import org.apache.kafka.clients.consumer.ConsumerRecord
     val cRecord: ConsumerRecord[Array[Byte], Array[Byte]] = new ConsumerRecord[Array[Byte], Array[Byte]](topic, partition, offset, key, value)
-    val out: Collector[String] = new Collector[String] {
-      override def collect(t: String): Unit = ???
-
-      override def close(): Unit = ???
-    }
+    val out: Collector[String] = mock[Collector[String]]
     stringDeSerialization.deserialize(cRecord, out)
     val event = new Event(new Gson().fromJson(EventFixture.SAMPLE_EVENT_1, new util.LinkedHashMap[String, AnyRef]().getClass))
     val context: KafkaRecordSerializationSchema.KafkaSinkContext = new KafkaRecordSerializationSchema.KafkaSinkContext() {
