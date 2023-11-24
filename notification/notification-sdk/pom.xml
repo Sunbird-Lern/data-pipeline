@@ -36,6 +36,11 @@
 			<version>2.17.1</version>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.3.2</version>
+		</dependency>
+		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-codec</artifactId>
 			<version>4.1.68.Final</version>
@@ -43,7 +48,7 @@
 	     <dependency>
              <groupId>com.google.firebase</groupId>
              <artifactId>firebase-admin</artifactId>
-             <version>6.13.0</version>
+             <version>9.0.0</version>
 			 <exclusions>
 				 <exclusion>
 					 <artifactId>netty-codec</artifactId>
@@ -143,6 +148,18 @@
 									<exclude>org.apache.maven:lib:tests</exclude>
 								</excludes>
 							</artifactSet>
+							<filters>
+								<filter>
+									<!-- Do not copy the signatures in the META-INF folder.
+                                    Otherwise, this might cause SecurityExceptions when using the JAR. -->
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
 						</configuration>
 					</execution>
 				</executions>
