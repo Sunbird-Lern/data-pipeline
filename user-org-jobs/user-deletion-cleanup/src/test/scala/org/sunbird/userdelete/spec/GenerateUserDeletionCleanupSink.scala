@@ -1,4 +1,4 @@
-package org.sunbird.deletioncleanup.spec
+package org.sunbird.userdelete.spec
 
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import java.util

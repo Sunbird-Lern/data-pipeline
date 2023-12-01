@@ -14,10 +14,23 @@ class MongoUtil(host: String, port: Int, database: String) {
   val mongoClient: MongoClient = MongoClient(s"mongodb://$host:$port")
   val mongoDatabase: MongoDatabase = mongoClient.getDatabase(database)
 
+  def find(collection: String, query: Bson): util.List[Document] = {
+    val mongoCollection: MongoCollection[Document] = mongoDatabase.getCollection(collection)
+    val result = mongoCollection.find(query).toFuture()
+    Await.result(result, Duration.Inf).asJava
+  }
+
+  def insertOne(collection: String, document: Document): Boolean = {
+    val mongoCollection: MongoCollection[Document] = mongoDatabase.getCollection(collection)
+    val result = mongoCollection.insertOne(document).toFuture()
+    Await.result(result, Duration.Inf).wasAcknowledged()
+  }
+
   def updateMany(collection: String, filter: Bson, update: Bson) = {
     val mongoCollection: MongoCollection[Document] = mongoDatabase.getCollection(collection)
     val updateRes: Future[UpdateResult] = mongoCollection.updateMany(filter, update).toFuture()
     Await.result(updateRes, Duration.Inf)
+    //todo remove 5.seconds
     updateRes
   }
 

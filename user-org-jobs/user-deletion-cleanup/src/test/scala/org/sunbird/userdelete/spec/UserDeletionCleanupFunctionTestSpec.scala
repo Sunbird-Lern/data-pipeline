@@ -1,4 +1,4 @@
-package org.sunbird.deletioncleanup.spec
+package org.sunbird.userdelete.spec
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
