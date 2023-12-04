@@ -76,7 +76,9 @@ object UserMetadataUpdater {
           val userFrameworkFields = fwCache.getFwCategories(fwID)
           userFrameworkFields.map(key =>{
             val frValue = framework.getOrDefault(key, List().asJava)
-            userCacheData.+=("framework_" + key -> frValue)
+            if (!frValue.isEmpty) {
+              userCacheData.+=("framework_" + key -> frValue)
+            }
           })
         }
       }
@@ -139,6 +141,7 @@ object UserMetadataUpdater {
   def removeEmptyFields(key: String, dataCache: DataCache, userMetaData: mutable.Map[String, AnyRef]):Unit = {
     val redisRec = dataCache.hgetAllWithRetry(key)
     val removableKeys = redisRec.keySet.diff(userMetaData.keySet)
+    logger.info(s"removeEmptyFields: ${key}: removableKeys: ${removableKeys}")
     if(removableKeys.nonEmpty) dataCache.hdelWithRetry(key, removableKeys.toSeq)
   }
 
