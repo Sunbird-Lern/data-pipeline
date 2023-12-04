@@ -10,12 +10,13 @@
         <version>1.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
-    <artifactId>user-delete</artifactId>
+
+    <artifactId>ml-user-delete</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>UserDelete</name>
+    <name>MlUserDelete</name>
     <description>
-        Job to delete user data from mongodbDB for ML users
+        Job to delete user PII data from mongodbDB for ML users
     </description>
 
 
@@ -155,7 +156,7 @@
                 <configuration>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
-                    <filereports>userdeletioncleanup-testsuite.txt</filereports>
+                    <filereports>mluserdelete-testsuite.txt</filereports>
                 </configuration>
                 <executions>
                     <execution>

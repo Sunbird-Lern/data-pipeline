@@ -36,15 +36,10 @@ class UserDeleteConfig (override val config: Config) extends BaseJobConfig(confi
   val PROGRAM_USERS_COLLECTION = "programUsers"
 
 
-  // User deletion cleanup job metrics
+  // User delete job metrics
   val userDeletionCleanupHit = "user-deletion-cleanup-hit"
   val skipCount = "skipped-message-count"
   val successCount = "success-message-count"
-  val dbReadSuccessCount = "db-read-success-count"
-  val dbUpdateCount = "db-update-success-count"
-  val dbReadMissCount = "db-read-miss-count"
-  val apiReadSuccessCount = "api-read-success-count"
-  val apiReadMissCount = "api-read-miss-count"
   val totalEventsCount = "total-transfer-events-count"
 
   // constants
@@ -61,6 +56,5 @@ class UserDeleteConfig (override val config: Config) extends BaseJobConfig(confi
   val MASKED_PHONE = "userProfile.maskedPhone"
   val RECOVERY_PHONE = "userProfile.recoveryPhone"
   val PREV_USED_PHONE = "userProfile.prevUsedPhone"
-
 
 }

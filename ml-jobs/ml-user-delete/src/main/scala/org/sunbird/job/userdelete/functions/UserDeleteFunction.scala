@@ -23,7 +23,7 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
   lazy private val gson = new Gson()
 
   override def metricsList(): List[String] = {
-    List(config.userDeletionCleanupHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
+    List(config.userDeletionCleanupHit, config.skipCount, config.successCount, config.totalEventsCount)
   }
 
   override def open(parameters: Configuration): Unit = {
@@ -74,6 +74,8 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
          */
         val removeUserDataFromProgramsUsers = updateProgramUsersData(userId)
         removeUserDataFromProgramsUsers.map(handleUpdateResult(userId, config.PROGRAM_USERS_COLLECTION, _))
+
+        metrics.incCounter(config.successCount)
 
       } catch {
         case ex: Exception =>
@@ -134,9 +136,9 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
 
   def handleUpdateResult(userId: String, collection: String, result: UpdateResult): Unit = {
     if (result != null && result.getMatchedCount > 0) {
-      logger.info(s"Fetched ${result.getMatchedCount} documents for the UserID $userId in $collection collection, And modified ${result.getModifiedCount} documents.")
+      println(s"Fetched ${result.getMatchedCount} documents for the UserID $userId in $collection collection, And modified ${result.getModifiedCount} documents.")
     } else {
-      logger.info(s"UserId $userId is not present in the $collection collection")
+      println(s"UserId $userId is not present in the $collection collection")
     }
   }
 

@@ -30,7 +30,6 @@ class MongoUtil(host: String, port: Int, database: String) {
     val mongoCollection: MongoCollection[Document] = mongoDatabase.getCollection(collection)
     val updateRes: Future[UpdateResult] = mongoCollection.updateMany(filter, update).toFuture()
     Await.result(updateRes, Duration.Inf)
-    //todo remove 5.seconds
     updateRes
   }
 
