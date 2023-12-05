@@ -154,6 +154,11 @@ base_config: |
       port = "9042"
       isMultiDCEnabled = {{ cassandra_isMultiDCEnabled | lower }}
     }
+    ml-mongo {
+        host = "{{ mongo_connection_ip }}"
+        port = "27017"
+        database = "{{ ml_database }}"
+    }
 
 activity-aggregate-updater:
   activity-aggregate-updater: |+
@@ -677,3 +682,21 @@ user-deletion-cleanup:
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1
 
+ml-user-delete:
+  ml-user-delete: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = ${job.env}".delete.user"
+      groupId = ${job.env}"-delete-user-group"
+    }
+    task {
+      user.deletion.cleanup.parallelism = {{ user_deletion_cleanup_job_parallelism }}
+    }
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['ml-user-delete'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['ml-user-delete'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['ml-user-delete'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
