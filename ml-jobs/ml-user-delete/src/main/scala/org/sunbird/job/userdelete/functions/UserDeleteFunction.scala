@@ -1,6 +1,5 @@
 package org.sunbird.job.userdelete.functions
 
-import com.google.gson.Gson
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
@@ -8,10 +7,10 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.{Filters, Updates}
 import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.{JSONUtil, MongoUtil}
 import org.sunbird.job.userdelete.domain.Event
 import org.sunbird.job.userdelete.task.UserDeleteConfig
+import org.sunbird.job.util.{JSONUtil, MongoUtil}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -20,7 +19,6 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
   extends BaseProcessFunction[Event, Event](config) {
 
   private[this] val logger = LoggerFactory.getLogger(classOf[UserDeleteFunction])
-  lazy private val gson = new Gson()
 
   override def metricsList(): List[String] = {
     List(config.userDeletionCleanupHit, config.skipCount, config.successCount, config.totalEventsCount)
@@ -37,7 +35,7 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
   }
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
-    logger.info(s"Processing deletion cleanup event from user: ${event.userId}")
+    logger.info(s"Processing ml-delete cleanup event from user: ${event.userId}")
     metrics.incCounter(config.totalEventsCount)
     val userId: String = event.userId
 
@@ -83,7 +81,8 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
           throw ex
 
       }
-    } else metrics.incCounter(config.skipCount)
+    } else logger.info("UserID from the Event is empty")
+      metrics.incCounter(config.skipCount)
 
   }
 
@@ -136,9 +135,9 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
 
   def handleUpdateResult(userId: String, collection: String, result: UpdateResult): Unit = {
     if (result != null && result.getMatchedCount > 0) {
-      println(s"Fetched ${result.getMatchedCount} documents for the UserID $userId in $collection collection, And modified ${result.getModifiedCount} documents.")
+      logger.info(s"Fetched ${result.getMatchedCount} documents for the UserID $userId in $collection collection, And modified ${result.getModifiedCount} documents.")
     } else {
-      println(s"UserId $userId is not present in the $collection collection")
+      logger.info(s"UserId $userId is not present in the $collection collection")
     }
   }
 

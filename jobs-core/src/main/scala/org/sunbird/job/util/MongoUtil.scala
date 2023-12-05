@@ -1,4 +1,4 @@
-package org.sunbird.dp.core.util
+package org.sunbird.job.util
 
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.result.UpdateResult

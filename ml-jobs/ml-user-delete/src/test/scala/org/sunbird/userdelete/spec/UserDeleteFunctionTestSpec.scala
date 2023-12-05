@@ -11,14 +11,15 @@ import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.mongodb.scala.model.Filters
-import org.sunbird.dp.BaseTestSpec
-import org.sunbird.dp.core.job.FlinkKafkaConnector
-import org.sunbird.dp.core.util.MongoUtil
+import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.userdelete.domain.Event
 import org.sunbird.job.userdelete.task.{UserDeleteConfig, UserDeleteStreamTask}
+import org.sunbird.job.util.MongoUtil
+import org.sunbird.spec.BaseTestSpec
 import org.sunbird.userdelete.fixture.LoadMongoData
 
 class UserDeleteFunctionTestSpec extends BaseTestSpec {
+
   implicit val mapTypeInfo: TypeInformation[java.util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[java.util.Map[String, AnyRef]])
   implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
   implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
@@ -58,7 +59,7 @@ class UserDeleteFunctionTestSpec extends BaseTestSpec {
   }
 
   def initialize() {
-    when(mockKafkaUtil.kafkaEventSource[Event](jobConfig.inputTopic))
+    when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.inputTopic))
       .thenReturn(new UserDeleteEventSource)
     when(mockKafkaUtil.kafkaStringSink(jobConfig.inputTopic)).thenReturn(new GenerateUserDeleteSink)
   }

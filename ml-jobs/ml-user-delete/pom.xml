@@ -16,7 +16,7 @@
     <packaging>jar</packaging>
     <name>MlUserDelete</name>
     <description>
-        Job to delete user PII data from mongodbDB for ML users
+        Job to delete user PII data from mongodb for ML users
     </description>
 
 
@@ -47,13 +47,13 @@
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
-            <artifactId>dp-core</artifactId>
+            <artifactId>jobs-core</artifactId>
             <version>1.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
-            <artifactId>dp-core</artifactId>
+            <artifactId>jobs-core</artifactId>
             <version>1.0.0</version>
             <type>test-jar</type>
             <scope>test</scope>

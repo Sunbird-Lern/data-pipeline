@@ -3,8 +3,7 @@ package org.sunbird.job.userdelete.task
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.streaming.api.scala.OutputTag
-import org.sunbird.dp.core.job.BaseJobConfig
+import org.sunbird.job.BaseJobConfig
 import org.sunbird.job.userdelete.domain.Event
 
 class UserDeleteConfig (override val config: Config) extends BaseJobConfig(config, "UserDeleteConfig") {
@@ -23,7 +22,6 @@ class UserDeleteConfig (override val config: Config) extends BaseJobConfig(confi
   // Functions
   val userDeleteFunction: String = "UserDeleteFunction"
 
-
   //MongoDB
   val dbHost: String = config.getString("ml-mongo.host")
   val dbPort: Int = config.getInt("ml-mongo.port")
@@ -34,7 +32,6 @@ class UserDeleteConfig (override val config: Config) extends BaseJobConfig(confi
   val OBSERVATION_SUBMISSION_COLLECTION = "observationSubmissions"
   val PROJECTS_COLLECTION = "projects"
   val PROGRAM_USERS_COLLECTION = "programUsers"
-
 
   // User delete job metrics
   val userDeletionCleanupHit = "user-deletion-cleanup-hit"

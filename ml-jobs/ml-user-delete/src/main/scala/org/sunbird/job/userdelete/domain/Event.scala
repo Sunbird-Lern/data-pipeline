@@ -1,13 +1,9 @@
 package org.sunbird.job.userdelete.domain
 
-import org.sunbird.dp.core.domain.Events
+import org.sunbird.job.domain.reader.JobRequest
 
-import java.util
+class Event(eventMap: java.util.Map[String, Any], partition: Int, offset: Long) extends JobRequest(eventMap, partition, offset) {
 
-class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
-
-  def userId: String = {
-    telemetry.read[String]("edata.userId").orNull
-  }
+  def userId: String = readOrDefault[String]("edata.userId", "")
 
 }
