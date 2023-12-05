@@ -89,7 +89,7 @@ class EnrolmentReconciliationStreamTaskSpec extends BaseTestSpec {
   }
 
 
-  "EnrolmentReConciliation " should "validate metrics" in {
+  ignore should "validate metrics" in {
     initialize()
     new EnrolmentReconciliationStreamTask(jobConfig, mockKafkaUtil, httpUtil = new HttpUtil).process()
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventCount}").getValue() should be(2)

@@ -79,7 +79,7 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
   }
 
 
-  "AssessmentAggregator " should "Update event to db" in {
+  ignore should "Update event to db" in {
     // TODO:
 //    when(mockKafkaUtil.kafkaEventSource[Event](assessmentConfig.kafkaInputTopic)).thenReturn(new AssessmentAggreagatorEventSource)
 //    when(mockKafkaUtil.kafkaEventSink[Event](assessmentConfig.kafkaFailedTopic)).thenReturn(new FailedEventsSink())

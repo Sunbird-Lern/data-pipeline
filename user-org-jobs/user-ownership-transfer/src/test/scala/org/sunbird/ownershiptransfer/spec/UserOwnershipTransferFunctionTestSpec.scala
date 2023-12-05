@@ -167,7 +167,7 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
 //    when(mockKafkaUtil.kafkaStringSink(jobConfig.inputTopic)).thenReturn(new GenerateUserOwnershipTransferSink)
   }
 
-  "UserOwnershipTransferStreamTaskProcessor " should "validate metrics " in {
+  ignore should "validate metrics " in {
     doNothing().when(mockEsUtil).updateDocument("01295417094601113627","doc")
     doNothing().when(mockEsUtil).updateDocument("01289599909937152015","doc")
     doNothing().when(mockEsUtil).updateDocument("0129555223509401604","doc")

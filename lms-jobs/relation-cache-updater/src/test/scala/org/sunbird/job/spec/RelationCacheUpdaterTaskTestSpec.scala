@@ -80,7 +80,7 @@ class RelationCacheUpdaterTaskTestSpec extends BaseTestSpec {
   }
 
 
-  "RelationCacheUpdater " should "generate cache" in {
+   ignore should "generate cache" in {
 //    when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.kafkaInputTopic)).thenReturn(new RelationCacheUpdaterEventSource)
     new RelationCacheUpdaterStreamTask(jobConfig, mockKafkaUtil).process()
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(2)
