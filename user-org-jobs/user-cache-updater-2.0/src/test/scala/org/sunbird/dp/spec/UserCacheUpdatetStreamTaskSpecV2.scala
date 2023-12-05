@@ -16,6 +16,7 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.sunbird.dp.core.cache.RedisConnect
 import org.sunbird.dp.core.job.FlinkKafkaConnector
+import org.sunbird.dp.core.util.JSONUtil
 import org.sunbird.dp.fixture.EventFixture
 import org.sunbird.dp.usercache.domain.Event
 import org.sunbird.dp.usercache.task.{UserCacheUpdaterConfigV2, UserCacheUpdaterStreamTaskV2}
@@ -156,6 +157,11 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     setupRestUtilData()
     setupFrameworkMockWebServer()
     when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new InputSource)
+    // select index: 12
+    jedis.select(userCacheConfig.userStore)
+    /*To check overwrite the existing functionality*/
+    jedis.hmset("user:user-1", JSONUtil.deserialize[java.util.Map[String, String]]("""{"firstname":"Manju","framework_agriculturecategory":"category1","userlogintype":"Validated"};"""))
+    jedis.hmset("user:user-2", JSONUtil.deserialize[java.util.Map[String, String]]("""{"firstname":"Manju","userlogintype":"Validated"};"""))
 
     val task = new UserCacheUpdaterStreamTaskV2(userCacheConfig, mockKafkaUtil)
     task.process()
@@ -169,9 +175,6 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     BaseMetricsReporter.gaugeMetrics(s"${userCacheConfig.jobName}.${userCacheConfig.successCount}").getValue() should be(7)
     BaseMetricsReporter.gaugeMetrics(s"${userCacheConfig.jobName}.${userCacheConfig.apiReadSuccessCount}").getValue() should be(7)
     BaseMetricsReporter.gaugeMetrics(s"${userCacheConfig.jobName}.${userCacheConfig.apiReadMissCount}").getValue() should be(0)
-
-    // select index: 12
-    jedis.select(userCacheConfig.userStore)
 
     //user information: user-1
     var userInfo = jedis.hgetAll(userCacheConfig.userStoreKeyPrefix +  "user-1")

@@ -145,6 +145,13 @@ object UserMetadataUpdater {
     if(removableKeys.nonEmpty) dataCache.hdelWithRetry(key, removableKeys.toSeq)
   }
 
+  def removeFrameworkFields(key: String, dataCache: DataCache): Unit = {
+    val redisRec = dataCache.hgetAllWithRetry(key, false)
+    val frameworkKeys = redisRec.keySet.filter(k => k.contains("framework_"))
+    logger.info(s"removeFrameworkFields: ${key}: frameworkKeys: ${frameworkKeys}")
+    if (frameworkKeys.nonEmpty) dataCache.hdelWithRetry(key, frameworkKeys.toSeq)
+  }
+
   def stringify(userData: mutable.Map[String, AnyRef]): mutable.Map[String, String] = {
     userData.map { f =>
       (f._1, if (!f._2.isInstanceOf[String]) {
