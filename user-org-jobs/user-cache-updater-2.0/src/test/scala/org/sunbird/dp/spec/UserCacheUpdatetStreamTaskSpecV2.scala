@@ -50,6 +50,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     BaseMetricsReporter.gaugeMetrics.clear()
     val redisConnect = new RedisConnect(userCacheConfig.metaRedisHost, userCacheConfig.metaRedisPort, userCacheConfig)
     jedis = redisConnect.getConnection(userCacheConfig.userStore)
+    setupRedisData()
     flinkCluster.before()
   }
 
@@ -107,6 +108,13 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
 
   }
 
+  def setupRedisData(): Unit = {
+    // select index: 12
+    jedis.select(userCacheConfig.userStore)
+    jedis.hmset("user:user-1", JSONUtil.deserialize[java.util.Map[String, String]]("""{"firstname":"Manju","framework_agriculturecategory":"category1","userlogintype":"Validated"};"""))
+    jedis.hmset("user:user-2", JSONUtil.deserialize[java.util.Map[String, String]]("""{"firstname":"Manju","userlogintype":"Validated"};"""))
+  }
+
   def setupFrameworkMockWebServer(): Unit = {
     val igotFramework = """{"id":"api.framework.read","ver":"1.0","ts":"2023-11-07T10:24:21.073Z","params":{"resmsgid":"d09e5c10-7d57-11ee-9536-81786392a376","msgid":"d09c8750-7d57-11ee-8359-37cd2dcc94dd","status":"successful","err":null,"errmsg":null},"responseCode":"OK","result":{"framework":{"identifier":"igot_health","code":"igot_health","name":"IGOT-Health","description":"IGOT-Health","categories":[{"identifier":"igot_health_board","code":"board","terms":[],"translations":null,"name":"Board","description":"Board","index":1,"status":"Live"},{"identifier":"igot_health_medium","code":"medium","terms":[],"translations":null,"name":"Medium","description":"Medium","index":2,"status":"Live"},{"identifier":"igot_health_gradelevel","code":"gradeLevel","terms":[],"translations":null,"name":"Grade","description":"Grade","index":3,"status":"Live"},{"identifier":"igot_health_subject","code":"subject","terms":[],"translations":null,"name":"Subject","description":"Subject","index":4,"status":"Live"},{"identifier":"igot_health_topic","code":"topic","translations":null,"name":"Concept","description":"Concept","index":5,"status":"Live"}],"type":"K-12","objectType":"Framework"}}}"""
 
@@ -157,11 +165,6 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     setupRestUtilData()
     setupFrameworkMockWebServer()
     when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new InputSource)
-    // select index: 12
-    jedis.select(userCacheConfig.userStore)
-    /*To check overwrite the existing functionality*/
-    jedis.hmset("user:user-1", JSONUtil.deserialize[java.util.Map[String, String]]("""{"firstname":"Manju","framework_agriculturecategory":"category1","userlogintype":"Validated"};"""))
-    jedis.hmset("user:user-2", JSONUtil.deserialize[java.util.Map[String, String]]("""{"firstname":"Manju","userlogintype":"Validated"};"""))
 
     val task = new UserCacheUpdaterStreamTaskV2(userCacheConfig, mockKafkaUtil)
     task.process()
@@ -175,6 +178,9 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     BaseMetricsReporter.gaugeMetrics(s"${userCacheConfig.jobName}.${userCacheConfig.successCount}").getValue() should be(7)
     BaseMetricsReporter.gaugeMetrics(s"${userCacheConfig.jobName}.${userCacheConfig.apiReadSuccessCount}").getValue() should be(7)
     BaseMetricsReporter.gaugeMetrics(s"${userCacheConfig.jobName}.${userCacheConfig.apiReadMissCount}").getValue() should be(0)
+
+    // select index: 12
+    jedis.select(userCacheConfig.userStore)
 
     //user information: user-1
     var userInfo = jedis.hgetAll(userCacheConfig.userStoreKeyPrefix +  "user-1")
@@ -306,7 +312,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     userInfo.get("district") should be ("CUTTACK")
     userInfo.get("block") should be ("BLOCK1")
     userInfo.get("cluster") should be ("CLUSTER1")
-    userInfo.getOrDefault(userCacheConfig.userLoginTypeKey, null) should be (null)
+    userInfo.get(userCacheConfig.userLoginTypeKey) should be ("Validated")
 
     when(mockKafkaUtil.kafkaEventSource[Event](userCacheConfig.inputTopic)).thenReturn(new AppInputSource)
     task.process()
