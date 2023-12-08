@@ -328,7 +328,7 @@ collection-cert-pre-processor:
     content_read_api = "/content/v3/read"
     service {
       content.basePath = "{{ content_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
     }
     enable.suppress.exception = {{ collection_certificate_pre_processor_enable_suppress_exception | lower }}
     redis-meta {
@@ -389,7 +389,7 @@ collection-certificate-generator:
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"
@@ -440,7 +440,7 @@ legacy-certificate-migrator:
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"
@@ -570,8 +570,8 @@ user-cache-updater-v2:
   user-cache-updater-v2: |+
     include file("/data/flink/conf/base-config.conf")
     kafka {
-      input.topic = ${job.env}".telemetry.audit"
-      groupId = ${job.env}"-user-cache-updater-group"
+      input.topic = {{ kafka_topic_telemetry_audit }}
+      groupId = {{ kafka_group_user_cache_updater }}
     }
     task {
       restart-strategy.attempts = {{ restart_attempts }} # max 3 restart attempts
@@ -580,7 +580,7 @@ user-cache-updater-v2:
       parallelism = {{ user_cache_updater_job_parallelism }}
       usercache.updater.parallelism = {{ user_cache_updater_job_parallelism }}
     }
-    regd.user.producer.pid = "learner-service"
+    regd.user.producer.pid = "userorg-service"
     user.self.signin.types = ["google","self"]
     user.validated.types = ["sso"]
     user.self.signin.key = "Self-Signed-In"
@@ -595,7 +595,12 @@ user-cache-updater-v2:
       }
     }
     #(user read api details)
-    user-read.api.url = "http://{{private_ingressgateway_ip}}{{ user_read_api_endpoint }}"
+    user_read_api = "/private/user/v1/read/"
+    framework_read_api = "/api/framework/v1/read/"
+    service {
+      taxonomy.basePath = "{{ domain_url }}"
+      userorg.basePath = "{{ userorg_service_base_url }}"
+    }
 
 
   flink-conf: |+
@@ -653,7 +658,7 @@ user-deletion-cleanup:
             basePath = "{{ lms_service_base_url }}"
         }
         userorg {
-            basePath = "{{ learner_service_base_url }}"
+            basePath = "{{ userorg_service_base_url }}"
         }
     }
 
