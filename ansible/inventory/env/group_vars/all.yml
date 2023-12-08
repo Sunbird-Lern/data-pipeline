@@ -34,7 +34,7 @@ core_cassandra_connection_ip: "{{ groups['core-cassandra'][0] }}"
 dial_service_generate_url: "http://{{private_ingressgateway_ip}}/dial/dialcode/v3/generate"
 search_service_endpoint: "{{ekstep_domain_name}}/api/search/v2/search"
 
-mongo_connection_ip: "{{ml_mongodb_host | default(groups['mongo_master'][0]}}"
+mongo_connection_ip: "{{ml_mongodb_host | default(groups['mongo_master'][0])}}"
 ml_database: "{{ ml_mongodb | default('ml-survey') }}"
 
 ## learning service variables
