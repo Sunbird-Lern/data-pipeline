@@ -26,9 +26,9 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
     this.redisConnection.close()
   }
 
-  def hgetAllWithRetry(key: String): mutable.Map[String, AnyRef] = {
+  def hgetAllWithRetry(key: String, retainRemovableFields: Boolean = true): mutable.Map[String, AnyRef] = {
     try {
-      convertToComplexDataTypes(hgetAll(key))
+      convertToComplexDataTypes(hgetAll(key, retainRemovableFields))
     } catch {
       case ex: JedisException =>
         logger.error("Exception when retrieving data from redis cache", ex)
@@ -64,10 +64,10 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
     result
   }
 
-  private def hgetAll(key: String): mutable.Map[String, String] = {
+  private def hgetAll(key: String, retainRemovableFields: Boolean = true): mutable.Map[String, String] = {
     val dataMap = redisConnection.hgetAll(key)
     if (dataMap.size() > 0) {
-      if(fields.nonEmpty) dataMap.keySet().retainAll(fields.asJava)
+      if(retainRemovableFields && fields.nonEmpty) dataMap.keySet().retainAll(fields.asJava)
       dataMap.values().removeAll(util.Collections.singleton(""))
       dataMap.asScala
     } else {
