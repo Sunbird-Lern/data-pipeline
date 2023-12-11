@@ -1,4 +1,4 @@
-package org.sunbird.userdelete.fixture
+package org.sunbird.deletioncleanup.fixture
 
 object EventFixture {
 
