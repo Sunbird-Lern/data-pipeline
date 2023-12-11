@@ -232,7 +232,7 @@ flink_job_names:
     taskslots: 1
     cpu_requests: 0.3
   ml-user-delete:
-    job_class_name: 'org.sunbird.job.userdelete.task.UserDeleteStreamTask.scala'
+    job_class_name: 'org.sunbird.job.userdelete.task.UserDeleteStreamTask'
     replica: 1
     jobmanager_memory: 1024m
     taskmanager_memory: 1024m
