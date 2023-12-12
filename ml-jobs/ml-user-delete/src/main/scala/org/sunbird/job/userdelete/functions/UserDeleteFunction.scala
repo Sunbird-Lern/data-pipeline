@@ -35,7 +35,7 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
   }
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
-    logger.info(s"Processing ml-delete cleanup event from user: ${event.userId}")
+    logger.info(s"\n Processing ml-user-delete event for the UserId: ${event.userId}")
     metrics.incCounter(config.totalEventsCount)
     val userId: String = event.userId
 
@@ -73,16 +73,24 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
         val removeUserDataFromProgramsUsers = updateProgramUsersData(userId)
         removeUserDataFromProgramsUsers.map(handleUpdateResult(userId, config.PROGRAM_USERS_COLLECTION, _))
 
+        /**
+         * Remove user related data from solutions collection
+         */
+        val removeUserDataFromSolutions = updateSolutionsData(userId)
+        removeUserDataFromSolutions.map(handleUpdateResult(userId, config.SOLUTIONS_COLLECTION, _))
+
         metrics.incCounter(config.successCount)
 
       } catch {
         case ex: Exception =>
-          logger.info("Event throwing exception: ", JSONUtil.serialize(event))
+          logger.error("Exception processing ml-user-delete event for UserId: " + userId, JSONUtil.serialize(event))
           throw ex
 
       }
-    } else logger.info("UserID from the Event is empty")
+    } else {
+      logger.info("UserID from the Event is empty")
       metrics.incCounter(config.skipCount)
+    }
 
   }
 
@@ -116,6 +124,12 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
     result
   }
 
+  def updateSolutionsData(userId: String): Future[UpdateResult] = {
+    val filter: Bson = Filters.equal(config.AUTHOR, userId)
+    val result = mongoUtil.updateMany(config.SOLUTIONS_COLLECTION, filter, updateUserDataInSolutions)
+    result
+  }
+
   def updateUserData: Bson = {
     val update: Bson = Updates.combine(
       Updates.set(config.FIRSTNAME, "Deleted User"),
@@ -129,6 +143,15 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
       Updates.unset(config.MASKED_PHONE),
       Updates.unset(config.RECOVERY_PHONE),
       Updates.unset(config.PREV_USED_PHONE)
+    )
+    update
+  }
+
+  def updateUserDataInSolutions: Bson = {
+    val update: Bson = Updates.combine(
+      Updates.set(config.CREATOR, "Deleted User"),
+      Updates.set(config.LICENSE_AUTHOR, "Deleted User"),
+      Updates.set(config.LICENSE_CREATOR, "Deleted User")
     )
     update
   }

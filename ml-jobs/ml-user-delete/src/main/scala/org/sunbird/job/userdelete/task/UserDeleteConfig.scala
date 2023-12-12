@@ -32,6 +32,7 @@ class UserDeleteConfig (override val config: Config) extends BaseJobConfig(confi
   val OBSERVATION_SUBMISSION_COLLECTION = "observationSubmissions"
   val PROJECTS_COLLECTION = "projects"
   val PROGRAM_USERS_COLLECTION = "programUsers"
+  val SOLUTIONS_COLLECTION = "solutions"
 
   // User delete job metrics
   val userDeletionCleanupHit = "user-deletion-cleanup-hit"
@@ -42,6 +43,7 @@ class UserDeleteConfig (override val config: Config) extends BaseJobConfig(confi
   // constants
   val CREATEDBY = "createdBy"
   val USERID = "userId"
+  val AUTHOR = "author"
   val FIRSTNAME = "userProfile.firstName"
   val LAST_NAME = "userProfile.lastName"
   val DOB = "userProfile.dob"
@@ -53,5 +55,8 @@ class UserDeleteConfig (override val config: Config) extends BaseJobConfig(confi
   val MASKED_PHONE = "userProfile.maskedPhone"
   val RECOVERY_PHONE = "userProfile.recoveryPhone"
   val PREV_USED_PHONE = "userProfile.prevUsedPhone"
+  val CREATOR = "creator"
+  val LICENSE_AUTHOR = "license.author"
+  val LICENSE_CREATOR = "license.creator"
 
 }

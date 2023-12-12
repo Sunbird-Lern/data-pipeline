@@ -74,6 +74,7 @@ class UserDeleteFunctionTestSpec extends BaseTestSpec {
     mongoCollection.insertOne("projects", LoadMongoData.Data3)
     mongoCollection.insertOne("programUsers", LoadMongoData.Data3)
     mongoCollection.insertOne("programUsers", LoadMongoData.Data4)
+    mongoCollection.insertOne("solutions", LoadMongoData.Data5)
   }
 
 

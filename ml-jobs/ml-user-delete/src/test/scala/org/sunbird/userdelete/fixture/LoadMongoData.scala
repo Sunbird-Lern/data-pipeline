@@ -18,6 +18,11 @@ object LoadMongoData {
     "prevUsedPhone" -> "******9985",
   )
 
+  val licenseDocument = Document(
+    "author" -> "CBSE",
+    "creator" -> "CBSE"
+  )
+
   val Data1 = Document(
     "_id" -> 123,
     "createdBy" -> "5deed393-6e04-449a-b98d-7f0fbf88f22e",
@@ -44,6 +49,13 @@ object LoadMongoData {
     "userId" -> "5deed393-6e04-449a-b98d-7f0fbf88f22e",
     "createdAt" -> "2021-05-25 07:38:10.949Z",
     "userProfile" -> userProfileDocument
+  )
+
+  val Data5 = Document(
+    "_id" -> 789,
+    "author" -> "5deed393-6e04-449a-b98d-7f0fbf88f22e",
+    "creator" -> "Diksha",
+    "license" -> licenseDocument
   )
 
 }
