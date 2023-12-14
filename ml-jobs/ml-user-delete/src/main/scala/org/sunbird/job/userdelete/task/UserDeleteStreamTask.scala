@@ -16,9 +16,9 @@ class UserDeleteStreamTask(config: UserDeleteConfig, kafkaConnector: FlinkKafkaC
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
     implicit val mapTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     val source = kafkaConnector.kafkaJobRequestSource[Event](config.inputTopic)
-    env.addSource(source).name(config.userDeletionCleanupConsumer)
-      .uid(config.userDeletionCleanupConsumer)
-      .setParallelism(config.userDeletionCleanupParallelism)
+    env.addSource(source).name(config.mlUserDeleteConsumer)
+      .uid(config.mlUserDeleteConsumer)
+      .setParallelism(config.mlUserDeleteParallelism)
       .rebalance
       .process(new UserDeleteFunction(config))
       .name(config.userDeleteFunction).uid(config.userDeleteFunction)

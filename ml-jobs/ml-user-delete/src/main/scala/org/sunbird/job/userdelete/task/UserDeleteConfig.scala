@@ -14,10 +14,10 @@ class UserDeleteConfig (override val config: Config) extends BaseJobConfig(confi
   val inputTopic: String = config.getString("kafka.input.topic")
 
   // Parallelism
-  val userDeletionCleanupParallelism: Int = config.getInt("task.user.deletion.cleanup.parallelism")
+  val mlUserDeleteParallelism: Int = config.getInt("task.ml.user.delete.parallelism")
 
   // Consumers
-  val userDeletionCleanupConsumer: String = "user-deletion-cleanup-consumer"
+  val mlUserDeleteConsumer: String = "ml-user-delete-consumer"
 
   // Functions
   val userDeleteFunction: String = "UserDeleteFunction"
