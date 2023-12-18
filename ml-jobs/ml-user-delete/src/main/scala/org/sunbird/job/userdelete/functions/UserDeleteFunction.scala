@@ -35,7 +35,7 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
   }
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
-    logger.info(s"\n Processing ml-user-delete event for the UserId: ${event.userId}")
+    logger.info(s"Processing ml-user-delete event for the UserId: ${event.userId}")
     metrics.incCounter(config.totalEventsCount)
     val userId: String = event.userId
 

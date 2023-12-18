@@ -695,7 +695,7 @@ ml-user-delete:
       groupId = ${job.env}"-ml-user-delete-group"
     }
     task {
-      ml.user.delete.parallelism = {{ user_deletion_cleanup_job_parallelism }}
+      ml.user.delete.parallelism = {{ ml_user_delete_job_parallelism }}
     }
 
   flink-conf: |+

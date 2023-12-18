@@ -133,6 +133,9 @@ programuserinfo_programuser_parallelism: 1
 middleware_cassandra_programuserinfo_keyspace: sunbird_programs
 middleware_cassandra_programuserinfo_table: program_enrollment
 
+### Ml-User-Delete Job Var
+ml_user_delete_job_parallelism: 1
+
 ### to be removed
 job_classname: ""
 
