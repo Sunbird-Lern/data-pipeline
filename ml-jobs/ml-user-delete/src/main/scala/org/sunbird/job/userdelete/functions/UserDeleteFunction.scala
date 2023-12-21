@@ -108,7 +108,7 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
 
   def updateObservationSubmissionData(userId: String): Future[UpdateResult] = {
     val filter: Bson = Filters.equal(config.CREATEDBY, userId)
-    val result = mongoUtil.updateMany(config.OBSERVATION_SUBMISSION_COLLECTION, filter, updateUserData)
+    val result = mongoUtil.updateMany(config.OBSERVATION_SUBMISSION_COLLECTION, filter, updateUserDataInObservationSubmission)
     result
   }
 
@@ -132,17 +132,19 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
 
   def updateUserData: Bson = {
     val update: Bson = Updates.combine(
-      Updates.set(config.FIRSTNAME, "Deleted User"),
+      Updates.set(config.FIRST_NAME, "Deleted User"),
       Updates.unset(config.LAST_NAME),
       Updates.unset(config.DOB),
       Updates.unset(config.EMAIL),
       Updates.unset(config.MASKED_EMAIL),
       Updates.unset(config.RECOVERY_EMAIL),
       Updates.unset(config.PREV_USED_EMAIL),
+      Updates.unset(config.ENC_EMAIL),
       Updates.unset(config.PHONE),
       Updates.unset(config.MASKED_PHONE),
       Updates.unset(config.RECOVERY_PHONE),
-      Updates.unset(config.PREV_USED_PHONE)
+      Updates.unset(config.PREV_USED_PHONE),
+      Updates.unset(config.ENC_PHONE)
     )
     update
   }
@@ -152,6 +154,38 @@ class UserDeleteFunction(config: UserDeleteConfig)(implicit val mapTypeInfo: Typ
       Updates.set(config.CREATOR, "Deleted User"),
       Updates.set(config.LICENSE_AUTHOR, "Deleted User"),
       Updates.set(config.LICENSE_CREATOR, "Deleted User")
+    )
+    update
+  }
+
+  def updateUserDataInObservationSubmission: Bson = {
+    val update: Bson = Updates.combine(
+      Updates.set(config.FIRST_NAME, "Deleted User"),
+      Updates.set(config.OBS_INFO_FIRST_NAME, "Deleted User"),
+      Updates.unset(config.LAST_NAME),
+      Updates.unset(config.DOB),
+      Updates.unset(config.EMAIL),
+      Updates.unset(config.MASKED_EMAIL),
+      Updates.unset(config.RECOVERY_EMAIL),
+      Updates.unset(config.PREV_USED_EMAIL),
+      Updates.unset(config.ENC_EMAIL),
+      Updates.unset(config.PHONE),
+      Updates.unset(config.MASKED_PHONE),
+      Updates.unset(config.RECOVERY_PHONE),
+      Updates.unset(config.PREV_USED_PHONE),
+      Updates.unset(config.ENC_PHONE),
+      Updates.unset(config.OBS_INFO_LAST_NAME),
+      Updates.unset(config.OBS_INFO_DOB),
+      Updates.unset(config.OBS_INFO_EMAIL),
+      Updates.unset(config.OBS_INFO_MASKED_EMAIL),
+      Updates.unset(config.OBS_INFO_RECOVERY_EMAIL),
+      Updates.unset(config.OBS_INFO_PREV_USED_EMAIL),
+      Updates.unset(config.OBS_INFO_ENC_EMAIL),
+      Updates.unset(config.OBS_INFO_PHONE),
+      Updates.unset(config.OBS_INFO_MASKED_PHONE),
+      Updates.unset(config.OBS_INFO_RECOVERY_PHONE),
+      Updates.unset(config.OBS_INFO_PREV_USED_PHONE),
+      Updates.unset(config.OBS_INFO_ENC_PHONE)
     )
     update
   }
