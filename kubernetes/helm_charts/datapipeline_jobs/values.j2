@@ -160,6 +160,8 @@ base_config: |
         database = "{{ ml_database }}"
     }
 
+    sunbird_instance_name = "{{ sunbird_installation | default('Sunbird')}}"
+
 activity-aggregate-updater:
   activity-aggregate-updater: |+
     include file("/data/flink/conf/base-config.conf")
