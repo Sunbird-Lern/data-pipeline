@@ -34,6 +34,8 @@ core_cassandra_connection_ip: "{{ groups['core-cassandra'][0] }}"
 dial_service_generate_url: "http://{{private_ingressgateway_ip}}/dial/dialcode/v3/generate"
 search_service_endpoint: "{{ekstep_domain_name}}/api/search/v2/search"
 
+mongo_connection_ip: "{{ml_mongodb_host | default(groups['mongo_master'][0])}}"
+ml_database: "{{ ml_mongodb | default('ml-survey') }}"
 
 ## learning service variables
 plugin_media_base_url: "{{proto}}://{{domain_name}}"  # Plugin should be doanloaded from sunbird. Commenting the ekstep url : "{{ekstep_domain_name}}"
@@ -98,15 +100,17 @@ kp_print_service_base_url: "http://{{private_ingressgateway_ip}}/print"
 cert_reg_service_base_url: "http://{{private_ingressgateway_ip}}/certreg"
 kp_search_service_base_url: "http://{{private_ingressgateway_ip}}/search"
 lms_service_base_url: "http://{{private_ingressgateway_ip}}/lms"
-learner_service_base_url: "http://{{private_ingressgateway_ip}}/userorg"
+userorg_service_base_url: "http://{{private_ingressgateway_ip}}/userorg"
 sourcing_content_service_base_url: "http://{{dock_private_ingressgateway_ip | default('localhost') }}/content"
 content_service_base_url: "http://{{private_ingressgateway_ip}}/content"
+taxonomy_service_base_url: "http://{{private_ingressgateway_ip}}/taxonomy"
 kp_content_service_base_url: "http://{{private_ingressgateway_ip}}/content"
 cert_service_base_url: "http://{{private_ingressgateway_ip}}/cert"
 enc_service_base_url: "http://{{private_ingressgateway_ip}}/enc"
 cert_rc_base_url: "http://{{private_ingressgateway_ip}}/registry-service/api/v1"
 cert_rc_entity: "TrainingCertificate"
 certificate_base_path: "https://{{domain_name}}/certs"
+domain_url:  "{{proto}}://{{domain_name}}"
 cert_domain_url:  "{{proto}}://{{domain_name}}"
 cert_container_name: "{{ cloud_storage_certservice_bucketname }}"
 cert_cloud_storage_type: "{{cloud_service_provider}}"
@@ -118,6 +122,7 @@ content_read_api_host: "{{content_read_api_host}}"
 content_read_api_endpoint: "{{content_read_api_endpoint}}"
 content_cloud_storage_container: "{{cloud_storage_content_bucketname}}"
 cloud_store_base_path_placeholder: "CLOUD_BASE_PATH"
+
 
 default_channel: "org.sunbird"
 download_neo4j: true
@@ -150,6 +155,7 @@ kafka_topic_enrolment_reconciliation_failed: "{{env_name}}.enrolment.reconciliat
 kafka_topic_generate_certificate_failed: "{{env_name}}.generate.certificate.failed"
 kafka_topic_migrate_certificate_request: "{{env_name}}.legacy.certificate.migrate"
 kafka_topic_programuser_info: "{{env_name}}.programuser.info"
+kafka_topic_telemetry_audit:  "{{env_name}}.telemetry.audit"
 
 ## LERN BB specific kafka groups,have to be overridden in private devops repo to include BB Name for integrators.
 kafka_group_activity_agg: "{{env_name}}-activity-aggregate-group"
@@ -162,6 +168,7 @@ kafka_group_merge_courses: "{{env_name}}-merge-courses-group"
 kafka_group_assessment_aggregator: "{{env_name}}-assessment-aggregator-group"
 kafka_group_lms_notification: "{{env_name}}-lms-notification"
 kafka_group_programuser_info: "{{env_name}}-programuser-group"
+kafka_group_user_cache_updater: "{{env_name}}-user-cache-updater-group"
 
 ## Checkpoint Config
 cloud_storage_key: "{{ cloud_public_storage_accountname }}"
@@ -170,8 +177,5 @@ cloud_storage_endpoint: ""
 cloud_storage_path_style_access: ""
 cloud_storage_project_id: ""
 cloud_storage_flink_bucketname: "flink-check-points-store"
-
-#(user read api details)
-user_read_api_endpoint: "/learner/private/user/v1/read/"
 
 sunbird_api_auth_token: "{{ core_vault_sunbird_api_auth_token }}"

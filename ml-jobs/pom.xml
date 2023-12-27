@@ -17,6 +17,7 @@
 
     <modules>
         <module>program-user-info</module>
+        <module>ml-user-delete</module>
     </modules>
 
     <build>
