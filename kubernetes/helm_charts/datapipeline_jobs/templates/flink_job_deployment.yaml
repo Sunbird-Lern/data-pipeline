@@ -113,6 +113,7 @@ spec:
 {{- if eq .Values.cloud_service_provider "azure" }}
                "-Dfs.azure.account.key.{{ .Values.cloud_storage_key }}.blob.core.windows.net={{ .Values.cloud_storage_secret }}",
 {{- end }}
+
 {{- if or (eq .Values.cloud_service_provider "aws") (eq .Values.cloud_service_provider "oci") }}
                "-Dpresto.s3.access-key={{ .Values.cloud_storage_key }}",
                "-Dpresto.s3.secret-key={{ .Values.cloud_storage_secret }}",
