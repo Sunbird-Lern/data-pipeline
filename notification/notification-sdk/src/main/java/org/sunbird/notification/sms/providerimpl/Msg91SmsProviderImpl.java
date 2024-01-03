@@ -27,11 +27,7 @@ import org.sunbird.notification.utils.Util;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /** @author manzarul */
 public class Msg91SmsProviderImpl implements ISmsProvider {

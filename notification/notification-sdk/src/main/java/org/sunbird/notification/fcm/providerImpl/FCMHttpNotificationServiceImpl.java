@@ -26,7 +26,7 @@ import java.util.Map;
 public class FCMHttpNotificationServiceImpl implements IFCMNotificationService {
   private static Logger logger = LogManager.getLogger("FCMHttpNotificationServiceImpl");
   private static IFCMNotificationService iFCMNotificationService =  null;
-  
+
   public static IFCMNotificationService getInstance() {
     if(iFCMNotificationService ==  null) {
       iFCMNotificationService = new FCMHttpNotificationServiceImpl();
