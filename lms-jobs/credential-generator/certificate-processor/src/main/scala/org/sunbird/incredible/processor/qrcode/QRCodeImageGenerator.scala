@@ -1,19 +1,19 @@
 package org.sunbird.incredible.processor.qrcode
 
-import java.awt.{Color, Font, FontFormatException, FontMetrics, Graphics2D, RenderingHints}
-import java.awt.font.TextAttribute
-import java.awt.image.BufferedImage
-import java.io.{File, IOException, InputStream}
-import java.util
-
-import com.google.zxing.{BarcodeFormat, EncodeHintType, NotFoundException, WriterException}
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource
 import com.google.zxing.common.{BitMatrix, HybridBinarizer}
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
-import javax.imageio.ImageIO
+import com.google.zxing.{BarcodeFormat, EncodeHintType, NotFoundException, WriterException}
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
+
+import java.awt.font.TextAttribute
+import java.awt.image.BufferedImage
+import java.awt.{Color, Font, FontFormatException, Graphics2D, RenderingHints}
+import java.io.{File, IOException, InputStream}
+import java.util
+import javax.imageio.ImageIO
 
 class QRCodeImageGenerator {
 
