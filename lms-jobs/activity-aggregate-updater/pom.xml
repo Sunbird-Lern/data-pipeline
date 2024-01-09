@@ -36,11 +36,6 @@
             <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.10.6</version>
-        </dependency>
-        <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>storehaus-cache_${scala.version}</artifactId>
             <version>0.15.0</version>
@@ -165,7 +160,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>4.4.0</version>
+                <version>${scala-maven-plugin.version}</version>
                 <configuration>
                     <source>11</source>
                     <target>11</target>

@@ -13,7 +13,7 @@
         <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
         <CLOUD_STORE_GROUP_ID>org.sunbird</CLOUD_STORE_GROUP_ID>
         <CLOUD_STORE_ARTIFACT_ID>cloud-store-sdk_${scala.version}</CLOUD_STORE_ARTIFACT_ID>
-        <CLOUD_STORE_VERSION>1.4.6</CLOUD_STORE_VERSION>
+        <CLOUD_STORE_VERSION>1.4.7</CLOUD_STORE_VERSION>
     </properties>
     <artifactId>certificate-processor</artifactId>
     <dependencies>
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>com.konghq</groupId>
             <artifactId>unirest-java</artifactId>
-            <version>3.10.00</version>
+            <version>3.13.13</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -137,7 +137,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>4.4.0</version>
+                <version>${scala-maven-plugin.version}</version>
                 <configuration>
                     <source>11</source>
                     <target>11</target>

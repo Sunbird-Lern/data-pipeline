@@ -1,11 +1,5 @@
 package org.sunbird.dp.assessment.functions
 
-import java.lang.reflect.Type
-import java.math.BigDecimal
-import java.sql.Timestamp
-import java.text.DecimalFormat
-import java.util
-import java.util.UUID
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.datastax.driver.core.{Row, UDTValue, UserType}
 import com.google.gson.Gson
@@ -17,11 +11,15 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 import org.sunbird.dp.assessment.domain.Event
 import org.sunbird.dp.assessment.task.AssessmentAggregatorConfig
-import org.sunbird.dp.core.util.RestUtil
 import org.sunbird.dp.core.cache.{DataCache, RedisConnect}
 import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
+import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil, RestUtil}
 
+import java.lang.reflect.Type
+import java.math.BigDecimal
+import java.sql.Timestamp
+import java.text.DecimalFormat
+import java.util
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
