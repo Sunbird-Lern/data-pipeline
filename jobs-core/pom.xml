@@ -157,11 +157,6 @@
             <version>6.8.22</version>
         </dependency>
         <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.33</version>
-        </dependency>
-        <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>storehaus-cache_${scala.version}</artifactId>
             <version>0.15.0</version>
