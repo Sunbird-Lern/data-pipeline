@@ -13,7 +13,7 @@
         <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
         <CLOUD_STORE_GROUP_ID>org.sunbird</CLOUD_STORE_GROUP_ID>
         <CLOUD_STORE_ARTIFACT_ID>cloud-store-sdk_${scala.version}</CLOUD_STORE_ARTIFACT_ID>
-        <CLOUD_STORE_VERSION>1.4.6</CLOUD_STORE_VERSION>
+        <CLOUD_STORE_VERSION>1.4.7</CLOUD_STORE_VERSION>
     </properties>
     <artifactId>certificate-processor</artifactId>
     <dependencies>
@@ -27,16 +27,16 @@
             <groupId>${CLOUD_STORE_GROUP_ID}</groupId>
             <artifactId>${CLOUD_STORE_ARTIFACT_ID}</artifactId>
             <version>${CLOUD_STORE_VERSION}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
-            </exclusions>
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>org.slf4j</groupId>-->
+<!--                    <artifactId>slf4j-log4j12</artifactId>-->
+<!--                </exclusion>-->
+<!--                <exclusion>-->
+<!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
+<!--                    <artifactId>jackson-databind</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>
