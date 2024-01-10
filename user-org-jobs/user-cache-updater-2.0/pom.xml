@@ -19,7 +19,7 @@
     <packaging>jar</packaging>
     <name>UserCacheUpdaterV2</name>
     <description>
-        Updating user details into readis cache
+        Updating user details into redis cache
     </description>
 
     <properties>
@@ -100,7 +100,7 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>mockwebserver</artifactId>
-            <version>4.4.0</version>
+            <version>4.12.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
