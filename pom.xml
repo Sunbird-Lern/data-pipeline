@@ -34,7 +34,7 @@
 		<scala.version>2.12</scala.version>
 		<scala.maj.version>2.12.11</scala.maj.version>
 		<flink.version>1.13.5</flink.version>
-		<kafka.version>2.5.1</kafka.version>
+		<kafka.version>2.4.1</kafka.version>
 		<scala-maven-plugin.version>4.4.0</scala-maven-plugin.version>
 		<jackson-jaxrs.version>1.9.13</jackson-jaxrs.version>
 		<com.fasterxml.jackson.version>2.15.3</com.fasterxml.jackson.version>
