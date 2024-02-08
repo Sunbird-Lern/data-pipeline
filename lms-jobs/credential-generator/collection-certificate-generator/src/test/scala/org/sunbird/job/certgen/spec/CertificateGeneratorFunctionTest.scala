@@ -42,7 +42,10 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     evidenceUrl = jobConfig.EVIDENCE_URL, signatoryExtension = jobConfig.SIGNATORY_EXTENSION)
   val mockEsUtil: ElasticSearchUtil = mock[ElasticSearchUtil](Mockito.withSettings().serializable())
   val formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-
+  val headers = Map[String, String](
+    "Content-Type" -> "application/json",
+    "Authorization" -> jobConfig.rcApiKey
+  )
 
 
   override protected def beforeAll(): Unit = {
@@ -85,7 +88,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
       JsonKeys.NAME -> "name",
       JsonKeys.CERTIFICATE_NAME -> "name"
     )
-    when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(certReq))).thenReturn(HTTPResponse(200, """{"id":"sunbird-rc.registry.create","ver":"1.0","ets":1646765130993,"params":{"resmsgid":"","msgid":"cca2e242-fce7-47ec-b5d0-61cebe56c31d","err":"","status":"SUCCESSFUL","errmsg":""},"responseCode":"OK","result":{"TrainingCertificate":{"osid":"validId"}}}"""))
+    when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(certReq), headers)).thenReturn(HTTPResponse(200, """{"id":"sunbird-rc.registry.create","ver":"1.0","ets":1646765130993,"params":{"resmsgid":"","msgid":"cca2e242-fce7-47ec-b5d0-61cebe56c31d","err":"","status":"SUCCESSFUL","errmsg":""},"responseCode":"OK","result":{"TrainingCertificate":{"osid":"validId"}}}"""))
     var id: String = null
     noException should be thrownBy {
        id = new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  certReq)
@@ -98,7 +101,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
       JsonKeys.NAME -> "name",
       JsonKeys.CERTIFICATE_NAME -> "name"
     )
-    when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(certReq))).thenReturn(HTTPResponse(500, """{}"""))
+    when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(certReq), headers)).thenReturn(HTTPResponse(500, """{}"""))
     an [ServerException] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  certReq)
   }
 
@@ -126,7 +129,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     val courseId = event.related.getOrElse(jobConfig.BATCH_ID, "").asInstanceOf[String]
     val req = Map("filters" -> Map())
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/PublicKey/search", ScalaModuleJsonUtils.serialize(req))).thenReturn(HTTPResponse(200, """[{"osUpdatedAt":"2022-03-17T06:43:48.070698Z","osCreatedAt":"2022-03-17T06:43:48.070698Z","osUpdatedBy":"anonymous","osCreatedBy":"anonymous","osid":"1-25a8c96b-b254-4720-bbc9-29b37c3c2bec","value":"keyvalue","alg":"RSA"}]"""))
-    when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(createCertReq))).thenReturn(HTTPResponse(200, """{"id":"sunbird-rc.registry.create","ver":"1.0","ets":1646765130993,"params":{"resmsgid":"","msgid":"cca2e242-fce7-47ec-b5d0-61cebe56c31d","err":"","status":"SUCCESSFUL","errmsg":""},"responseCode":"OK","result":{"TrainingCertificate":{"osid":"validId"}}}"""))
+    when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(createCertReq), headers)).thenReturn(HTTPResponse(200, """{"id":"sunbird-rc.registry.create","ver":"1.0","ets":1646765130993,"params":{"resmsgid":"","msgid":"cca2e242-fce7-47ec-b5d0-61cebe56c31d","err":"","status":"SUCCESSFUL","errmsg":""},"responseCode":"OK","result":{"TrainingCertificate":{"osid":"validId"}}}"""))
     when(mockCassandraUtil.find("SELECT * FROM sunbird_courses.user_enrolments WHERE userid='"+event.userId+"' AND batchid='"+batchId+"' AND courseid='"+courseId+"';")).thenReturn(new util.ArrayList[Row]())
     noException should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).generateCertificateUsingRC(event, null)(mockMetrics)
 
