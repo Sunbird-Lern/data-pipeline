@@ -1,20 +1,22 @@
 package org.sunbird.transferownership.spec
 
 import com.typesafe.config.{Config, ConfigFactory}
-import de.flapdoodle.embed.mongo.{MongodExecutable, MongodProcess, MongodStarter}
 import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net}
 import de.flapdoodle.embed.mongo.distribution.Version
+import de.flapdoodle.embed.mongo.{MongodExecutable, MongodProcess, MongodStarter}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.mockito.Mockito
 import org.mockito.Mockito.when
+import org.mongodb.scala.model.Filters
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.transferownership.domain.Event
 import org.sunbird.job.transferownership.task.{TransferOwnershipConfig, TransferOwnershipStreamTask}
 import org.sunbird.job.util.MongoUtil
 import org.sunbird.spec.BaseTestSpec
+import org.sunbird.transferownership.fixture.LoadMongoData
 
 class TransferOwnershipFunctionTestSpec extends BaseTestSpec {
 
@@ -42,12 +44,12 @@ class TransferOwnershipFunctionTestSpec extends BaseTestSpec {
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     //Embedded MongoDB connection
-//    mongodExecutable = starter.prepare(new MongodConfigBuilder()
-//      .version(Version.Main.V4_0)
-//      .net(new Net(port, false))
-//      .build())
-//    mongodProcess = mongodExecutable.start()
-    //loadTestData()
+    mongodExecutable = starter.prepare(new MongodConfigBuilder()
+      .version(Version.Main.V4_0)
+      .net(new Net(port, false))
+      .build())
+    mongodProcess = mongodExecutable.start()
+    loadTestData()
     flinkCluster.before()
   }
 
@@ -62,12 +64,23 @@ class TransferOwnershipFunctionTestSpec extends BaseTestSpec {
     when(mockKafkaUtil.kafkaStringSink(jobConfig.inputTopic)).thenReturn(new GenerateTransferOwnershipSink)
   }
 
+  val mongoCollection = new MongoUtil("localhost", port, "ml-service")
 
-  "TransferOwnership" should "execute successfully " in {
+  def loadTestData() = {
+    mongoCollection.insertOne("solutions", LoadMongoData.loadSolutionsData1)
+  }
+
+  "TransferOwnership for one-to-one solution asset " should "execute successfully " in {
     initialize()
+    val filter = Filters.equal("author", "789")
+    val solutionsData = mongoCollection.find("solutions", filter)
+    println(solutionsData)
     new TransferOwnershipStreamTask(jobConfig, mockKafkaUtil).process()
+    val filter1 = Filters.equal("author", "123")
+    val solutionsData1 = mongoCollection.find("solutions", filter1)
+    println(solutionsData1)
+  }
 
-    }
 
 
 }
