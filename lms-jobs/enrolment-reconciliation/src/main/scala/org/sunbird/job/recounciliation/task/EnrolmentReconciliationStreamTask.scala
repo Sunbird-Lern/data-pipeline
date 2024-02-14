@@ -1,10 +1,11 @@
 package org.sunbird.job.recounciliation.task
 
 import com.typesafe.config.ConfigFactory
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.recounciliation.domain.{CollectionProgress, Event}
 import org.sunbird.job.recounciliation.functions.{EnrolmentReconciliationFn, ProgressCompleteFunction, ProgressUpdateFunction}
@@ -23,16 +24,16 @@ class EnrolmentReconciliationStreamTask(config: EnrolmentReconciliationConfig, k
     implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     val source = kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic)
 
-    val progressStream = env.addSource(source).name(config.enrolmentReconciliationConsumer)
+    val progressStream = env.fromSource(source, WatermarkStrategy.noWatermarks[Event](), config.enrolmentReconciliationConsumer)
       .uid(config.enrolmentReconciliationConsumer).setParallelism(config.kafkaConsumerParallelism)
       .rebalance
       .process(new EnrolmentReconciliationFn(config, httpUtil))
       .name("enrolment-reconciliation").uid("enrolment-reconciliation")
       .setParallelism(config.enrolmentReconciliationParallelism)
 
-    progressStream.getSideOutput(config.auditEventOutputTag).addSink(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
+    progressStream.getSideOutput(config.auditEventOutputTag).sinkTo(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
       .name(config.enrolmentReconciliationProducer).uid(config.enrolmentReconciliationProducer)
-    progressStream.getSideOutput(config.failedEventOutputTag).addSink(kafkaConnector.kafkaStringSink(config.kafkaFailedEventTopic))
+    progressStream.getSideOutput(config.failedEventOutputTag).sinkTo(kafkaConnector.kafkaStringSink(config.kafkaFailedEventTopic))
       .name(config.enrolmentReconciliationFailedEventProducer).uid(config.enrolmentReconciliationFailedEventProducer)
 
     // TODO: set separate parallelism for below task.
@@ -41,9 +42,9 @@ class EnrolmentReconciliationStreamTask(config: EnrolmentReconciliationConfig, k
     val enrolmentCompleteStream = progressStream.getSideOutput(config.collectionCompleteOutputTag).process(new ProgressCompleteFunction(config))
       .name(config.collectionCompleteFn).uid(config.collectionCompleteFn).setParallelism(config.enrolmentCompleteParallelism)
 
-    enrolmentCompleteStream.getSideOutput(config.certIssueOutputTag).addSink(kafkaConnector.kafkaStringSink(config.kafkaCertIssueTopic))
+    enrolmentCompleteStream.getSideOutput(config.certIssueOutputTag).sinkTo(kafkaConnector.kafkaStringSink(config.kafkaCertIssueTopic))
       .name(config.certIssueEventProducer).uid(config.certIssueEventProducer)
-    enrolmentCompleteStream.getSideOutput(config.auditEventOutputTag).addSink(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
+    enrolmentCompleteStream.getSideOutput(config.auditEventOutputTag).sinkTo(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
       .name(config.enrolmentCompleteEventProducer).uid(config.enrolmentCompleteEventProducer)
 
     env.execute(config.jobName)

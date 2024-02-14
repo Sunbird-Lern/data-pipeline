@@ -70,14 +70,6 @@ object EventFixture {
       |  port = 6341
       |}
       |
-      |postgress {
-      |    host = localhost
-      |    port = 5432
-      |    maxConnection = 2
-      |    user = "postgres"
-      |    password = "postgres"
-      |}
-      |
       |lms-cassandra {
       |  host = "localhost"
       |  port = 9142

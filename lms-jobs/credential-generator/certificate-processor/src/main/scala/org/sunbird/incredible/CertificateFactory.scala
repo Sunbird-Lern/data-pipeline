@@ -1,16 +1,16 @@
 package org.sunbird.incredible
 
-import java.io.IOException
-import java.time.Instant
-import java.util.UUID
-
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
 import org.sunbird.incredible.pojos.ob.{BadgeClass, CertificateExtension, CompositeIdentityObject, Issuer, Signature, SignedVerification, TrainingEvidence}
 import org.sunbird.incredible.processor.CertModel
 import org.sunbird.incredible.processor.signature.SignatureHelper
+
+import java.io.IOException
+import java.time.Instant
+import java.util.UUID
 
 object CertificateFactory {
 

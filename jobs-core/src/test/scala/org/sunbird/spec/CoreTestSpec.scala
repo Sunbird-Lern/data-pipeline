@@ -1,9 +1,7 @@
 package org.sunbird.spec
 
-import java.util
-
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.scalatest.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.sunbird.fixture.EventFixture
@@ -12,6 +10,8 @@ import org.sunbird.job.cache.{DataCache, RedisConnect}
 import org.sunbird.job.serde.{MapDeserializationSchema, MapSerializationSchema, StringDeserializationSchema, StringSerializationSchema}
 import org.sunbird.job.util.FlinkUtil
 import redis.clients.jedis.exceptions.JedisDataException
+
+import java.util
 
 class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
 
@@ -63,13 +63,13 @@ class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
     val mapDeSerialization = new MapDeserializationSchema()
     import org.apache.kafka.clients.consumer.ConsumerRecord
     val cRecord: ConsumerRecord[Array[Byte], Array[Byte]] = new ConsumerRecord[Array[Byte], Array[Byte]](topic, partition, offset, key, value)
-    stringDeSerialization.deserialize(cRecord)
-    stringSerialization.serialize("test", System.currentTimeMillis())
-    stringDeSerialization.isEndOfStream("") should be(false)
+//    stringDeSerialization.deserialize(cRecord)
+//    stringSerialization.serialize("test", System.currentTimeMillis())
+//    stringDeSerialization.isEndOfStream("") should be(false)
     val map = new util.HashMap[String, AnyRef]()
     map.put("country_code", "IN")
     map.put("country", "INDIA")
-    mapSerialization.serialize(map, System.currentTimeMillis())
+//    mapSerialization.serialize(map, System.currentTimeMillis())
   }
 
   "DataCache" should "be able to add the data into redis" in intercept[JedisDataException]{

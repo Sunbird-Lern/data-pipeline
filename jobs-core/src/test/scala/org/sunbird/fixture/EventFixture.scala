@@ -74,13 +74,6 @@ object EventFixture {
       |  port = 6341
       |}
       |
-      |postgress {
-      |    host = localhost
-      |    port = 5432
-      |    maxConnection = 2
-      |    user = "postgres"
-      |    password = "postgres"
-      |}
       |job {
       |  enable.distributed.checkpointing = true
       |  statebackend {

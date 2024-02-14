@@ -1,7 +1,7 @@
 package org.sunbird.job.deletioncleanup.task
 
-import java.io.File
 import com.typesafe.config.ConfigFactory
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
@@ -11,6 +11,8 @@ import org.sunbird.dp.core.util.{ElasticSearchUtil, FlinkUtil, HttpUtil}
 import org.sunbird.job.deletioncleanup.domain.Event
 import org.sunbird.job.deletioncleanup.functions.UserDeletionCleanupFunction
 
+import java.io.File
+
 class UserDeletionCleanupStreamTask(config: UserDeletionCleanupConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil, kafkaConnector: FlinkKafkaConnector) {
 
   def process(): Unit = {
@@ -18,7 +20,7 @@ class UserDeletionCleanupStreamTask(config: UserDeletionCleanupConfig, httpUtil:
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
     implicit val mapTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     val source = kafkaConnector.kafkaEventSource[Event](config.inputTopic)
-    env.addSource(source, config.userDeletionCleanupConsumer).uid(config.userDeletionCleanupConsumer).
+    env.fromSource(source, WatermarkStrategy.noWatermarks[Event](), config.userDeletionCleanupConsumer).uid(config.userDeletionCleanupConsumer).
       setParallelism(config.userDeletionCleanupParallelism).rebalance()
       .process(new UserDeletionCleanupFunction(config, httpUtil, esUtil))
       .name(config.userDeletionCleanupFunction).uid(config.userDeletionCleanupFunction)

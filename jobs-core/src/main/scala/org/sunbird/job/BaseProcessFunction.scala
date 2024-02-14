@@ -1,13 +1,15 @@
 package org.sunbird.job
 
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
 import org.apache.flink.api.scala.metrics.ScalaGauge
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction
 import org.apache.flink.streaming.api.functions.{KeyedProcessFunction, ProcessFunction}
-import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
 import org.apache.flink.streaming.api.windowing.windows.{GlobalWindow, TimeWindow}
 import org.apache.flink.util.Collector
+
+import java.lang
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 case class Metrics(metrics: ConcurrentHashMap[String, AtomicLong]) {
   def incCounter(metric: String): Unit = {
@@ -64,10 +66,10 @@ abstract class WindowBaseProcessFunction[I, O, K](config: BaseJobConfig) extends
 
   def process(key: K,
               context: ProcessWindowFunction[I, O, K, GlobalWindow]#Context,
-              elements: Iterable[I],
+              elements: lang.Iterable[I],
               metrics: Metrics): Unit
 
-  override def process(key: K, context: Context, elements: Iterable[I], out: Collector[O]): Unit = {
+  override def process(key: K, context: ProcessWindowFunction[I, O, K, GlobalWindow]#Context, elements: lang.Iterable[I], out: Collector[O]): Unit = {
     process(key, context, elements, metrics)
   }
 }
@@ -86,10 +88,10 @@ abstract class TimeWindowBaseProcessFunction[I, O, K](config: BaseJobConfig) ext
 
   def process(key: K,
               context: ProcessWindowFunction[I, O, K, TimeWindow]#Context,
-              elements: Iterable[I],
+              elements: lang.Iterable[I],
               metrics: Metrics): Unit
 
-  override def process(key: K, context: Context, elements: Iterable[I], out: Collector[O]): Unit = {
+  override def process(key: K, context: ProcessWindowFunction[I, O, K, TimeWindow]#Context, elements: lang.Iterable[I], out: Collector[O]): Unit = {
     process(key, context, elements, metrics)
   }
 }

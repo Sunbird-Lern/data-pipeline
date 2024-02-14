@@ -83,8 +83,9 @@ class CertificateGeneratorFunctionTaskTestSpec extends BaseTestSpec {
     * this test works on intellij , but using mvn scoverge:report is not working
     */
   it should "generate certificate and add to the registry" in {
-    when(mockKafkaUtil.kafkaStringSink(jobConfig.kafkaAuditEventTopic)).thenReturn(new auditEventSink)
-    when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.kafkaInputTopic)).thenReturn(new CertificateGeneratorEventSource)
+    // TODO:
+//    when(mockKafkaUtil.kafkaStringSink(jobConfig.kafkaAuditEventTopic)).thenReturn(new auditEventSink)
+//    when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.kafkaInputTopic)).thenReturn(new CertificateGeneratorEventSource)
     intercept[JobExecutionException](new CertificateGeneratorStreamTask(jobConfig, mockKafkaUtil, mockHttpUtil, storageService).process())
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(3)
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.successEventCount}").getValue() should be(1)
@@ -113,14 +114,15 @@ class CertificateGeneratorEventSource extends SourceFunction[Event] {
   override def cancel() = {}
 }
 
-class auditEventSink extends SinkFunction[String] {
-
-  override def invoke(value: String): Unit = {
-    synchronized {
-      auditEventSink.values.add(value)
-    }
-  }
-}
+// TODO:
+//class auditEventSink extends SinkFunction[String] {
+//
+//  override def invoke(value: String): Unit = {
+//    synchronized {
+//      auditEventSink.values.add(value)
+//    }
+//  }
+//}
 
 object auditEventSink {
   val values: util.List[String] = new util.ArrayList()

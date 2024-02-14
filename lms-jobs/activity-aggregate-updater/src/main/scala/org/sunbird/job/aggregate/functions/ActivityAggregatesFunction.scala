@@ -1,7 +1,5 @@
 package org.sunbird.job.aggregate.functions
 
-import java.lang.reflect.Type
-import java.util.concurrent.TimeUnit
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.querybuilder.{QueryBuilder, Select, Update}
 import com.google.gson.Gson
@@ -12,17 +10,19 @@ import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.slf4j.LoggerFactory
-import org.sunbird.job.cache.{DataCache, RedisConnect}
-import org.sunbird.job.aggregate.domain.{UserContentConsumption, _}
+import org.sunbird.job.aggregate.domain._
 import org.sunbird.job.aggregate.task.ActivityAggregateUpdaterConfig
+import org.sunbird.job.cache.{DataCache, RedisConnect}
 import org.sunbird.job.util.{CassandraUtil, HttpUtil}
 import org.sunbird.job.{Metrics, WindowBaseProcessFunction}
 
+import java.lang
+import java.lang.reflect.Type
+import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
 
 class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUtil: HttpUtil, @transient var cassandraUtil: CassandraUtil = null)
                                 (implicit val stringTypeInfo: TypeInformation[String])
@@ -53,10 +53,10 @@ class ActivityAggregatesFunction(config: ActivityAggregateUpdaterConfig, httpUti
   }
 
   override def process(key: Int,
-              context: ProcessWindowFunction[Map[String, AnyRef], String, Int, GlobalWindow]#Context,
-              events: Iterable[Map[String, AnyRef]],
-              metrics: Metrics): Unit = {
-
+                       context: ProcessWindowFunction[Map[String, AnyRef], String, Int, GlobalWindow]#Context,
+                       eventss: lang.Iterable[Map[String, AnyRef]],
+                       metrics: Metrics): Unit = {
+    val events: Iterable[Map[String, AnyRef]] = eventss.asScala
     logger.debug("Input Events Size: " + events.toList.size)
     val inputUserConsumptionList: List[UserContentConsumption] = events
         .groupBy(key => (key.get(config.courseId), key.get(config.batchId), key.get(config.userId)))

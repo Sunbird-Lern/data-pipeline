@@ -64,6 +64,7 @@ trait IssueCertificateHelper {
             metrics.incCounter(config.dbReadCount)
             val enrolmentAdditionProps = additionalProps.getOrElse(config.enrollment, List[String]())
             if(null != row){
+                logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: " + row.toString)
                 val active:Boolean = row.getBool(config.active)
                 val issuedCertificates = row.getList(config.issuedCertificates, TypeTokens.mapOf(classOf[String], classOf[String])).asScala.toList
                 val isCertIssued = issuedCertificates.nonEmpty && issuedCertificates.exists(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name, "")))
@@ -74,7 +75,11 @@ trait IssueCertificateHelper {
                 val userId = if(active && (criteriaStatus == status) && (!isCertIssued || event.reIssue)) event.userId else ""
                 val issuedOn = row.getTimestamp(config.completedOn)
                 val addProps = enrolmentAdditionProps.map(prop => prop -> row.getObject(prop.toLowerCase)).toMap
-                EnrolledUser(userId, oldId, issuedOn, {if(addProps.nonEmpty) Map[String, Any](config.enrollment -> addProps) else Map()})
+              logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: userId: " + userId)
+              logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: oldId: " + oldId)
+              logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: issuedOn: " + issuedOn)
+              logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: addProps: " + addProps)
+              EnrolledUser(userId, oldId, issuedOn, {if(addProps.nonEmpty) Map[String, Any](config.enrollment -> addProps) else Map()})
             } else EnrolledUser("", "")
         } else EnrolledUser(event.userId, "")
     }
@@ -102,9 +107,12 @@ trait IssueCertificateHelper {
     }
 
     def validateUser(userId: String, userCriteria: Map[String, AnyRef])(metrics:Metrics, config:CollectionCertPreProcessorConfig, httpUtil: HttpUtil): Map[String, AnyRef] = {
+      logger.info("IssueCertificateHelper: validateUser: userId: " + userId)
         if(userId.nonEmpty) {
             val url = config.learnerBasePath + config.userReadApi + "/" + userId + "?organisations,roles,locations,declarations,externalIds"
+          logger.info("IssueCertificateHelper: validateUser: url: " + url)
             val result = getAPICall(url, "response")(config, httpUtil, metrics)
+          logger.info("IssueCertificateHelper: validateUser: result: " + result)
             if(userCriteria.isEmpty || userCriteria.size == userCriteria.count(uc => uc._2 == result.getOrElse(uc._1, null))) {
                 result
             } else Map[String, AnyRef]()
