@@ -81,7 +81,7 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   // Functions
   val userDeletionCleanupFunction: String = "UserDeletionCleanupFunction"
 
-  val SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID: String = config.getString("SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID")
+  val SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID: String = config.getString("sunbird_keycloak_user_federation_provider_id")
 
 
 }
