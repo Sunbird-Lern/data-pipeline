@@ -3,6 +3,7 @@ package org.sunbird.job.util
 import com.datastax.driver.core._
 import com.datastax.driver.core.exceptions.DriverException
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy
+import com.datastax.driver.core.querybuilder.{Delete, QueryBuilder}
 import org.slf4j.LoggerFactory
 
 import java.util
@@ -73,6 +74,23 @@ class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
   def executePreparedStatement(query: String, params: Object*): util.List[Row] = {
     val rs: ResultSet = session.execute(session.prepare(query).bind(params: _*))
     rs.all()
+  }
+
+  def deleteRecordByCompositeKey(keyspaceName: String, tableName: String, compositeKeyMap: Map[String, String]): Boolean = {
+    logger.debug("CassandraUtil: deleteRecord start:: " + compositeKeyMap)
+    try {
+      val delete: Delete = QueryBuilder.delete.from(keyspaceName, tableName)
+      compositeKeyMap.foreach(x => {
+        delete.where().and(QueryBuilder.eq(x._1, x._2))
+      })
+
+      val rs: ResultSet = session.execute(delete)
+      rs.wasApplied
+    } catch {
+      case e: Exception =>
+        logger.error("CassandraUtil: deleteRecord by composite key. " + tableName + " : " + e.getMessage, e)
+        throw e
+    }
   }
 
 }

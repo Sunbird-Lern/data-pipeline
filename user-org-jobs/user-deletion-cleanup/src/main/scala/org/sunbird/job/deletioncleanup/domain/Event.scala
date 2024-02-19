@@ -1,11 +1,11 @@
 package org.sunbird.job.deletioncleanup.domain
 
-import org.sunbird.dp.core.domain.Events
+import org.sunbird.job.domain.reader.{Event => BaseEvent}
 
 import java.util
 import scala.collection.convert.ImplicitConversions.`map AsScala`
 
-class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
+class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
   override def kafkaKey(): String = {
     did()

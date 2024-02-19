@@ -10,8 +10,8 @@ import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.keycloak.admin.client.resource.UserResource
 import org.keycloak.representations.idm.UserRepresentation
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
+import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
 import org.sunbird.job.deletioncleanup.domain.{ActorObject, Event, EventContext, EventData, EventObject, TelemetryEvent}
 import org.sunbird.job.deletioncleanup.task.UserDeletionCleanupConfig
 import org.sunbird.job.deletioncleanup.util.KeyCloakConnectionProvider
