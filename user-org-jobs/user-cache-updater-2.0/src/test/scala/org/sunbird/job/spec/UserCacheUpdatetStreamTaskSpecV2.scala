@@ -1,4 +1,4 @@
-package org.sunbird.dp.spec
+package org.sunbird.job.spec
 
 import java.io.IOException
 import java.util
@@ -14,13 +14,13 @@ import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.mockito.Mockito
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.sunbird.dp.core.cache.RedisConnect
-import org.sunbird.dp.core.job.FlinkKafkaConnector
-import org.sunbird.dp.core.util.JSONUtil
-import org.sunbird.dp.fixture.EventFixture
-import org.sunbird.dp.usercache.domain.Event
-import org.sunbird.dp.usercache.task.{UserCacheUpdaterConfigV2, UserCacheUpdaterStreamTaskV2}
-import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
+import org.sunbird.job.cache.RedisConnect
+import org.sunbird.job.connector.FlinkKafkaConnector
+import org.sunbird.job.usercache.domain.Event
+import org.sunbird.job.usercache.task.{UserCacheUpdaterConfigV2, UserCacheUpdaterStreamTaskV2}
+import org.sunbird.job.util.JSONUtil
+import org.sunbird.spec.{BaseMetricsReporter, BaseTestSpec}
+import org.sunbird.job.fixture.EventFixture
 import redis.clients.jedis.Jedis
 import redis.embedded.RedisServer
 
@@ -48,7 +48,7 @@ class UserCacheUpdatetStreamTaskSpecV2 extends BaseTestSpec with BeforeAndAfterE
     redisServer = new RedisServer(6340)
     redisServer.start()
     BaseMetricsReporter.gaugeMetrics.clear()
-    val redisConnect = new RedisConnect(userCacheConfig.metaRedisHost, userCacheConfig.metaRedisPort, userCacheConfig)
+    val redisConnect = new RedisConnect(userCacheConfig, Option(userCacheConfig.metaRedisHost), Option(userCacheConfig.metaRedisPort))
     jedis = redisConnect.getConnection(userCacheConfig.userStore)
     setupRedisData()
     flinkCluster.before()

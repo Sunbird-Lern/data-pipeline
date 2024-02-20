@@ -1,12 +1,12 @@
-package org.sunbird.dp.usercache.util
+package org.sunbird.job.usercache.util
 
 import com.google.gson.Gson
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.core.cache.DataCache
-import org.sunbird.dp.core.job.Metrics
-import org.sunbird.dp.usercache.domain.Event
-import org.sunbird.dp.usercache.task.UserCacheUpdaterConfigV2
-import org.sunbird.dp.core.util.RestUtil
+import org.sunbird.job.Metrics
+import org.sunbird.job.cache.DataCache
+import org.sunbird.job.util.RestUtil
+import org.sunbird.job.usercache.domain.Event
+import org.sunbird.job.usercache.task.UserCacheUpdaterConfigV2
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable

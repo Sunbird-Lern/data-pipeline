@@ -1,19 +1,18 @@
-package org.sunbird.dp.usercache.functions
+package org.sunbird.job.usercache.functions
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.usercache.domain.Event
-import org.sunbird.dp.usercache.task.UserCacheUpdaterConfigV2
-import org.sunbird.dp.usercache.util.{FrameworkCacheHandler, UserMetadataUpdater}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
+import org.sunbird.job.cache.{DataCache, RedisConnect}
+import org.sunbird.job.usercache.domain.Event
+import org.sunbird.job.usercache.task.UserCacheUpdaterConfigV2
+import org.sunbird.job.usercache.util.{FrameworkCacheHandler, UserMetadataUpdater}
+import org.sunbird.job.util.RestUtil
 
 import scala.collection.JavaConverters.mapAsJavaMap
 import scala.collection.mutable
-import org.sunbird.dp.core.util.RestUtil
-import org.sunbird.dp.core.cache.{DataCache, RedisConnect}
-import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
 
 class UserCacheUpdaterFunctionV2(config: UserCacheUpdaterConfigV2)(implicit val mapTypeInfo: TypeInformation[Event])
   extends BaseProcessFunction[Event, Event](config) {
@@ -30,7 +29,7 @@ class UserCacheUpdaterFunctionV2(config: UserCacheUpdaterConfigV2)(implicit val 
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
-    dataCache = new DataCache(config, new RedisConnect(config.metaRedisHost, config.metaRedisPort, config), config.userStore, config.userFields)
+    dataCache = new DataCache(config, new RedisConnect(config, Option(config.metaRedisHost), Option(config.metaRedisPort)), config.userStore, config.userFields)
     dataCache.init()
     restUtil = new RestUtil()
     fwCache = new FrameworkCacheHandler(config, restUtil)

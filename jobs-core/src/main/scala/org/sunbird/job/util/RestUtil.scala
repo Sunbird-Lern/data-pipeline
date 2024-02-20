@@ -1,4 +1,4 @@
-package org.sunbird.dp.core.util
+package org.sunbird.job.util
 
 import java.util
 

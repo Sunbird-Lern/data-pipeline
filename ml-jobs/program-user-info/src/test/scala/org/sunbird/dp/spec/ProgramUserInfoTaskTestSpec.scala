@@ -17,7 +17,6 @@ import org.mockito.Mockito.when
 import org.sunbird.dp.userinfo.domain.Event
 import org.sunbird.dp.core.job.FlinkKafkaConnector
 import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
-import org.sunbird.dp.fixture.EventFixture
 import org.sunbird.dp.userinfo.task.{ProgramUserInfoConfig, ProgramUserInfoStreamTask}
 import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
 

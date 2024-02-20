@@ -22,7 +22,6 @@ import org.sunbird.dp.assessment.task.{AssessmentAggregatorConfig, AssessmentAgg
 import org.sunbird.dp.core.cache.RedisConnect
 import org.sunbird.dp.core.job.FlinkKafkaConnector
 import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
-import org.sunbird.dp.fixture.EventFixture
 import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
 import redis.embedded.RedisServer
 

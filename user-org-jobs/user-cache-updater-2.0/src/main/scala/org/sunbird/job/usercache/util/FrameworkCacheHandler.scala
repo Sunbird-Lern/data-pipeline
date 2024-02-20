@@ -1,10 +1,10 @@
-package org.sunbird.dp.usercache.util
+package org.sunbird.job.usercache.util
 
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
-import org.sunbird.dp.core.util.RestUtil
-import org.sunbird.dp.usercache.task.UserCacheUpdaterConfigV2
+import org.sunbird.job.usercache.task.UserCacheUpdaterConfigV2
+import org.sunbird.job.util.RestUtil
 
 import scala.collection.JavaConverters._
 

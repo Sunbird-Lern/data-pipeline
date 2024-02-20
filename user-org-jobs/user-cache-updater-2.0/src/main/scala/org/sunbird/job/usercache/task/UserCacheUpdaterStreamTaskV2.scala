@@ -1,15 +1,15 @@
-package org.sunbird.dp.usercache.task
+package org.sunbird.job.usercache.task
 
 import java.io.File
 import com.typesafe.config.ConfigFactory
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
-import org.sunbird.dp.core.job.FlinkKafkaConnector
-import org.sunbird.dp.core.util.FlinkUtil
-import org.sunbird.dp.usercache.domain.Event
-import org.sunbird.dp.usercache.functions.UserCacheUpdaterFunctionV2
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.sunbird.job.connector.FlinkKafkaConnector
+import org.sunbird.job.util.FlinkUtil
+import org.sunbird.job.usercache.domain.Event
+import org.sunbird.job.usercache.functions.UserCacheUpdaterFunctionV2
 
 class UserCacheUpdaterStreamTaskV2(config: UserCacheUpdaterConfigV2, kafkaConnector: FlinkKafkaConnector) {
 
@@ -20,8 +20,8 @@ class UserCacheUpdaterStreamTaskV2(config: UserCacheUpdaterConfigV2, kafkaConnec
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
     implicit val mapTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     val source = kafkaConnector.kafkaEventSource[Event](config.inputTopic)
-    env.addSource(source, config.userCacheConsumer).uid(config.userCacheConsumer).
-      setParallelism(config.userCacheParallelism).rebalance()
+    env.addSource(source).name(config.userCacheConsumer).uid(config.userCacheConsumer).
+      setParallelism(config.userCacheParallelism).rebalance
       .process(new UserCacheUpdaterFunctionV2(config))
       .name(config.userCacheUpdaterFunction).uid(config.userCacheUpdaterFunction)
     env.execute(config.jobName)

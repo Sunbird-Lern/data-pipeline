@@ -49,13 +49,12 @@
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
-            <artifactId>dp-core</artifactId>
+            <artifactId>jobs-core</artifactId>
             <version>1.0.0</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
-            <artifactId>dp-core</artifactId>
+            <artifactId>jobs-core</artifactId>
             <version>1.0.0</version>
             <type>test-jar</type>
             <scope>test</scope>

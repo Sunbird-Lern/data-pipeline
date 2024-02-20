@@ -1,11 +1,10 @@
-package org.sunbird.dp.usercache.domain
+package org.sunbird.job.usercache.domain
 
 import java.util
+import org.sunbird.job.domain.reader.{Event => BaseEvent}
+import org.sunbird.job.usercache.util.UserReadResult
 
-import org.sunbird.dp.core.domain.Events
-import org.sunbird.dp.usercache.util.UserReadResult
-
-class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
+class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
   override def kafkaKey(): String = {
     did()
