@@ -1,13 +1,13 @@
-package org.sunbird.dp.userinfo.functions
+package org.sunbird.job.userinfo.functions
 
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.CassandraUtil
-import org.sunbird.dp.userinfo.domain.Event
-import org.sunbird.dp.userinfo.task.ProgramUserInfoConfig
-import org.sunbird.dp.userinfo.util.Commons
+import org.sunbird.job.{BaseProcessFunction, Metrics}
+import org.sunbird.job.userinfo.domain.Event
+import org.sunbird.job.userinfo.task.ProgramUserInfoConfig
+import org.sunbird.job.userinfo.util.Commons
+import org.sunbird.job.util.CassandraUtil
 
 import java.text.SimpleDateFormat
 import java.util

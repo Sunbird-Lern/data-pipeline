@@ -1,9 +1,9 @@
-package org.sunbird.dp.userinfo.domain
+package org.sunbird.job.userinfo.domain
 
 import java.util
-import org.sunbird.dp.core.domain.Events
+import org.sunbird.job.domain.reader.{Event => BaseEvent}
 
-class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
+class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
   def _id: String = {
     Option(telemetry.readOrDefault[String]("_id", null)).filter(_.nonEmpty).orNull

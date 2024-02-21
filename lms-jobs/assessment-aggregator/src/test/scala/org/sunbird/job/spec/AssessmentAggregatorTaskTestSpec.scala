@@ -16,13 +16,14 @@ import org.cassandraunit.dataset.cql.FileCQLDataSet
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.mockito.Mockito
 import org.mockito.Mockito._
-import org.sunbird.dp.assessment.domain.Event
-import org.sunbird.dp.assessment.functions.AggDetails
-import org.sunbird.dp.assessment.task.{AssessmentAggregatorConfig, AssessmentAggregatorStreamTask}
-import org.sunbird.dp.core.cache.RedisConnect
-import org.sunbird.dp.core.job.FlinkKafkaConnector
-import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
-import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
+import org.sunbird.job.assessment.domain.Event
+import org.sunbird.job.assessment.functions.AggDetails
+import org.sunbird.job.assessment.task.{AssessmentAggregatorConfig, AssessmentAggregatorStreamTask}
+import org.sunbird.job.cache.RedisConnect
+import org.sunbird.job.connector.FlinkKafkaConnector
+import org.sunbird.job.fixture.EventFixture
+import org.sunbird.job.util.{CassandraUtil, JSONUtil}
+import org.sunbird.spec.{BaseMetricsReporter, BaseTestSpec}
 import redis.embedded.RedisServer
 
 import java.util
@@ -156,7 +157,7 @@ class AssessmentAggregatorTaskTestSpec extends BaseTestSpec {
   }
 
   def setupRedisTestData() {
-    val redisConnect = new RedisConnect(assessmentConfig.metaRedisHost, assessmentConfig.metaRedisPort, assessmentConfig)
+    val redisConnect = new RedisConnect(assessmentConfig, Option(assessmentConfig.metaRedisHost), Option(assessmentConfig.metaRedisPort))
     val jedis = redisConnect.getConnection(assessmentConfig.relationCacheNode)
     EventFixture.leafNodesList.map(nodes => {
       nodes.map(node => {

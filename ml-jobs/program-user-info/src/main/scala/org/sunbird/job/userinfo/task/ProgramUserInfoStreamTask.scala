@@ -1,12 +1,12 @@
-package org.sunbird.dp.userinfo.task
+package org.sunbird.job.userinfo.task
 
-import org.sunbird.dp.core.job.FlinkKafkaConnector
 import com.typesafe.config.ConfigFactory
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
-import org.sunbird.dp.core.util.FlinkUtil
-import org.sunbird.dp.userinfo.domain.Event
-import org.sunbird.dp.userinfo.functions.ProgramUserInfoFunction
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.sunbird.job.connector.FlinkKafkaConnector
+import org.sunbird.job.userinfo.domain.Event
+import org.sunbird.job.userinfo.functions.ProgramUserInfoFunction
+import org.sunbird.job.util.FlinkUtil
 
 import java.io.File
 

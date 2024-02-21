@@ -1,8 +1,8 @@
-package org.sunbird.dp.userinfo.util
+package org.sunbird.job.userinfo.util
 
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import org.apache.commons.collections.MapUtils
-import org.sunbird.dp.core.util.CassandraUtil
+import org.sunbird.job.util.CassandraUtil
 
 import java.util
 import java.util.Map

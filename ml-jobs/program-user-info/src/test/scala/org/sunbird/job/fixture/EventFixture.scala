@@ -1,4 +1,4 @@
-package org.sunbird.dp.fixture
+package org.sunbird.job.fixture
 
 object EventFixture {
 

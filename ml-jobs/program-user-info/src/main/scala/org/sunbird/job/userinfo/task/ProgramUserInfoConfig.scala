@@ -1,7 +1,7 @@
-package org.sunbird.dp.userinfo.task
+package org.sunbird.job.userinfo.task
 
 import com.typesafe.config.Config
-import org.sunbird.dp.core.job.BaseJobConfig
+import org.sunbird.job.BaseJobConfig
 
 class ProgramUserInfoConfig(override val config: Config) extends BaseJobConfig(config, jobName = "ProgramUserInfo") {
 

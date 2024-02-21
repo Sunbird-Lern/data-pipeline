@@ -116,19 +116,18 @@
                     <release>11</release>
                 </configuration>
             </plugin>
-           <!-- <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.2.1</version>
                 <executions>
-                    &lt;!&ndash; Run shade goal on package phase &ndash;&gt;
+                    <!-- Run shade goal on package phase -->
                     <execution>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
                             <artifactSet>
                                 <excludes>
                                     <exclude>com.google.code.findbugs:jsr305</exclude>
@@ -136,8 +135,8 @@
                             </artifactSet>
                             <filters>
                                 <filter>
-                                    &lt;!&ndash; Do not copy the signatures in the META-INF folder.
-                                    Otherwise, this might cause SecurityExceptions when using the JAR. &ndash;&gt;
+                                    <!-- Do not copy the signatures in the META-INF folder.
+                                    Otherwise, this might cause SecurityExceptions when using the JAR. -->
                                     <artifact>*:*</artifact>
                                     <excludes>
                                         <exclude>META-INF/*.SF</exclude>
@@ -149,9 +148,9 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.sunbird.dp.usercache.task.UserCacheUpdaterStreamTaskV2</mainClass>
+                                    <mainClass>org.sunbird.job.usercache.task.UserCacheUpdaterStreamTaskV2</mainClass>
                                 </transformer>
-                                &lt;!&ndash; append default configs &ndash;&gt;
+                                <!-- append default configs -->
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>reference.conf</resource>
@@ -160,7 +159,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
 
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
