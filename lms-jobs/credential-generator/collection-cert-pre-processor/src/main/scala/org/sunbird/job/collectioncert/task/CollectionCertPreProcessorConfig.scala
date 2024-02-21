@@ -15,8 +15,8 @@ class CollectionCertPreProcessorConfig(override val config: Config) extends Base
     //Redis config
     val collectionCacheStore: Int = config.getInt("redis.database.collectionCache.id")
     val contentCacheStore: Int = config.getInt("redis.database.contentCache.id")
-    val metaRedisHost: String = config.getString("redis-meta.host")
-    val metaRedisPort: Int = config.getInt("redis-meta.port")
+    override val metaRedisHost: String = config.getString("redis-meta.host")
+    override val metaRedisPort: Int = config.getInt("redis-meta.port")
 
     
     //kafka config

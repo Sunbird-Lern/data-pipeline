@@ -9,7 +9,7 @@ import org.sunbird.job.cache.{DataCache, RedisConnect}
 import org.sunbird.job.usercache.domain.Event
 import org.sunbird.job.usercache.task.UserCacheUpdaterConfigV2
 import org.sunbird.job.usercache.util.{FrameworkCacheHandler, UserMetadataUpdater}
-import org.sunbird.job.util.RestUtil
+import org.sunbird.job.util.{JSONUtil, RestUtil}
 
 import scala.collection.JavaConverters.mapAsJavaMap
 import scala.collection.mutable

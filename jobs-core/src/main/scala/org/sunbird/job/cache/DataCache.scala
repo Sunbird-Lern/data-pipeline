@@ -1,7 +1,6 @@
 package org.sunbird.job.cache
 
 import java.util
-
 import com.google.gson.Gson
 import org.slf4j.LoggerFactory
 import org.sunbird.job.BaseJobConfig
@@ -9,6 +8,7 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.{JedisConnectionException, JedisException}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.collection.mutable.Map
 
 class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val dbIndex: Int, val fields: List[String]) {
@@ -25,30 +25,54 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
     this.redisConnection.close()
   }
 
-  def hgetAllWithRetry(key: String): Map[String, String] = {
+  def hgetAllWithRetry(key: String, retainRemovableFields: Boolean = true): mutable.Map[String, AnyRef] = {
     try {
-      hgetAll(key)
+      convertToComplexDataTypes(hgetAll(key, retainRemovableFields))
     } catch {
       case ex: JedisException =>
         logger.error("Exception when retrieving data from redis cache", ex)
         this.redisConnection.close()
         this.redisConnection = redisConnect.getConnection(dbIndex)
-        hgetAll(key)
+        convertToComplexDataTypes(hgetAll(key))
     }
-
   }
 
-  private def hgetAll(key: String): Map[String, String] = {
+  def isArray(value: String): Boolean = {
+    val redisValue = value.trim
+    redisValue.length > 0 && redisValue.startsWith("[")
+  }
+
+  def isObject(value: String) = {
+    val redisValue = value.trim
+    redisValue.length > 0 && redisValue.startsWith("{")
+  }
+
+  def convertToComplexDataTypes(data: mutable.Map[String, String]): mutable.Map[String, AnyRef] = {
+    val result = mutable.Map[String, AnyRef]()
+    data.keys.map {
+      redisKey =>
+        val redisValue = data(redisKey)
+        if (isArray(redisValue)) {
+          result += redisKey -> gson.fromJson(redisValue, new util.ArrayList[AnyRef]().getClass)
+        } else if (isObject(redisValue)) {
+          result += redisKey -> gson.fromJson(redisValue, new util.HashMap[String, AnyRef]().getClass)
+        } else {
+          result += redisKey -> redisValue
+        }
+    }
+    result
+  }
+
+  private def hgetAll(key: String, retainRemovableFields: Boolean = true): mutable.Map[String, String] = {
     val dataMap = redisConnection.hgetAll(key)
     if (dataMap.size() > 0) {
-      dataMap.keySet().retainAll(fields.asJava)
+      if (retainRemovableFields && fields.nonEmpty) dataMap.keySet().retainAll(fields.asJava)
       dataMap.values().removeAll(util.Collections.singleton(""))
       dataMap.asScala
     } else {
-      Map[String, String]()
+      mutable.Map[String, String]()
     }
   }
-
   def getWithRetry(key: String): Map[String, AnyRef] = {
     try {
       get(key)

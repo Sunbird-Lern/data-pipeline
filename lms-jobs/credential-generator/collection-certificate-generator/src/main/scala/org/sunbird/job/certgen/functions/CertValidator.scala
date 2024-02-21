@@ -189,6 +189,8 @@ class CertValidator() {
         .getList(config.issuedCertificates, TypeTokens.mapOf(classOf[String], classOf[String])).asScala.toList
       val isCertIssued = !issuedCertificates.isEmpty && !issuedCertificates
         .filter(cert => event.name.equalsIgnoreCase(cert.getOrDefault(config.name, "").asInstanceOf[String])).isEmpty
+
+      // If oldId is present in the event, event will be considered for reissuing the certificate
       ((null != event.oldId && !event.oldId.isEmpty) || !isCertIssued)
     } else false
   }
