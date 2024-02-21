@@ -1,4 +1,4 @@
-package org.sunbird.dp.assessment.functions
+package org.sunbird.job.assessment.functions
 
 import java.lang.reflect.Type
 import java.util
@@ -10,11 +10,11 @@ import com.google.gson.reflect.TypeToken
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.assessment.domain.Event
+import org.sunbird.job.assessment.domain.Event
 import org.apache.flink.configuration.Configuration
-import org.sunbird.dp.assessment.task.AssessmentAggregatorConfig
-import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
+import org.sunbird.job.assessment.task.AssessmentAggregatorConfig
+import org.sunbird.job.util.{CassandraUtil, JSONUtil}
 
 import java.text.SimpleDateFormat
 import scala.collection.JavaConverters._

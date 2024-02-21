@@ -1,16 +1,15 @@
-package org.sunbird.dp.assessment.task
+package org.sunbird.job.assessment.task
 
 import java.io.File
-
 import com.typesafe.config.ConfigFactory
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
-import org.sunbird.dp.assessment.domain.Event
-import org.sunbird.dp.assessment.functions.{AssessmentAggregatorFunction, UserScoreAggregateFunction}
-import org.sunbird.dp.core.job.FlinkKafkaConnector
-import org.sunbird.dp.core.util.FlinkUtil
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.sunbird.job.assessment.domain.Event
+import org.sunbird.job.assessment.functions.{AssessmentAggregatorFunction, UserScoreAggregateFunction}
+import org.sunbird.job.connector.FlinkKafkaConnector
+import org.sunbird.job.util.FlinkUtil
 
 /**
   * Assessment Aggregator task does the following pipeline processing in a sequence:
@@ -45,12 +44,14 @@ class AssessmentAggregatorStreamTask(config: AssessmentAggregatorConfig, kafkaCo
     def process(): Unit = {
         implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
         implicit val mapTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+        implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
         val source = kafkaConnector.kafkaEventSource[Event](config.kafkaInputTopic)
 
         val aggregatorStream =
-            env.addSource(source, config.assessmentAggConsumer)
-              .uid(config.assessmentAggConsumer).setParallelism(config.kafkaConsumerParallelism).rebalance()
-              .process(new AssessmentAggregatorFunction(config))
+            env.addSource(source).name(config.assessmentAggConsumer)
+              .uid(config.assessmentAggConsumer).setParallelism(config.kafkaConsumerParallelism).rebalance
+              .process(new AssessmentAggregatorFunction
+              (config))
               .name(config.assessmentAggregatorFunction).uid(config.assessmentAggregatorFunction)
               .setParallelism(config.assessAggregatorParallelism)
 

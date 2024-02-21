@@ -1,14 +1,14 @@
 package org.sunbird.job.ownershiptransfer.domain
 
-import org.sunbird.dp.core.domain.Events
-import org.sunbird.dp.core.job.Metrics
-import org.sunbird.dp.core.util.{HttpUtil, JSONUtil}
+import org.sunbird.job.Metrics
+import org.sunbird.job.domain.reader.{Event => BaseEvent}
 import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
+import org.sunbird.job.util.{HttpUtil, JSONUtil}
 
 import java.util
 import scala.collection.convert.ImplicitConversions.`map AsScala`
 
-class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
+class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
   override def kafkaKey(): String = {
     did()

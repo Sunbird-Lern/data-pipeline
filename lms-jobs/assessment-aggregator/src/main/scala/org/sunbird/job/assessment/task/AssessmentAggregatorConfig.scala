@@ -1,11 +1,11 @@
-package org.sunbird.dp.assessment.task
+package org.sunbird.job.assessment.task
 
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.streaming.api.scala.OutputTag
-import org.sunbird.dp.assessment.domain.Event
-import org.sunbird.dp.core.job.BaseJobConfig
+import org.sunbird.job.BaseJobConfig
+import org.sunbird.job.assessment.domain.Event
 
 class AssessmentAggregatorConfig(override val config: Config) extends BaseJobConfig(config, jobName = "AssessmentAggregatorJob") {
 

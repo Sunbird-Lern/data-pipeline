@@ -1,4 +1,4 @@
-package org.sunbird.dp.assessment.functions
+package org.sunbird.job.assessment.functions
 
 import java.lang.reflect.Type
 import java.math.BigDecimal
@@ -15,12 +15,11 @@ import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.assessment.domain.Event
-import org.sunbird.dp.assessment.task.AssessmentAggregatorConfig
-import org.sunbird.dp.core.util.RestUtil
-import org.sunbird.dp.core.cache.{DataCache, RedisConnect}
-import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.{CassandraUtil, JSONUtil}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
+import org.sunbird.job.assessment.domain.Event
+import org.sunbird.job.assessment.task.AssessmentAggregatorConfig
+import org.sunbird.job.cache.{DataCache, RedisConnect}
+import org.sunbird.job.util.{CassandraUtil, JSONUtil, RestUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -54,9 +53,9 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
-    dataCache = new DataCache(config, new RedisConnect(config.metaRedisHost, config.metaRedisPort, config), config.relationCacheNode, List())
+    dataCache = new DataCache(config, new RedisConnect(config, Option(config.metaRedisHost), Option(config.metaRedisPort)), config.relationCacheNode, List())
     dataCache.init()
-    contentCache = new DataCache(config, new RedisConnect(config.metaRedisHost, config.metaRedisPort, config), config.contentCacheNode, List())
+    contentCache = new DataCache(config, new RedisConnect(config, Option(config.metaRedisHost), Option(config.metaRedisPort)), config.contentCacheNode, List())
     contentCache.init()
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
     questionType = cassandraUtil.getUDTType(config.dbKeyspace, config.dbudtType)

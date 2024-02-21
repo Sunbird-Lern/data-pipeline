@@ -1,9 +1,9 @@
-package org.sunbird.dp.assessment.domain
+package org.sunbird.job.assessment.domain
 
 import java.util
-import org.sunbird.dp.core.domain.{Events, EventsPath}
+import org.sunbird.job.domain.reader.{EventsPath, Event => BaseEvent}
 
-class Event(eventMap: util.Map[String, Any]) extends Events(eventMap) {
+class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
   private val jobName = "AssessmentAggregator"
 

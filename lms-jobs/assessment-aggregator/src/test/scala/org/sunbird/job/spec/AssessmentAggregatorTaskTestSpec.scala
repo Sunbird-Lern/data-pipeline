@@ -1,4 +1,4 @@
-package org.sunbird.dp.spec
+package org.sunbird.job.spec
 
 import com.datastax.driver.core.Row
 import com.google.common.reflect.TypeToken

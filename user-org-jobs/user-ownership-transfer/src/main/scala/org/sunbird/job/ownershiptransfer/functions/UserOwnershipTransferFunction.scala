@@ -6,10 +6,10 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.dp.core.job.{BaseProcessFunction, Metrics}
-import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
 import org.sunbird.job.ownershiptransfer.domain.Event
 import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
+import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
 
 import scala.collection.JavaConverters._
 import java.util
