@@ -87,7 +87,7 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
       logger.info("AssessmentAggregatorFunction:: processElement:: event:: " + event)
       // Validating the contentId
       if (isValidContent(event.courseId, event.contentId)(metrics)) {
-        val assessEvents = event.assessEvents.asScala
+        val assessEvents = event.assessEvents
         if(null != assessEvents && !assessEvents.isEmpty) {
           val sortAndFilteredEvents: List[AssessEvent] = getUniqueQuestions(assessEvents = assessEvents.toList)
           if (config.skipMissingRecords) { // Skip configuration to enable the force filter of duplicate questions based on the question meta
@@ -161,9 +161,9 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
     }
   }
 
-  def getUniqueQuestions(assessEvents: List[util.Map[String, AnyRef]]): List[AssessEvent] = {
+  def getUniqueQuestions(assessEvents: List[Map[String, AnyRef]]): List[AssessEvent] = {
     assessEvents.map(event => {
-      AssessEvent(event.get("ets").asInstanceOf[Long], new Gson().fromJson(new Gson().toJson(event.get("edata")), classOf[QuestionData]))
+      AssessEvent(event.get("ets").get.asInstanceOf[Long], new Gson().fromJson(JSONUtil.serialize(event.get("edata").get), classOf[QuestionData]))
     }).sortWith(_.ets > _.ets).groupBy(_.edata.item.id).map(_._2.head).toList
   }
 

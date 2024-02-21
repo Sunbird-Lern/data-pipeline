@@ -33,8 +33,8 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
     telemetry.read[String]("userId").get
   }
 
-  def assessEvents: util.ArrayList[util.Map[String, AnyRef]] = {
-    telemetry.read[util.ArrayList[util.Map[String, AnyRef]]]("events").getOrElse(null)
+  def assessEvents: List[Map[String, AnyRef]] = {
+    telemetry.read[List[Map[String, AnyRef]]]("events").getOrElse(null)
   }
 
   def markFailed(errorMsg: String): Unit = {
