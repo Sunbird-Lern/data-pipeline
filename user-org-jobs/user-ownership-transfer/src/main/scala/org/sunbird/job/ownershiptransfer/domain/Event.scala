@@ -37,8 +37,8 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
       if (200 == userReadResp.status) {
         metrics.incCounter(config.apiReadSuccessCount)
-        val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
-        val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
+        val response = JSONUtil.deserialize[Map[String, AnyRef]](userReadResp.body)
+        val userDetails = response.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
         userDetails.getOrElse("identifier", "").asInstanceOf[String].equalsIgnoreCase(userId) && userDetails.getOrElse("rootOrgId","").asInstanceOf[String].equalsIgnoreCase(organisation)
       } else false
     } else false

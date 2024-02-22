@@ -81,7 +81,7 @@ class Telemetry(var map: util.Map[String, Any]) extends Serializable {
 
   @throws[TelemetryReaderException]
   def getEts: Long = {
-    mustReadValue[Double]("ets").toLong
+    mustReadValue[Long]("ets")
   }
 
   def getAtTimestamp: String = {
