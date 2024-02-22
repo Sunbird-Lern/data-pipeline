@@ -70,7 +70,7 @@ class ProgramUserInfoFunction(config: ProgramUserInfoConfig,
      */
     val userLocationData = new util.HashMap[String, String]
     if(event.user_Location!= null && event.user_Location.isEmpty==false) {
-      event.user_Location.forEach(f => {
+      event.user_Location.foreach(f => {
         if (f != null && f.get("type") != null && !f.get("type").toString().isBlank()) {
           if (f != null && f.get("name") != null && !f.get("name").toString().isBlank()) {
             userLocationData.put(f.get("type") + "_name", f.get("name").toString)
@@ -92,7 +92,7 @@ class ProgramUserInfoFunction(config: ProgramUserInfoConfig,
     if (event.user_Types != null && event.user_Types.isEmpty == false) {
       val subTypeBuilder = new StringBuilder
       val subTypeSet = new util.HashSet[String]
-      event.user_Types.forEach(f => {
+      event.user_Types.foreach(f => {
         userTypeData.put("type", Option(f.get("type")).map(_.toString).filter(_.nonEmpty).map(_.toLowerCase).orNull)
         val subType = Option(f.get("subType")).map(_.toString).filter(_.nonEmpty).map(_.toUpperCase).orNull
         if (subType != null && !subTypeSet.contains(subType)) {
@@ -111,11 +111,11 @@ class ProgramUserInfoFunction(config: ProgramUserInfoConfig,
      */
     val organisationsData = new util.HashMap[String, String]
     if(event.organisations!= null) {
-      organisationsData.put("organisation_id", Option(event.organisations.get("id")) match {
+      organisationsData.put("organisation_id", Option(event.organisations.get("id").toString) match {
         case Some(s: String) if s.trim.nonEmpty => s
         case _ => null
       })
-      organisationsData.put("organisation_name", Option(event.organisations.get("orgName")) match {
+      organisationsData.put("organisation_name", Option(event.organisations.get("orgName").toString) match {
         case Some(s: String) if s.trim.nonEmpty => s
         case _ => null
       })

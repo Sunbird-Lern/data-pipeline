@@ -37,16 +37,16 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
     Option(telemetry.readOrDefault[String]("updatedAt", null)).filter(_.nonEmpty).orNull
   }
 
-  def user_Location: util.ArrayList[util.Map[String, Any]] = {
-    telemetry.read[util.ArrayList[util.Map[String, Any]]]("userProfile.userLocations").getOrElse(null)
+  def user_Location: List[Map[String, Any]] = {
+    telemetry.read[List[Map[String, Any]]]("userProfile.userLocations").getOrElse(null)
   }
 
-  def user_Types: util.ArrayList[util.Map[String, Any]] = {
-    telemetry.read[util.ArrayList[util.Map[String, Any]]]("userProfile.profileUserTypes").getOrElse(null)
+  def user_Types: List[Map[String, Any]] = {
+    telemetry.read[List[Map[String, Any]]]("userProfile.profileUserTypes").getOrElse(null)
   }
 
-  def organisations: util.Map[String, Any] = {
-    telemetry.read[util.Map[String, Any]]("userProfile.rootOrg").getOrElse(null)
+  def organisations: Map[String, Any] = {
+    telemetry.read[Map[String, Any]]("userProfile.rootOrg").getOrElse(null)
   }
 }
 
