@@ -27,11 +27,11 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
     telemetry.read[util.ArrayList[String]]("edata.managed_users").orNull
   }
 
-  def isValid(userDetails: util.HashMap[String, AnyRef]): Boolean = {
+  def isValid(userDetails: Map[String, AnyRef]): Boolean = {
     userId.nonEmpty && validateUser(userDetails, userId, organisation)
   }
 
-  def validateUser(userDetails: util.HashMap[String, AnyRef], userId: String, organisation: String): Boolean = {
+  def validateUser(userDetails: Map[String, AnyRef], userId: String, organisation: String): Boolean = {
     if(userId.nonEmpty) {
         userDetails.getOrElse("identifier", "").asInstanceOf[String].equalsIgnoreCase(userId) && userDetails.getOrElse("rootOrgId","").asInstanceOf[String].equalsIgnoreCase(organisation)
       } else false

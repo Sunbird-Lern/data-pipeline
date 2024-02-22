@@ -52,8 +52,8 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
     if (200 == userReadResp.status) {
       metrics.incCounter(config.apiReadSuccessCount)
-      val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
-      val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
+      val response = JSONUtil.deserialize[Map[String, AnyRef]](userReadResp.body)
+      val userDetails = response.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
 
       if(event.isValid(userDetails)) {
         try {
@@ -133,7 +133,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
   def getFederatedUserId(userId: String): String = String.join(":", "f", config.SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID, userId)
 
-  def removeEntryFromUserLookUp(userDetails: util.HashMap[String, AnyRef]) (config: UserDeletionCleanupConfig, cassandraUtil: CassandraUtil): Unit = {
+  def removeEntryFromUserLookUp(userDetails: Map[String, AnyRef]) (config: UserDeletionCleanupConfig, cassandraUtil: CassandraUtil): Unit = {
     val reqMap: ListBuffer[Map[String, String]] = new ListBuffer[Map[String, String]]()
 
     if (StringUtils.isNotBlank(userDetails.getOrElse(config.EMAIL, "").asInstanceOf[String])) {

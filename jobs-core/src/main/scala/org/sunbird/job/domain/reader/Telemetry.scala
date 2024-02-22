@@ -1,5 +1,7 @@
 package org.sunbird.job.domain.reader
 
+import org.sunbird.job.util.JSONUtil
+
 import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.util
@@ -53,7 +55,9 @@ class Telemetry(var map: util.Map[String, Any]) extends Serializable {
           i < lastIndex && parent != null
         }) {
           var result: util.Map[String, Any] = null
-          if (parent.isInstanceOf[util.Map[_, _]]) result = new ParentMap(parent, keys(i)).readChild.orNull
+          if (parent.isInstanceOf[util.Map[_, _]]) {
+            result = JSONUtil.deserialize[util.Map[String, Any]](JSONUtil.serialize(new ParentMap(parent, keys(i)).readChild.orNull))
+          }
           parent = result
           i += 1
         }
