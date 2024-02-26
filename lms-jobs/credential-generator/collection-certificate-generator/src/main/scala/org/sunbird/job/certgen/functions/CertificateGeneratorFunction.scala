@@ -230,7 +230,11 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         val plainReq: String = ScalaModuleJsonUtils.serialize(request)
         val req = removeBadChars(plainReq)
         logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Create API request: " + req)
-        val httpResponse = httpUtil.post(uri, req)
+        val headers = Map[String, String](
+          "Content-Type" -> "application/json",
+          "Authorization" -> config.rcApiKey
+        )
+        val httpResponse = httpUtil.post(uri, req, headers)
         if(httpResponse.status == 200) {
           val response = ScalaJsonUtil.deserialize[Map[String, AnyRef]](httpResponse.body)
           logger.info("CertificateGeneratorFunction:: callCertificateRc:: RC Create API response: " + response)

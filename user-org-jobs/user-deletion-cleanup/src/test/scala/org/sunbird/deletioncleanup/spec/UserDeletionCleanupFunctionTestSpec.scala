@@ -10,11 +10,11 @@ import org.cassandraunit.dataset.cql.FileCQLDataSet
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.mockito.Mockito
 import org.mockito.Mockito.when
-import org.sunbird.dp.core.job.FlinkKafkaConnector
-import org.sunbird.dp.core.util.{CassandraUtil, ElasticSearchUtil, HTTPResponse, HttpUtil}
-import org.sunbird.dp.{BaseMetricsReporter, BaseTestSpec}
+import org.sunbird.job.connector.FlinkKafkaConnector
+import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HTTPResponse, HttpUtil}
 import org.sunbird.job.deletioncleanup.domain.Event
 import org.sunbird.job.deletioncleanup.task.{UserDeletionCleanupConfig, UserDeletionCleanupStreamTask}
+import org.sunbird.spec.{BaseMetricsReporter, BaseTestSpec}
 
 
 class UserDeletionCleanupFunctionTestSpec extends BaseTestSpec {

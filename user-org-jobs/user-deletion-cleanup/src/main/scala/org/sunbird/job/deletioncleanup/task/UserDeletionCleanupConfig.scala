@@ -4,7 +4,7 @@ import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.streaming.api.scala.OutputTag
-import org.sunbird.dp.core.job.BaseJobConfig
+import org.sunbird.job.BaseJobConfig
 import org.sunbird.job.deletioncleanup.domain.Event
 
 class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConfig(config, "UserDeletionCleanupConfig") {
@@ -81,7 +81,7 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   // Functions
   val userDeletionCleanupFunction: String = "UserDeletionCleanupFunction"
 
-  val SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID: String = config.getString("SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID")
+  val SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID: String = config.getString("sunbird_keycloak_user_federation_provider_id")
 
 
 }

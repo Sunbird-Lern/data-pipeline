@@ -38,7 +38,7 @@ class ProgressCompleteFunction(config: EnrolmentReconciliationConfig)(implicit v
     
     val enrolmentQueries = pendingEnrolments.map(enrolmentComplete => getEnrolmentCompleteQuery(enrolmentComplete))
     updateDB(config.thresholdBatchWriteSize, enrolmentQueries)(metrics)
-    pendingEnrolments.foreach(e => {
+    events.foreach(e => {
       createIssueCertEvent(e, context)(metrics)
       generateAuditEvent(e, context)(metrics)
     })

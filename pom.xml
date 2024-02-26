@@ -22,7 +22,6 @@
 	<modules>
 		<module>jobs-core</module>
 		<module>notification</module>
-		<module>dp-core</module>
 		<module>lms-jobs</module>
 		<module>user-org-jobs</module>
 		<module>ml-jobs</module>
