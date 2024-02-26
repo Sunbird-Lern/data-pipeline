@@ -2,8 +2,8 @@ package org.sunbird.ownershiptransfer.spec
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
-import org.sunbird.dp.core.util.JSONUtil
 import org.sunbird.job.ownershiptransfer.domain.Event
+import org.sunbird.job.util.JSONUtil
 import org.sunbird.ownershiptransfer.fixture.EventFixture
 
 class UserOwnershipTransferEventSource extends SourceFunction[Event] {

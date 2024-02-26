@@ -32,12 +32,12 @@
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
-            <artifactId>dp-core</artifactId>
+            <artifactId>jobs-core</artifactId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
-            <artifactId>dp-core</artifactId>
+            <artifactId>jobs-core</artifactId>
             <version>1.0.0</version>
             <type>test-jar</type>
             <scope>test</scope>
@@ -144,7 +144,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.sunbird.dp.assessment.task.AssessmentAggregatorStreamTask</mainClass>
+                                    <mainClass>org.sunbird.job.assessment.task.AssessmentAggregatorStreamTask</mainClass>
                                 </transformer>
                                 <!-- append default configs -->
                                 <transformer

@@ -5,7 +5,6 @@ import java.util.{Date, UUID}
 
 import scala.collection.JavaConverters._
 
-
 case class ActorObject(id: String, `type`: String = "User")
 
 case class EventContext(channel: String = "in.sunbird",
