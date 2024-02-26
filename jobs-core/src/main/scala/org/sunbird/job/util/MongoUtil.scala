@@ -1,6 +1,7 @@
 package org.sunbird.job.util
 
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.UpdateOptions
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{Document, MongoClient, MongoCollection, MongoDatabase}
 
@@ -30,6 +31,12 @@ class MongoUtil(host: String, port: Int, database: String) {
     val mongoCollection: MongoCollection[Document] = mongoDatabase.getCollection(collection)
     val updateRes: Future[UpdateResult] = mongoCollection.updateMany(filter, update).toFuture()
     Await.result(updateRes, Duration.Inf)
+    updateRes
+  }
+
+  def updateOne(collection: String, filter: Bson, update: Bson): Future[UpdateResult] = {
+    val mongoCollection: MongoCollection[Document] = mongoDatabase.getCollection(collection)
+    val updateRes: Future[UpdateResult] = mongoCollection.updateOne(filter, update).toFuture()
     updateRes
   }
 
