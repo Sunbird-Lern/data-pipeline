@@ -37,10 +37,6 @@
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
                     <artifactId>slf4j-reload4j</artifactId>
                     <groupId>org.slf4j</groupId>
                 </exclusion>
