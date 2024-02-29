@@ -48,11 +48,11 @@ class UserCacheUpdaterFunctionV2(config: UserCacheUpdaterConfigV2)(implicit val 
       Option(userId).map(id => {
         Option(event.getState).map(name => {
           val userData: mutable.Map[String, AnyRef] = name.toUpperCase match {
-            case "CREATE" | "CREATED" | "UPDATE" | "UPDATED" => {
+            case "CREATE" | "CREATED" | "UPDATE" | "UPDATED" | "Delete" => {
               UserMetadataUpdater.execute(id, event, metrics, config, dataCache, restUtil, fwCache)
             }
             case _ => {
-              logger.info(s"Invalid event state name either it should be(Create/Created/Update/Updated) but found $name for ${event.mid()}")
+              logger.info(s"Invalid event state name either it should be(Create/Created/Update/Updated/Delete) but found $name for ${event.mid()}")
               metrics.incCounter(config.skipCount)
               mutable.Map[String, AnyRef]()
             }
