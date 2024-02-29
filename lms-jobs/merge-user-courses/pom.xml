@@ -48,6 +48,12 @@
       <artifactId>flink-test-utils_${scala.version}</artifactId>
       <version>${flink.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>log4j-slf4j-impl</artifactId>
+          <groupId>org.apache.logging.log4j</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -72,6 +78,12 @@
       <groupId>org.cassandraunit</groupId>
       <artifactId>cassandra-unit</artifactId>
       <version>3.11.2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.33</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -143,7 +155,7 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>4.4.0</version>
+        <version>${scala-maven-plugin.version}</version>
         <configuration>
           <source>11</source>
           <target>11</target>

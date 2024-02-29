@@ -13,7 +13,7 @@
         <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
         <CLOUD_STORE_GROUP_ID>org.sunbird</CLOUD_STORE_GROUP_ID>
         <CLOUD_STORE_ARTIFACT_ID>cloud-store-sdk_${scala.version}</CLOUD_STORE_ARTIFACT_ID>
-        <CLOUD_STORE_VERSION>1.4.6</CLOUD_STORE_VERSION>
+        <CLOUD_STORE_VERSION>1.4.7</CLOUD_STORE_VERSION>
     </properties>
     <artifactId>certificate-processor</artifactId>
     <dependencies>
@@ -29,24 +29,28 @@
             <version>${CLOUD_STORE_VERSION}</version>
             <exclusions>
                 <exclusion>
+                    <artifactId>log4j</artifactId>
+                    <groupId>log4j</groupId>
+                </exclusion>
+                <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
+                    <artifactId>slf4j-reload4j</artifactId>
+                    <groupId>org.slf4j</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
-            <version>3.3.3</version>
+            <version>3.5.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
-            <version>3.3.3</version>
+            <version>3.5.1</version>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
@@ -68,12 +72,7 @@
         <dependency>
             <groupId>com.konghq</groupId>
             <artifactId>unirest-java</artifactId>
-            <version>3.10.00</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <version>1.8</version>
+            <version>3.13.13</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
@@ -137,7 +136,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>4.4.0</version>
+                <version>${scala-maven-plugin.version}</version>
                 <configuration>
                     <source>11</source>
                     <target>11</target>

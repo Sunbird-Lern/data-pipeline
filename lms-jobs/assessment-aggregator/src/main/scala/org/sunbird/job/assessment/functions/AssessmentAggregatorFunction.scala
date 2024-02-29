@@ -1,11 +1,5 @@
 package org.sunbird.job.assessment.functions
 
-import java.lang.reflect.Type
-import java.math.BigDecimal
-import java.sql.Timestamp
-import java.text.DecimalFormat
-import java.util
-import java.util.UUID
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.datastax.driver.core.{Row, UDTValue, UserType}
 import com.google.gson.Gson
@@ -21,6 +15,11 @@ import org.sunbird.job.assessment.task.AssessmentAggregatorConfig
 import org.sunbird.job.cache.{DataCache, RedisConnect}
 import org.sunbird.job.util.{CassandraUtil, JSONUtil, RestUtil}
 
+import java.lang.reflect.Type
+import java.math.BigDecimal
+import java.sql.Timestamp
+import java.text.DecimalFormat
+import java.util
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 

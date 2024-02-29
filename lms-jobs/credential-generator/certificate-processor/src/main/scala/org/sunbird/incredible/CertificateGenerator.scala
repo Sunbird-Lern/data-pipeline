@@ -1,15 +1,15 @@
 package org.sunbird.incredible
 
-import java.io.{File, IOException}
-import java.net.{URI, URISyntaxException}
-
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
 import org.sunbird.incredible.pojos.exceptions.InvalidDateFormatException
 import org.sunbird.incredible.pojos.ob.CertificateExtension
 import org.sunbird.incredible.processor.CertModel
 import org.sunbird.incredible.processor.qrcode.{AccessCodeGenerator, QRCodeGenerationModel, QRCodeImageGenerator}
 import org.sunbird.incredible.processor.signature.SignatureException
+
+import java.io.{File, IOException}
+import java.net.{URI, URISyntaxException}
 
 case class QrCodeModel(accessCode: String, qrFile: File)
 

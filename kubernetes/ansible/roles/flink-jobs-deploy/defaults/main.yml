@@ -191,7 +191,7 @@ flink_job_names:
     taskslots: 1
     cpu_requests: 0.3
   assessment-aggregator:
-    job_class_name: 'org.sunbird.dp.assessment.task.AssessmentAggregatorStreamTask'
+    job_class_name: 'org.sunbird.job.assessment.task.AssessmentAggregatorStreamTask'
     replica: 1
     jobmanager_memory: 1024m
     taskmanager_memory: 1024m
@@ -208,7 +208,7 @@ flink_job_names:
     taskslots: 1
     cpu_requests: 0.3
   user-cache-updater-v2:
-    job_class_name: 'org.sunbird.dp.usercache.task.UserCacheUpdaterStreamTaskV2'
+    job_class_name: 'org.sunbird.job.usercache.task.UserCacheUpdaterStreamTaskV2'
     replica: 1
     jobmanager_memory: 1024m
     taskmanager_memory: 1024m
@@ -218,7 +218,7 @@ flink_job_names:
     cpu_requests: 0.3
     scale_enabled: false
   program-user-info:
-    job_class_name: 'org.sunbird.dp.userinfo.task.ProgramUserInfoStreamTask'
+    job_class_name: 'org.sunbird.job.userinfo.task.ProgramUserInfoStreamTask'
     replica: 1
     jobmanager_memory: 1024m
     taskmanager_memory: 1024m
