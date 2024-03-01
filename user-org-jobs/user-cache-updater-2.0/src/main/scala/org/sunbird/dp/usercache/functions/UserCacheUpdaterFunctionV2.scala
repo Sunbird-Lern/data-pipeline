@@ -48,7 +48,7 @@ class UserCacheUpdaterFunctionV2(config: UserCacheUpdaterConfigV2)(implicit val 
       Option(userId).map(id => {
         Option(event.getState).map(name => {
           val userData: mutable.Map[String, AnyRef] = name.toUpperCase match {
-            case "CREATE" | "CREATED" | "UPDATE" | "UPDATED" | "DELETE" => {
+            case "CREATE" | "CREATED" | "UPDATE" | "UPDATED" | "DELETE" | "DELETED" => {
               UserMetadataUpdater.execute(id, event, metrics, config, dataCache, restUtil, fwCache)
             }
             case _ => {
