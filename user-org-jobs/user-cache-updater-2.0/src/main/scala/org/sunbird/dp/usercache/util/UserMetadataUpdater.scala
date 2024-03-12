@@ -114,6 +114,8 @@ object UserMetadataUpdater {
         config.userId -> response.userId)
 
     } else if (config.userReadApiErrors.contains(userReadRes.responseCode.toUpperCase) && userReadRes.params.err.equalsIgnoreCase(config.userAccBlockedErrCode)) { //Skip the events for which response is 400 Bad request
+      userCacheData.+=(config.firstName -> "Deleted User", config.lastName -> "")
+      userCacheData.+=(config.email -> "Deleted User")
       logger.info(s"User Read API has response as ${userReadRes.responseCode.toUpperCase} for user: ${userId}")
       metrics.incCounter(config.apiReadMissCount)
     } else {
