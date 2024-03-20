@@ -732,8 +732,8 @@ user-ownership-transfer:
              basePath = "{{ userorg_service_base_url }}"
          }
     }
-    user_read_api = ""
-    batch_search_api = ""
+    user_read_api = "/user/v5/read/"
+    batch_search_api = "/course/v1/batch/list"
     threshold.batch.write.size = {{ user_ownership_transfer_batch_write_size }}
 
   flink-conf: |+
