@@ -720,6 +720,21 @@ user-ownership-transfer:
     task {
       user.ownership.transfer.parallelism = {{ user_ownership_transfer_job_parallelism }}
     }
+    lms-cassandra {
+      course_batch.table = "{{ middleware_course_batch_table }}"
+      keyspace = "{{ middleware_course_keyspace }}"
+    }
+    service {
+         lms {
+             basePath = "{{ lms_service_base_url }}"
+         }
+         userorg {
+             basePath = "{{ userorg_service_base_url }}"
+         }
+    }
+    user_read_api = ""
+    batch_search_api = ""
+    threshold.batch.write.size = {{ user_ownership_transfer_batch_write_size }}
 
   flink-conf: |+
     jobmanager.memory.flink.size: {{ flink_job_names['user-ownership-transfer'].jobmanager_memory }}

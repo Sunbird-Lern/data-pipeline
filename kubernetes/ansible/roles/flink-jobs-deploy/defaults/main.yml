@@ -128,6 +128,7 @@ user_deletion_cleanup_job_parallelism: 1
 
 ###  User-ownership-transfer Job related Vars
 user_ownership_transfer_job_parallelism: 1
+user_ownership_transfer_batch_write_size: 10
 
 ### Program-User-Info Job vars
 programuserinfo_consumer_parallelism: 1
