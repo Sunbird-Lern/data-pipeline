@@ -10,6 +10,10 @@ import scala.collection.convert.ImplicitConversions.`map AsScala`
 
 class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
+  def this() {
+    this(new util.HashMap[String, Any]())
+  }
+
   override def kafkaKey(): String = {
     did()
   }
