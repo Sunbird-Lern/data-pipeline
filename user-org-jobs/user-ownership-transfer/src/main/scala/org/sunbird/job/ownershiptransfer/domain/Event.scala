@@ -10,34 +10,36 @@ import scala.collection.convert.ImplicitConversions.`map AsScala`
 
 class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
-  var fromUserId: String = _
-  var toUserId: String = _
-  var organisation: String = _
-
-  fromUserId = telemetry.read[String]("edata.fromUserId").orNull
-  toUserId = telemetry.read[String]("edata.toUserId").orNull
-  organisation = telemetry.read[String]("edata.organisationId").orNull
-
   override def kafkaKey(): String = {
     did()
   }
 
-  def isValid(metrics: Metrics, config: UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
-    fromUserId != null && toUserId != null &&
-      validateUser(fromUserId, organisation)(metrics, config, httpUtil) &&
-      validateUser(toUserId, organisation)(metrics, config, httpUtil)
+  def fromUserId: String = {
+    telemetry.read[String]("edata.fromUserId").orNull
   }
 
-  def validateUser(userId: String, organisation: String)(metrics: Metrics, config: UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
-    if (userId != null) {
+  def toUserId: String = {
+    telemetry.read[String]("edata.toUserId").orNull
+  }
+
+  def organisation: String = {
+    telemetry.read[String]("edata.organisationId").orNull
+  }
+
+  def isValid()(metrics: Metrics, config:UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
+    fromUserId.nonEmpty && toUserId.nonEmpty && validateUser(fromUserId, organisation)(metrics, config, httpUtil) && validateUser(toUserId, organisation)(metrics, config, httpUtil)
+  }
+
+  def validateUser(userId: String, organisation: String)(metrics: Metrics, config:UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
+    if(userId.nonEmpty) {
       val url = config.userOrgServiceBasePath + config.userReadApi + "/" + userId + "?identifier,rootOrgId"
       val userReadResp = httpUtil.get(url)
-      if (userReadResp.status == 200) {
+
+      if (200 == userReadResp.status) {
         metrics.incCounter(config.apiReadSuccessCount)
         val response = JSONUtil.deserialize[Map[String, AnyRef]](userReadResp.body)
-        val userDetails = response.getOrElse("result", Map.empty[String, AnyRef]).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map.empty[String, AnyRef]).asInstanceOf[Map[String, AnyRef]]
-        userDetails.getOrElse("identifier", "").asInstanceOf[String].equalsIgnoreCase(userId) &&
-          userDetails.getOrElse("rootOrgId", "").asInstanceOf[String].equalsIgnoreCase(organisation)
+        val userDetails = response.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
+        userDetails.getOrElse("identifier", "").asInstanceOf[String].equalsIgnoreCase(userId) && userDetails.getOrElse("rootOrgId","").asInstanceOf[String].equalsIgnoreCase(organisation)
       } else false
     } else false
   }
