@@ -64,6 +64,7 @@ class UserCacheUpdaterConfigV2(override val config: Config) extends BaseJobConfi
   val language = "language"
   val email = "email"
   val phone = "phone"
+  val status = "status"
   val profileUserTypesKey = "profileusertypes"
 
   //user store key prefix
