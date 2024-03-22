@@ -13,7 +13,7 @@ import scala.collection.mutable
 
 case class UserReadResult(result: java.util.HashMap[String, Any], responseCode: String, params: Params)
 case class Response(firstName: String, lastName: String, encEmail: String, encPhone: String, language: java.util.List[String], rootOrgId: String, profileUserType: java.util.HashMap[String, String],
-                    userLocations: java.util.ArrayList[java.util.Map[String, AnyRef]], rootOrg: RootOrgInfo, userId: String, framework: java.util.LinkedHashMap[String, java.util.List[String]], profileUserTypes: java.util.List[java.util.HashMap[String, String]])
+                    userLocations: java.util.ArrayList[java.util.Map[String, AnyRef]], rootOrg: RootOrgInfo, userId: String,status: String, framework: java.util.LinkedHashMap[String, java.util.List[String]], profileUserTypes: java.util.List[java.util.HashMap[String, String]])
 case class RootOrgInfo(orgName: String)
 case class Params(msgid: String, err: String, status: String, errmsg: String)
 
@@ -111,6 +111,7 @@ object UserMetadataUpdater {
         config.rootOrgId -> response.rootOrgId,
         config.phone -> response.encPhone,
         config.email -> response.encEmail,
+        config.status -> response.status,
         config.userId -> response.userId)
 
     } else if (config.userReadApiErrors.contains(userReadRes.responseCode.toUpperCase) && userReadRes.params.err.equalsIgnoreCase(config.userAccBlockedErrCode)) { //Skip the events for which response is 400 Bad request
