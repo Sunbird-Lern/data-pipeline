@@ -11,7 +11,7 @@ import org.sunbird.job.deletioncleanup.domain.Event
 import org.sunbird.job.deletioncleanup.functions.UserDeletionCleanupFunction
 import org.sunbird.job.util.{ElasticSearchUtil, FlinkUtil, HttpUtil}
 
-class UserDeletionCleanupStreamTask(config: UserDeletionCleanupConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil, kafkaConnector: FlinkKafkaConnector) {
+class UserDeletionCleanupStreamTask(config: UserDeletionCleanupConfig, httpUtil: HttpUtil, kafkaConnector: FlinkKafkaConnector) {
 
   def process(): Unit = {
 
@@ -20,7 +20,7 @@ class UserDeletionCleanupStreamTask(config: UserDeletionCleanupConfig, httpUtil:
     val source = kafkaConnector.kafkaEventSource[Event](config.inputTopic)
     env.addSource(source).name(config.userDeletionCleanupConsumer).uid(config.userDeletionCleanupConsumer).
       setParallelism(config.userDeletionCleanupParallelism).rebalance
-      .process(new UserDeletionCleanupFunction(config, httpUtil, esUtil))
+      .process(new UserDeletionCleanupFunction(config, httpUtil))
       .name(config.userDeletionCleanupFunction).uid(config.userDeletionCleanupFunction)
     env.execute(config.jobName)
   }
@@ -37,9 +37,8 @@ object UserDeletionCleanupStreamTask {
     }.getOrElse(ConfigFactory.load("user-deletion-cleanup.conf").withFallback(ConfigFactory.systemEnvironment()))
     val userDeletionCleanupConfig = new UserDeletionCleanupConfig(config)
     val httpUtil = new HttpUtil
-    val esUtil: ElasticSearchUtil = new ElasticSearchUtil(userDeletionCleanupConfig.esConnection, userDeletionCleanupConfig.searchIndex, userDeletionCleanupConfig.courseBatchIndexType)
     val kafkaUtil = new FlinkKafkaConnector(userDeletionCleanupConfig)
-    val task = new UserDeletionCleanupStreamTask(userDeletionCleanupConfig, httpUtil, esUtil, kafkaUtil)
+    val task = new UserDeletionCleanupStreamTask(userDeletionCleanupConfig, httpUtil, kafkaUtil)
     task.process()
   }
 }

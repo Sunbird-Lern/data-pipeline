@@ -179,7 +179,7 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
     when(mockEsUtil.getDocumentAsString(anyString())).thenReturn("01289599909937152015")
     when(mockEsUtil.getDocumentAsString(anyString())).thenReturn("0129555223509401604")
     initialize()
-    new UserOwnershipTransferStreamTask(jobConfig, mockHttpUtil, mockEsUtil, mockKafkaUtil).process()
+    new UserOwnershipTransferStreamTask(jobConfig, mockHttpUtil, mockKafkaUtil).process()
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(1)
   }
 

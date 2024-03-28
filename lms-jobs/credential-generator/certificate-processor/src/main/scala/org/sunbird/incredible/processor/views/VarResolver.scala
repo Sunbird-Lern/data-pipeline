@@ -5,7 +5,7 @@ import java.net.{URI, URISyntaxException, URLEncoder}
 import java.text.{DateFormat, ParseException, SimpleDateFormat}
 import java.util.{Date, Locale}
 
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
 import org.sunbird.incredible.JsonKeys
 import org.sunbird.incredible.pojos.ob.CertificateExtension

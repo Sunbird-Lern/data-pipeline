@@ -10,20 +10,18 @@ import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.keycloak.admin.client.resource.UserResource
 import org.keycloak.representations.idm.UserRepresentation
 import org.slf4j.LoggerFactory
-import org.sunbird.job.{BaseProcessFunction, Metrics}
-import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
-import org.sunbird.job.deletioncleanup.domain.{ActorObject, Event, EventContext, EventData, EventObject, TelemetryEvent}
+import org.sunbird.job.deletioncleanup.domain._
 import org.sunbird.job.deletioncleanup.task.UserDeletionCleanupConfig
 import org.sunbird.job.deletioncleanup.util.KeyCloakConnectionProvider
+import org.sunbird.job.util.{CassandraUtil, HttpUtil, JSONUtil}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
 
 import java.text.SimpleDateFormat
-import java.util
 import java.util.Date
 import scala.collection.JavaConverters._
-import scala.collection.convert.ImplicitConversions.`map AsScala`
 import scala.collection.mutable.ListBuffer
 
-class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil)(implicit val mapTypeInfo: TypeInformation[Event], @transient var cassandraUtil: CassandraUtil = null)
+class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: HttpUtil)(implicit val mapTypeInfo: TypeInformation[Event], @transient var cassandraUtil: CassandraUtil = null)
   extends BaseProcessFunction[Event, Event](config) {
 
   private[this] val logger = LoggerFactory.getLogger(classOf[UserDeletionCleanupFunction])

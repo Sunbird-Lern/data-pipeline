@@ -3,7 +3,6 @@ package org.sunbird.job.deletioncleanup.domain
 import org.sunbird.job.domain.reader.{Event => BaseEvent}
 
 import java.util
-import scala.collection.convert.ImplicitConversions.`map AsScala`
 
 class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 

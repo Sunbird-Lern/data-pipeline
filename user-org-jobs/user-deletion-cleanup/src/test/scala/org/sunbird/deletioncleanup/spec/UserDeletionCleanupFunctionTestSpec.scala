@@ -11,7 +11,7 @@ import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.sunbird.job.connector.FlinkKafkaConnector
-import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HTTPResponse, HttpUtil}
+import org.sunbird.job.util.{CassandraUtil, HTTPResponse, HttpUtil}
 import org.sunbird.job.deletioncleanup.domain.Event
 import org.sunbird.job.deletioncleanup.task.{UserDeletionCleanupConfig, UserDeletionCleanupStreamTask}
 import org.sunbird.spec.{BaseMetricsReporter, BaseTestSpec}
@@ -33,7 +33,6 @@ class UserDeletionCleanupFunctionTestSpec extends BaseTestSpec {
   val config: Config = ConfigFactory.load("test.conf")
   val jobConfig: UserDeletionCleanupConfig = new UserDeletionCleanupConfig(config)
   var mockHttpUtil: HttpUtil = mock[HttpUtil](Mockito.withSettings().serializable())
-  var mockEsUtil: ElasticSearchUtil = mock[ElasticSearchUtil](Mockito.withSettings().serializable())
   var cassandraUtil: CassandraUtil = _
 
 
@@ -70,7 +69,7 @@ class UserDeletionCleanupFunctionTestSpec extends BaseTestSpec {
   "UserDeletionCleanupStreamTaskProcessor " should "validate metrics " in {
     when(mockHttpUtil.get(jobConfig.userOrgServiceBasePath + jobConfig.userReadApi + "/02c4e0dc-3e25-4f7d-b811-242c73e24a01" + "?identifier,rootOrgId")).thenReturn(HTTPResponse(200, """{"id": "api.user.read.4cd4c690-eab6-4938-855a-447c7b1b8ea9","ver": "v5","ts": "2023-09-05 14:07:47:872+0000","params": {"resmsgid": "1281c745-830c-421c-8245-dd5b2b795842","msgid": "1281c745-830c-421c-8245-dd5b2b795842","err": null,"status": "SUCCESS","errmsg": null},"responseCode": "OK","result": {"response": {"identifier": "02c4e0dc-3e25-4f7d-b811-242c73e24a01","rootOrgId": "01309282781705830427","status": "1"}}}"""))
     initialize()
-    new UserDeletionCleanupStreamTask(jobConfig, mockHttpUtil, mockEsUtil, mockKafkaUtil).process()
+    new UserDeletionCleanupStreamTask(jobConfig, mockHttpUtil, mockKafkaUtil).process()
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(1)
   }
 
