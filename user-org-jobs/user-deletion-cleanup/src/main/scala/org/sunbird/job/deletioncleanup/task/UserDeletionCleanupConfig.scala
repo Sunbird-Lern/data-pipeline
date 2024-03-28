@@ -23,7 +23,7 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val dbReadMissCount = "db-read-miss-count"
   val apiReadSuccessCount = "api-read-success-count"
   val apiReadMissCount = "api-read-miss-count"
-  val totalEventsCount ="total-transfer-events-count"
+  val totalEventsCount ="total-delete-events-count"
 
   val auditEventOutputTagName = "audit-events"
   val auditEventOutputTag: OutputTag[String] = OutputTag[String](auditEventOutputTagName)

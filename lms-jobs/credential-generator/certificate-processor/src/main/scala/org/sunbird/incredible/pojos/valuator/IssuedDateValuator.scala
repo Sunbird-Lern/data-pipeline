@@ -3,7 +3,7 @@ package org.sunbird.incredible.pojos.valuator
 import java.text.{ParseException, SimpleDateFormat}
 import java.util.{Calendar, Date}
 
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.sunbird.incredible.pojos.exceptions.InvalidDateFormatException
 
 import scala.util.control.Breaks
