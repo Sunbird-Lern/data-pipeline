@@ -15,11 +15,11 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
   }
 
   def fromUserId: String = {
-    telemetry.read[String]("edata.fromUserId").orNull
+    telemetry.read[String]("edata.fromUserProfile.userId").orNull
   }
 
   def toUserId: String = {
-    telemetry.read[String]("edata.toUserId").orNull
+    telemetry.read[String]("edata.toUserProfile.userId").orNull
   }
 
   def organisation: String = {
