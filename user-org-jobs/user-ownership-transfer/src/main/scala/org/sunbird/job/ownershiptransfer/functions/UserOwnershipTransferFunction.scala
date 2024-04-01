@@ -20,7 +20,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
   implicit var esUtil: ElasticSearchUtil = null
 
   override def metricsList(): List[String] = {
-    List(config.totalEventsCount)
+    List(config.skipCount, config.successCount, config.totalEventsCount, config.apiReadSuccessCount, config.dbUpdateCount)
   }
 
   override def open(parameters: Configuration): Unit = {

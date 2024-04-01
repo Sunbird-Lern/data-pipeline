@@ -9,7 +9,7 @@ import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.ownershiptransfer.domain.Event
 import org.sunbird.job.ownershiptransfer.functions.UserOwnershipTransferFunction
-import org.sunbird.job.util.{ElasticSearchUtil, FlinkUtil, HttpUtil}
+import org.sunbird.job.util.{FlinkUtil, HttpUtil}
 
 class UserOwnershipTransferStreamTask(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, kafkaConnector: FlinkKafkaConnector) {
 

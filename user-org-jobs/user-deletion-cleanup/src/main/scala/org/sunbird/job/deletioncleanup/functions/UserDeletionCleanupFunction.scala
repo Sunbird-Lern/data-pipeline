@@ -28,7 +28,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   lazy private val gson = new Gson()
 
   override def metricsList(): List[String] = {
-    List(config.userDeletionCleanupHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
+    List(config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
   }
 
   override def open(parameters: Configuration): Unit = {

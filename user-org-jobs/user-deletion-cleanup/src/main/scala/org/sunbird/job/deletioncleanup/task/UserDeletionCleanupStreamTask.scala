@@ -9,7 +9,7 @@ import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.deletioncleanup.domain.Event
 import org.sunbird.job.deletioncleanup.functions.UserDeletionCleanupFunction
-import org.sunbird.job.util.{ElasticSearchUtil, FlinkUtil, HttpUtil}
+import org.sunbird.job.util.{FlinkUtil, HttpUtil}
 
 class UserDeletionCleanupStreamTask(config: UserDeletionCleanupConfig, httpUtil: HttpUtil, kafkaConnector: FlinkKafkaConnector) {
 
