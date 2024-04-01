@@ -63,6 +63,9 @@ processing_lern_kafka_overriden_topics:
   - name: delete.user
     retention_time: 172800000
     replication_factor: 1
+  - name: user.ownership.transfer
+    retention_time: 172800000
+    replication_factor: 1
 
 processing_lern_kafka_topics:
   - name: telemetry.assess
@@ -123,5 +126,8 @@ processing_lern_kafka_topics:
     num_of_partitions: 2
     replication_factor: 1
   - name: delete.user
+    num_of_partitions: 2
+    replication_factor: 1
+  - name: user.ownership.transfer
     num_of_partitions: 2
     replication_factor: 1

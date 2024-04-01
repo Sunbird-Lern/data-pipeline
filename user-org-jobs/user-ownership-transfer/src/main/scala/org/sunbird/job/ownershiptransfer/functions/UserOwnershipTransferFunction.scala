@@ -6,26 +6,28 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.job.{BaseProcessFunction, Metrics}
 import org.sunbird.job.ownershiptransfer.domain.Event
 import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
 import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, JSONUtil}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
 
-import scala.collection.JavaConverters._
 import java.util
 
-class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil)(implicit val mapTypeInfo: TypeInformation[Event], @transient var cassandraUtil: CassandraUtil = null)
+class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUtil: HttpUtil)(implicit val mapTypeInfo: TypeInformation[Event], @transient var cassandraUtil: CassandraUtil = null)
   extends BaseProcessFunction[Event, Event](config) {
 
   private[this] val logger = LoggerFactory.getLogger(classOf[UserOwnershipTransferFunction])
+  implicit var esUtil: ElasticSearchUtil = null
 
   override def metricsList(): List[String] = {
-    List(config.userOwnershipTransferHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
+    List(config.skipCount, config.successCount, config.totalEventsCount, config.apiReadSuccessCount, config.dbUpdateCount)
   }
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
+    if(esUtil==null)
+      esUtil = new ElasticSearchUtil(config.esConnection, config.searchIndex, config.courseBatchIndexType)
   }
 
   override def close(): Unit = {

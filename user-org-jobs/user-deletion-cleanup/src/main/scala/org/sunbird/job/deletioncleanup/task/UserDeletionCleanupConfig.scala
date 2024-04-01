@@ -15,15 +15,12 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val inputTopic: String = config.getString("kafka.input.topic")
 
   // User deletion cleanup job metrics
-  val userDeletionCleanupHit = "user-deletion-cleanup-hit"
   val skipCount = "skipped-message-count"
   val successCount = "success-message-count"
-  val dbReadSuccessCount = "db-read-success-count"
   val dbUpdateCount = "db-update-success-count"
-  val dbReadMissCount = "db-read-miss-count"
   val apiReadSuccessCount = "api-read-success-count"
   val apiReadMissCount = "api-read-miss-count"
-  val totalEventsCount ="total-transfer-events-count"
+  val totalEventsCount ="total-delete-events-count"
 
   val auditEventOutputTagName = "audit-events"
   val auditEventOutputTag: OutputTag[String] = OutputTag[String](auditEventOutputTagName)
@@ -32,11 +29,6 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val dbPort: Int = config.getInt("lms-cassandra.port")
 
   val userDeletionCleanupParallelism: Int = config.getInt("task.user.deletion.cleanup.parallelism")
-
-  //ES configuration
-  val esConnection: String = config.getString("es.basePath")
-  val searchIndex: String = "course-batch"
-  val courseBatchIndexType: String = "_doc"
 
   // constants
   val EMAIL = "email"
