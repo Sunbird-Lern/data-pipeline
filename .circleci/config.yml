@@ -2,8 +2,8 @@ version: 2
 
 jobs:
   unit-tests:
-    machine:
-      image: ubuntu-2204:2023.07.2
+    docker:
+      - image: cimg/openjdk:11.0.19
     resource_class: medium
     working_directory: ~/lern
     steps:
