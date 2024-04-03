@@ -1,7 +1,6 @@
 package org.sunbird.spec
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.elasticsearch.action.index.IndexResponse
 import org.scalatest.{FlatSpec, Matchers}
 import org.sunbird.job.util.ElasticSearchUtil
 
@@ -9,7 +8,7 @@ import org.sunbird.job.util.ElasticSearchUtil
 class ElasticSearchUtilSpec extends FlatSpec with Matchers {
 
   val config: Config = ConfigFactory.load("base-test.conf")
-  val esUtil = new ElasticSearchUtil(config.getString("es.basePath"), "compositesearch", "cs")
+  val esUtil = new ElasticSearchUtil(config.getString("es.basePath"), "compositesearch")
 
 //  "isIndexExists" should "return true if index exists" in {
 //    val indexExists = esUtil.isIndexExists("compositesearch")

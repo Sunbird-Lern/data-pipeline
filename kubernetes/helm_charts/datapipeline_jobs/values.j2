@@ -433,7 +433,6 @@ legacy-certificate-migrator:
     lms-cassandra {
       keyspace = "{{ middleware_course_keyspace }}"
       user_enrolments.table = "{{ middleware_user_enrolments_table }}"
-      course_batch.table = "{{ middleware_course_batch_table }}"
       sbkeyspace = "{{ registry_sunbird_keyspace }}"
       certreg.table ="{{ cert_registry_table }}"
     }
@@ -447,8 +446,6 @@ legacy-certificate-migrator:
     content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
-      certreg.basePath = "{{ cert_reg_service_base_url }}"
-      learner.basePath = "{{ userorg_service_base_url }}"
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"

@@ -30,7 +30,6 @@ class UserOwnershipTransferConfig(override val config: Config) extends BaseJobCo
   //ES configuration
   val esConnection: String = config.getString("es.basePath")
   val searchIndex: String = "course-batch"
-  val courseBatchIndexType: String = "_doc"
 
   //Thresholds
   val thresholdBatchWriteSize: Int = config.getInt("threshold.batch.write.size")
