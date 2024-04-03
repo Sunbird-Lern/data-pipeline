@@ -200,6 +200,7 @@
                 <version>3.8.1</version>
                 <configuration>
                     <release>11</release>
+                    <compilerArgs>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</compilerArgs>
                 </configuration>
             </plugin>
 
@@ -208,7 +209,6 @@
                 <version>${surefire.plugin.version}</version>
                 <configuration>
                     <skipTests>false</skipTests>
-                    <argLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
 
