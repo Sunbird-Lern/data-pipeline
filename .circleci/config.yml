@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   unit-tests:
     machine:
-      image: ubuntu-2004:2023.04.1
+      image: ubuntu-2204:2023.07.2
     resource_class: large
     working_directory: ~/lern
     steps:
@@ -17,6 +17,9 @@ jobs:
           command: |
             sudo apt-get update --allow-releaseinfo-change || sudo apt-get update --allow-releaseinfo-change
             sudo apt-get install -y imagemagick
+      - run:
+          name: redis
+          command: sudo apt install redis-server -y
       - run:
           name: Execute coverage report
           command: |
