@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   unit-tests:
     machine:
-      image: default
+      image: ubuntu-2004:202201-02
     resource_class: large
     working_directory: ~/lern
     steps:
