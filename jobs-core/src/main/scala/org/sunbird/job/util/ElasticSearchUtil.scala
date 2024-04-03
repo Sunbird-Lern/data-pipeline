@@ -23,7 +23,6 @@ import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
 class ElasticSearchUtil(connectionInfo: String, indexName: String, batchSize: Int = 1000) extends Serializable {
 
-  private val resultLimit = 100
   private val esClient: RestHighLevelClient = createClient(connectionInfo)
   private val mapper = new ObjectMapper
   private val maxFieldLimit = 32000
