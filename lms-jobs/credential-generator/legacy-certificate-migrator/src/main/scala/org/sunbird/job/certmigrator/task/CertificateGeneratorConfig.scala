@@ -10,6 +10,8 @@ import java.util
 
 class CertificateGeneratorConfig(override val config: Config) extends BaseJobConfig(config, "legacy-certificate-migrator") {
 
+  private val serialVersionUID = 2905979434303791379L
+
   implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
   implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
 

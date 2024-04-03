@@ -200,8 +200,6 @@
                 <version>3.8.1</version>
                 <configuration>
                     <release>11</release>
-                    <argLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
-<!--                    <compilerArgs>&#45;&#45;add-opens java.base/java.util=ALL-UNNAMED &#45;&#45;add-opens java.base/java.lang=ALL-UNNAMED</compilerArgs>-->
                 </configuration>
             </plugin>
 
