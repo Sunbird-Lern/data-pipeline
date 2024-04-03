@@ -3,15 +3,15 @@ version: 2.1
 jobs:
   unit-tests:
     machine:
-      image: ubuntu-2004:202201-02
-    resource_class: medium
+      image: ubuntu-2004:2022.04.1
+    resource_class: large
     working_directory: ~/lern
     steps:
       - checkout
       - restore_cache:
           keys:
             - lern-jobs-dependency-cache-{{ checksum "pom.xml" }} # appends cache key with a hash of pom.xml fi
-            - lern-jobs-dependency-cache- # fallback in case previous cache key is not foun
+            - lern-jobs-dependency-cache- # fallback in case previous cache key is not found
       - run: 
           name: Installation of imagemagick
           command: |
