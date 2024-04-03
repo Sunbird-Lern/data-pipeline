@@ -109,11 +109,8 @@ class BaseProcessFunctionTestSpec extends BaseSpec with Matchers {
     topics.foreach(createCustomTopic(_))
   }
 
-  // "Validation of SerDe"
-  ignore should "validate serialization and deserialization of Map, String and Event schema" in {
-
+  "Validation of SerDe" should "validate serialization and deserialization of Map, String and Event schema" in {
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(bsConfig)
-
 
     val mapStream =
       env.addSource(kafkaConnector.kafkaMapSource(bsConfig.kafkaMapInputTopic)).name("map-event-consumer")
