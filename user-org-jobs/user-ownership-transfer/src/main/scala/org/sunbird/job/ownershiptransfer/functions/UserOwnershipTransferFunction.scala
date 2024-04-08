@@ -40,6 +40,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
     metrics.incCounter(config.totalEventsCount)
     if(event.isValid()(metrics, config, httpUtil)) {
       try {
+        logger.info("Inside the try block post valid")
         // search for batches of the From_user. (and also mentor)
         val requestBody = s"""{
                              |    "request": {
@@ -53,6 +54,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
         val response = httpUtil.post(config.lmsServiceBasePath + config.batchSearchApi, requestBody)
         if (response.status == 200) {
+          logger.info("Inside response 200")
           val responseBody = JSONUtil.deserialize[util.HashMap[String, AnyRef]](response.body)
           val result = responseBody.getOrDefault("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
           val count = result.getOrElse("count", 0.asInstanceOf[Number]).asInstanceOf[Number].intValue()
@@ -84,6 +86,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
         val mentorResponse = httpUtil.post(config.lmsServiceBasePath + config.batchSearchApi, mentorRequestBody)
         if (mentorResponse.status == 200) {
+          logger.info("Inside mentor response 200")
           val mentorResponseBody = JSONUtil.deserialize[Map[String, AnyRef]](mentorResponse.body)
           val result = mentorResponseBody.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
           val count = result.getOrElse("count", 0.asInstanceOf[Number]).asInstanceOf[Number].intValue()
