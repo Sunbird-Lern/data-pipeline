@@ -53,7 +53,6 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
         val response = httpUtil.post(config.lmsServiceBasePath + config.batchSearchApi, requestBody)
         if (response.status == 200) {
-          logger.info("Inside response 200")
           val responseBody = JSONUtil.deserialize[util.HashMap[String, AnyRef]](response.body)
           val result = responseBody.getOrDefault("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
           val count = result.getOrElse("count", 0.asInstanceOf[Number]).asInstanceOf[Number].intValue()
@@ -67,7 +66,8 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             // update ES
             updateES(batchesList, event)
 
-          } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
+          } else
+            logger.info(s"There is no active batches found for : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)
           throw new Exception("search-service not returning error:" + response.status)
@@ -85,7 +85,6 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
         val mentorResponse = httpUtil.post(config.lmsServiceBasePath + config.batchSearchApi, mentorRequestBody)
         if (mentorResponse.status == 200) {
-          logger.info("Inside mentor response 200")
           val mentorResponseBody = JSONUtil.deserialize[Map[String, AnyRef]](mentorResponse.body)
           val result = mentorResponseBody.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
           val count = result.getOrElse("count", 0.asInstanceOf[Number]).asInstanceOf[Number].intValue()
@@ -98,11 +97,13 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
             // update ES
             updateES(batchesList, event)
-          } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
+          } else
+            logger.info(s"There is no active batches found for : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)
           throw new Exception("search-service not returning error:" + response.status)
         }
+        logger.info(s"Ownership transfer processed successfully:${JSONUtil.serialize(event)}")
       } catch {
         case ex: Exception =>
           ex.printStackTrace()
@@ -124,6 +125,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
       val result = cassandraUtil.upsert(cqlBatch.toString)
       if (result) {
         metrics.incCounter(config.dbUpdateCount)
+        logger.info("DB update successful")
       } else {
         val msg = "Database update has failed: " + cqlBatch.toString
         logger.info(msg)
@@ -164,4 +166,3 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
     })
   }
 }
-
