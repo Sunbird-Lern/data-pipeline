@@ -84,7 +84,6 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
                              |}""".stripMargin
 
         val mentorResponse = httpUtil.post(config.lmsServiceBasePath + config.batchSearchApi, mentorRequestBody)
-        logger.info(s"$mentorResponse")
         if (mentorResponse.status == 200) {
           val mentorResponseBody = JSONUtil.deserialize[Map[String, AnyRef]](mentorResponse.body)
           val result = mentorResponseBody.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
@@ -99,7 +98,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             // update ES
             updateES(batchesList, event)
           } else
-            logger.info(s"There is no active batches found for : ${event.fromUserId}")
+            logger.info(s"There is no active batches found as Mentor for : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)
           throw new Exception("search-service not returning error:" + response.status)
@@ -108,7 +107,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
       } catch {
         case ex: Exception =>
           ex.printStackTrace()
-          logger.info("Event throwing exception: ", JSONUtil.serialize(event))
+          logger.info(s"Event throwing exception:${JSONUtil.serialize(event)}")
           throw ex
       }
     } else metrics.incCounter(config.skipCount)
