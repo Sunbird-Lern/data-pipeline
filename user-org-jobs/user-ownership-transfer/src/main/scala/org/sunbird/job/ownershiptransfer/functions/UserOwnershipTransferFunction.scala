@@ -79,11 +79,12 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
                              |            "mentors": ["${event.fromUserId}"],
                              |            "status": [0,1]
                              |        },
-                             |        "fields": ["identifier", "createdFor","batchId","courseId","startDate","enrollmentType","mentors]
+                             |        "fields": ["identifier", "createdFor","batchId","courseId","startDate","enrollmentType","mentors"]
                              |    }
                              |}""".stripMargin
 
         val mentorResponse = httpUtil.post(config.lmsServiceBasePath + config.batchSearchApi, mentorRequestBody)
+        logger.info(s"$mentorResponse")
         if (mentorResponse.status == 200) {
           val mentorResponseBody = JSONUtil.deserialize[Map[String, AnyRef]](mentorResponse.body)
           val result = mentorResponseBody.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
