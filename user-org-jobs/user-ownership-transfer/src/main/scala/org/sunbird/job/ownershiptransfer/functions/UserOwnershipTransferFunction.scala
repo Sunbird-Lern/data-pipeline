@@ -37,11 +37,9 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
     logger.info(s"Processing ownership transfer event from user: ${event.fromUserId} to user: ${event.toUserId}")
-    logger.info(s"Received event: $event")
     metrics.incCounter(config.totalEventsCount)
     if(event.isValid()(metrics, config, httpUtil)) {
       try {
-        logger.info("Inside the try block post valid")
         // search for batches of the From_user. (and also mentor)
         val requestBody = s"""{
                              |    "request": {
