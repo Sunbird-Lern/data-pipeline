@@ -27,6 +27,7 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
   }
 
   def isValid()(metrics: Metrics, config:UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
+    println(s"fromUserId: $fromUserId, toUserId: $toUserId, organisation: $organisation")
     fromUserId.nonEmpty && toUserId.nonEmpty && validateUser(fromUserId, organisation)(metrics, config, httpUtil) && validateUser(toUserId, organisation)(metrics, config, httpUtil)
   }
 
