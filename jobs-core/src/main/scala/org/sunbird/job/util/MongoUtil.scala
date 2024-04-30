@@ -33,6 +33,12 @@ class MongoUtil(host: String, port: Int, database: String) {
     updateRes
   }
 
+  def updateOne(collection: String, filter: Bson, update: Bson): Future[UpdateResult] = {
+    val mongoCollection: MongoCollection[Document] = mongoDatabase.getCollection(collection)
+    val updateRes: Future[UpdateResult] = mongoCollection.updateOne(filter, update).toFuture()
+    updateRes
+  }
+
   def close(): Unit = {
     this.mongoClient.close()
   }

@@ -18,6 +18,7 @@
     <modules>
         <module>program-user-info</module>
         <module>ml-user-delete</module>
+        <module>ml-transfer-ownership</module>
     </modules>
 
     <build>
