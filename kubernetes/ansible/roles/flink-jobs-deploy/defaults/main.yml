@@ -140,6 +140,9 @@ middleware_cassandra_programuserinfo_table: program_enrollment
 ### Ml-User-Delete Job Var
 ml_user_delete_job_parallelism: 1
 
+### Ml-Transfer-Ownership
+ml_transfer_ownership_job_parallelism: 1
+
 ### to be removed
 job_classname: ""
 
@@ -247,6 +250,13 @@ flink_job_names:
     cpu_requests: 0.3
   user-ownership-transfer:
     job_class_name: 'org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  ml-transfer-ownership:
+    job_class_name: 'org.sunbird.job.transferownership.task.TransferOwnershipStreamTask'
     replica: 1
     jobmanager_memory: 1024m
     taskmanager_memory: 1024m
