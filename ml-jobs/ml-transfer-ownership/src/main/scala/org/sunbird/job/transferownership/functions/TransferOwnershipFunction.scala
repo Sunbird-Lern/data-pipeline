@@ -43,15 +43,10 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
 
-    //TODO: Precess only is either fromUserRole or toUserRole has PROGRAM_MANAGER or PROGRAM_DESIGNER
-    //TODO: put back logger instead of println
-
-    println(s"Processing ml-transfer-ownership event triggered by the UserId: ${event.eventTriggeredBy}")
+    logger.info(s"Processing ml-transfer-ownership event triggered by the UserId: ${event.eventTriggeredBy}")
     metrics.incCounter(config.totalEventsCount)
 
-
     if (event.validateAssetInformation() == true) {
-
 
       if (event.assetInformationType == "solution") {
 
@@ -59,8 +54,7 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
          * Update only one Solutions Collection document for 1-to-1 solution asset transfer
          */
         val oneToOneSolutionsFilter: Bson = Filters.and(Filters.equal(config.AUTHOR, event.fromUserId), Filters.equal(config.ID, new ObjectId(event.assetInformationId)))
-        //TODO : replace logger.info
-        println(s"Transferring one Solution Asset with Id ${event.assetInformationId} to To-User with Id ${event.toUserId} in Solutions collections")
+        logger.info(s"Transferring one Solution Asset with Id ${event.assetInformationId} to To-User with Id ${event.toUserId} in Solutions collections")
         updateSolutionsCollection(oneToOneSolutionsFilter)
       } else if (event.assetInformationType == "program") {
 
@@ -68,8 +62,7 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
          * Update only one Programs Collection document for 1-to-1 program asset transfer
          */
         val oneToOneProgramFilter: Bson = Filters.and(Filters.equal(config.OWNER, event.fromUserId), Filters.equal(config.ID, new ObjectId(event.assetInformationId)))
-        //TODO : replace logger.info
-        println(s"Transferring one Program Asset with Id ${event.assetInformationId} to To-User with Id ${event.toUserId} in Programs collections")
+        logger.info(s"Transferring one Program Asset with Id ${event.assetInformationId} to To-User with Id ${event.toUserId} in Programs collections")
         updateProgramsCollection(oneToOneProgramFilter)
 
         /**
@@ -79,15 +72,12 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
         val toUserFilter: Bson = Filters.equal(config.USERID, event.toUserId)
         val toUserExtensionData = getUserExtensionData(toUserFilter)
         if (toUserExtensionData.isEmpty) {
-          //TODO : replace logger.info
-          println("To-User Data is not present in userExtension Collection, So inserting new Document into userExtension")
+          logger.info("To-User Data is not present in userExtension Collection, So inserting new Document into userExtension")
           insertToUserDataInUserExtensionCollection(toUserFilter)
           matchToUserPlatformRoles(toUserFilter)
-          //make HM empty and triger
           oneToOneAssetTransfer(fromUserFilter)
         } else {
-          //TODO : replace logger.info
-          println("To-User Data is present in userExtension Collection")
+          logger.info("To-User Data is present in userExtension Collection")
           matchToUserPlatformRoles(toUserFilter)
           oneToOneAssetTransfer(fromUserFilter)
         }
@@ -98,16 +88,14 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
        * Update all solutionsCollection documents when author Id is equal to fromUserId
        */
       val solutionsFilter: Bson = Filters.equal(config.AUTHOR, event.fromUserId)
-      //TODO : replace logger.info
-      println(s"Transferring all Solutions Assets to To-User with Id ${event.toUserId} in Solutions collections")
+      logger.info(s"Transferring all Solutions Assets to To-User with Id ${event.toUserId} in Solutions collections")
       updateSolutionsCollection(solutionsFilter)
 
       /**
        * Update all programsCollection documents when owner Id is equal to fromUserId
        */
       val programsFilter: Bson = Filters.equal(config.OWNER, event.fromUserId)
-      //TODO : replace logger.info
-      println(s"Transferring all Programs Assets to To-User with Id ${event.toUserId} in Programs collections")
+      logger.info(s"Transferring all Programs Assets to To-User with Id ${event.toUserId} in Programs collections")
       updateProgramsCollection(programsFilter)
 
       /**
@@ -117,12 +105,10 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
       val toUserFilter: Bson = Filters.equal(config.USERID, event.toUserId)
       val toUserExtensionData = getUserExtensionData(toUserFilter)
       if (toUserExtensionData.isEmpty) {
-        //TODO : replace logger.info
-        println("To-User Data is not present in userExtension Collection, So inserting new Document into userExtension for all in one transfer")
+        logger.info("To-User Data is not present in userExtension Collection, So inserting new Document into userExtension for all in one transfer")
         insertToUserDataInOneGo(fromUserFilter)
       } else {
-        //TODO : replace logger.info
-        println("Performing all in one asset transfer when To-User Data is present in userExtension Collection")
+        logger.info("Performing all in one asset transfer when To-User Data is present in userExtension Collection")
         matchToUserPlatformRoles(toUserFilter)
         appendingPlatformRoles(fromUserFilter, toUserFilter)
       }
@@ -174,7 +160,6 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
       requiredData
     }
 
-
     def matchToUserPlatformRoles(filters: Bson) = {
       val toUserRolesData = mongoUtil.find(config.USER_EXTENSION, filters)
       val toUserPlatformRoles = if (toUserRolesData.iterator().hasNext) toUserRolesData.iterator().next().get("platformRoles") else None
@@ -184,7 +169,6 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
         case _ => List.empty[String]
       }.getOrElse(List.empty[String])
 
-      //TODO instead of finding diff between event.toUserRoles make find and compare
       val missingRoles = event.toUserRoles.diff(toUserRoleCodeList)
       missingRoles.foreach { role =>
         val roleFilter = Filters.equal(config.ROLES_CODE, role)
@@ -192,8 +176,7 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
         rolesIds.forEach { document =>
           val id = document.get("_id").map(_.asObjectId().getValue.toString).getOrElse("")
           val addNewRoleElement = Document("roleId" -> new ObjectId(id), "code" -> role, "programs" -> new BsonArray())
-          //TODO : replace logger.info
-          println(s"Updating the missing ${role} platformRoles for To-User")
+          logger.info(s"Updating the missing ${role} platformRoles for To-User")
           mongoUtil.updateOne(config.USER_EXTENSION, filters, Updates.push("platformRoles", addNewRoleElement))
         }
       }
@@ -220,11 +203,11 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
       )
       val updateToUserDocument = addToSet("platformRoles.$[].programs", new ObjectId(event.assetInformationId))
       //TODO : replace logger.info
-      println("Transferring Programs with Id " + event.assetInformationId + " to User Id " + event.toUserId)
+      logger.info("Transferring Programs with Id " + event.assetInformationId + " to User Id " + event.toUserId)
       mongoUtil.updateOne(config.USER_EXTENSION, toUserUpdateFilter, updateToUserDocument)
       val updateFromUserDocument = Updates.pull("platformRoles.$[].programs", new ObjectId(event.assetInformationId))
       //TODO : replace logger.info
-      println("Removing Programs with Id " + event.assetInformationId + " from User Id " + event.fromUserId)
+      logger.info("Removing Programs with Id " + event.assetInformationId + " from User Id " + event.fromUserId)
       mongoUtil.updateOne(config.USER_EXTENSION, fromUserFilter, updateFromUserDocument)
     }
 
@@ -243,12 +226,10 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
         config.PLATFORM_ROLES -> platformRoles,
         config.CREATED_BY -> event.eventTriggeredBy,
         config.UPDATED_BY -> event.eventTriggeredBy)
-      //TODO : replace logger.info
-      println("Transferring all Programs to new User with Id " + event.toUserId + " from Deleted User " + event.fromUserId)
+      logger.info("Transferring all Programs to new User with Id " + event.toUserId + " from Deleted User " + event.fromUserId)
       mongoUtil.insertOne(config.USER_EXTENSION, requiredData)
       val updateFromUserDocument = Updates.unset("platformRoles")
-      //TODO : replace logger.info
-      println("Removing platformRoles from Deleted User " + event.fromUserId)
+      logger.info("Removing platformRoles from Deleted User " + event.fromUserId)
       mongoUtil.updateOne(config.USER_EXTENSION, fromUserFilter, updateFromUserDocument)
     }
 
@@ -269,12 +250,10 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
               missingProgramIdsByCode += (fromCode -> missingProgramIds)
             }
           case None =>
-            //TODO : replace logger.info
-            println("Missing a roles in To-User data: matchToUserPlatformRoles method did not execute as expected")
+            logger.info("Missing a roles in To-User data: matchToUserPlatformRoles method did not execute as expected")
         }
       }
-      //TODO : replace logger.info
-      println("Transferring all Programs to new User with Id " + event.toUserId + " from Deleted User " + event.fromUserId)
+      logger.info("Transferring all Programs to new User with Id " + event.toUserId + " from Deleted User " + event.fromUserId)
       missingProgramIdsByCode.foreach { case (code, programIds) =>
         val filter = Filters.and(
           equal(config.USERID, event.toUserId),
@@ -285,11 +264,9 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
         mongoUtil.updateMany(config.USER_EXTENSION, filter, update)
       }
       val updateFromUserDocument = Updates.unset("platformRoles")
-      //TODO : replace logger.info
-      println("Removing platformRoles from Deleted User " + event.fromUserId)
+      logger.info("Removing platformRoles from Deleted User " + event.fromUserId)
       mongoUtil.updateOne(config.USER_EXTENSION, fromUserFilter, updateFromUserDocument)
     }
-
 
     def getUsersProgramIdsWithCode(platformRolesKey: Option[bson.BsonValue]): mutable.Map[String, List[String]] = {
       val programIdsByCode = mutable.Map[String, List[String]]()
@@ -302,12 +279,10 @@ class TransferOwnershipFunction(config: TransferOwnershipConfig)(implicit val ma
               val programIds = programs.getValues.asScala.map(_.asObjectId().getValue.toString).toList
               programIdsByCode += (code -> programIds)
             case _ =>
-              //TODO : replace logger.info
-              println("Key platformRoles is not in expected type")
+              logger.info("Key platformRoles is not in expected type")
           }
         case None =>
-          //TODO : replace logger.info
-          println("Error when matching program Ids with role code: platformRoles Key is not present")
+          logger.info("Error when matching program Ids with role code: platformRoles Key is not present")
       }
       programIdsByCode
     }

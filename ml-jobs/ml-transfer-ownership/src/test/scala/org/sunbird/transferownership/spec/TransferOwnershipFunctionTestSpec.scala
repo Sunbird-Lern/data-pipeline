@@ -10,7 +10,6 @@ import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.mockito.Mockito
 import org.mockito.Mockito.when
-import org.mongodb.scala.model.Filters
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.transferownership.domain.Event
 import org.sunbird.job.transferownership.task.{TransferOwnershipConfig, TransferOwnershipStreamTask}
@@ -68,19 +67,19 @@ class TransferOwnershipFunctionTestSpec extends BaseTestSpec {
 
   def loadTestData() = {
     mongoCollection.insertOne("solutions", LoadMongoData.loadSolutionsData1)
+    mongoCollection.insertOne("solutions", LoadMongoData.loadSolutionsData2)
+    mongoCollection.insertOne("solutions", LoadMongoData.loadSolutionsData3)
+    mongoCollection.insertOne("programs", LoadMongoData.loadProgramData1)
+    mongoCollection.insertOne("programs", LoadMongoData.loadProgramData2)
+    mongoCollection.insertOne("programs", LoadMongoData.loadProgramData3)
+    mongoCollection.insertOne("programs", LoadMongoData.loadProgramData4)
+    mongoCollection.insertOne("userExtension", LoadMongoData.loadUserExtensionData)
+    mongoCollection.insertOne("userRoles", LoadMongoData.loadUserRolesData)
   }
 
   "TransferOwnership for one-to-one solution asset " should "execute successfully " in {
     initialize()
-    val filter = Filters.equal("author", "789")
-    val solutionsData = mongoCollection.find("solutions", filter)
-    println(solutionsData)
     new TransferOwnershipStreamTask(jobConfig, mockKafkaUtil).process()
-    val filter1 = Filters.equal("author", "123")
-    val solutionsData1 = mongoCollection.find("solutions", filter1)
-    println(solutionsData1)
   }
-
-
 
 }
