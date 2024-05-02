@@ -4,14 +4,12 @@ import com.datastax.driver.core.querybuilder.{QueryBuilder, Update}
 import com.datastax.driver.core.{Row, TypeTokens}
 import com.google.gson.reflect.TypeToken
 import kong.unirest.UnirestException
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.slf4j.LoggerFactory
 import org.sunbird.incredible.processor.CertModel
-import org.sunbird.incredible.processor.store.StorageService
 import org.sunbird.incredible.{CertificateConfig, ScalaModuleJsonUtils}
-import org.sunbird.job.certmigrator.domain.Issuer
 import org.sunbird.job.certmigrator.domain._
 import org.sunbird.job.certmigrator.exceptions.ServerException
 import org.sunbird.job.certmigrator.task.CertificateGeneratorConfig
@@ -19,12 +17,11 @@ import org.sunbird.job.exception.InvalidEventException
 import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, ScalaJsonUtil}
 import org.sunbird.job.{BaseProcessKeyedFunction, Metrics}
 
-import java.io.{File, IOException}
+import java.io.File
 import java.lang.reflect.Type
 import java.text.SimpleDateFormat
 import java.util
 import java.util.stream.Collectors
-import java.util.{Base64, Date}
 import scala.collection.JavaConverters._
 
 class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, @transient var cassandraUtil: CassandraUtil = null)
@@ -43,7 +40,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
     if(esUtil==null)
-      esUtil = new ElasticSearchUtil(config.esConnection, config.certIndex, config.certIndexType)
+      esUtil = new ElasticSearchUtil(config.esConnection, config.certIndex)
   }
 
   override def close(): Unit = {

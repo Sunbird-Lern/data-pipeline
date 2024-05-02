@@ -433,7 +433,6 @@ legacy-certificate-migrator:
     lms-cassandra {
       keyspace = "{{ middleware_course_keyspace }}"
       user_enrolments.table = "{{ middleware_user_enrolments_table }}"
-      course_batch.table = "{{ middleware_course_batch_table }}"
       sbkeyspace = "{{ registry_sunbird_keyspace }}"
       certreg.table ="{{ cert_registry_table }}"
     }
@@ -447,8 +446,6 @@ legacy-certificate-migrator:
     content_cloud_storage_container = "{{ cloud_storage_content_bucketname }}"
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
-      certreg.basePath = "{{ cert_reg_service_base_url }}"
-      learner.basePath = "{{ userorg_service_base_url }}"
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"
@@ -706,6 +703,40 @@ ml-user-delete:
     jobmanager.memory.flink.size: {{ flink_job_names['ml-user-delete'].jobmanager_memory }}
     taskmanager.memory.flink.size: {{ flink_job_names['ml-user-delete'].taskmanager_memory }}
     taskmanager.numberOfTaskSlots: {{ flink_job_names['ml-user-delete'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
+
+user-ownership-transfer:
+  user-ownership-transfer: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = ${job.env}".user.ownership.transfer"
+      groupId = ${job.env}"-user-ownership-transfer-group"
+    }
+    task {
+      user.ownership.transfer.parallelism = {{ user_ownership_transfer_job_parallelism }}
+    }
+    lms-cassandra {
+      course_batch.table = "{{ middleware_course_batch_table }}"
+      keyspace = "{{ middleware_course_keyspace }}"
+    }
+    service {
+         lms {
+             basePath = "{{ lms_service_base_url }}"
+         }
+         userorg {
+             basePath = "{{ userorg_service_base_url }}"
+         }
+    }
+    user_read_api = "/user/v5/read/"
+    batch_search_api = "/course/v1/batch/list"
+    threshold.batch.write.size = {{ user_ownership_transfer_batch_write_size }}
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['user-ownership-transfer'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['user-ownership-transfer'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['user-ownership-transfer'].taskslots }}
     parallelism.default: 1
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1

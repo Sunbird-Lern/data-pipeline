@@ -9,9 +9,9 @@ import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.ownershiptransfer.domain.Event
 import org.sunbird.job.ownershiptransfer.functions.UserOwnershipTransferFunction
-import org.sunbird.job.util.{ElasticSearchUtil, FlinkUtil, HttpUtil}
+import org.sunbird.job.util.{FlinkUtil, HttpUtil}
 
-class UserOwnershipTransferStreamTask(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, esUtil: ElasticSearchUtil, kafkaConnector: FlinkKafkaConnector) {
+class UserOwnershipTransferStreamTask(config: UserOwnershipTransferConfig, httpUtil: HttpUtil, kafkaConnector: FlinkKafkaConnector) {
 
   def process(): Unit = {
 
@@ -20,7 +20,7 @@ class UserOwnershipTransferStreamTask(config: UserOwnershipTransferConfig, httpU
     val source = kafkaConnector.kafkaEventSource[Event](config.inputTopic)
     env.addSource(source).name(config.userOwnershipTransferConsumer).uid(config.userOwnershipTransferConsumer).
       setParallelism(config.userOwnershipTransferParallelism).rebalance
-      .process(new UserOwnershipTransferFunction(config, httpUtil, esUtil))
+      .process(new UserOwnershipTransferFunction(config, httpUtil))
       .name(config.userOwnershipTransferFunction).uid(config.userOwnershipTransferFunction)
     env.execute(config.jobName)
   }
@@ -37,9 +37,8 @@ object UserOwnershipTransferStreamTask {
     }.getOrElse(ConfigFactory.load("user-ownership-transfer.conf").withFallback(ConfigFactory.systemEnvironment()))
     val userOwnershipTransferConfig = new UserOwnershipTransferConfig(config)
     val httpUtil = new HttpUtil
-    val esUtil: ElasticSearchUtil = new ElasticSearchUtil(userOwnershipTransferConfig.esConnection, userOwnershipTransferConfig.searchIndex, userOwnershipTransferConfig.courseBatchIndexType)
     val kafkaUtil = new FlinkKafkaConnector(userOwnershipTransferConfig)
-    val task = new UserOwnershipTransferStreamTask(userOwnershipTransferConfig, httpUtil, esUtil, kafkaUtil)
+    val task = new UserOwnershipTransferStreamTask(userOwnershipTransferConfig, httpUtil, kafkaUtil)
     task.process()
   }
 }

@@ -5,7 +5,7 @@ import com.datastax.driver.core.{Row, TypeTokens}
 import com.google.gson.reflect.TypeToken
 import kong.unirest.UnirestException
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.slf4j.LoggerFactory
@@ -45,7 +45,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
     if(esUtil==null)
-      esUtil = new ElasticSearchUtil(config.esConnection, config.certIndex, "config.auditHistoryIndexType")
+      esUtil = new ElasticSearchUtil(config.esConnection, config.certIndex)
   }
 
   override def close(): Unit = {

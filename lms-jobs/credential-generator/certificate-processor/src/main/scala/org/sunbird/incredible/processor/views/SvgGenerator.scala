@@ -1,7 +1,7 @@
 package org.sunbird.incredible.processor.views
 
 import com.twitter.storehaus.cache.{Cache, LRUCache}
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.StringSubstitutor
 import org.slf4j.{Logger, LoggerFactory}
 import org.sunbird.incredible.pojos.ob.CertificateExtension
