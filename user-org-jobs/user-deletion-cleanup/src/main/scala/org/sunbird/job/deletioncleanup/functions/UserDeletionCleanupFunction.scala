@@ -46,6 +46,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
     metrics.incCounter(config.totalEventsCount)
 
     val url = config.userOrgServiceBasePath + config.userReadApi + "/" + event.userId + "?identifier,rootOrgId"
+    logger.info(url)
     val userReadResp = httpUtil.get(url)
 
     if (200 == userReadResp.status) {
