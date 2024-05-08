@@ -51,6 +51,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
     val userReadResp = httpUtil.get(url)
 
     if (200 == userReadResp.status) {
+      logger.info(s"The user is not yet deleted/blocked, processing the cleanup for: ${event.userId}")
       metrics.incCounter(config.apiReadSuccessCount)
       val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
       val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
@@ -107,8 +108,41 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
             logger.info("Event throwing exception: ", JSONUtil.serialize(event))
             throw ex
         }
-      } else metrics.incCounter(config.skipCount)
-    } else metrics.incCounter(config.skipCount)
+      } else{
+        logger.info(s"The user details for the given Event is invalid: $event")
+        metrics.incCounter(config.skipCount)
+      }
+    }else if(400 == userReadResp.status){
+      logger.info(s"User ${event.userId} is already deleted. Updating org table and removing managed users if any.")
+      metrics.incCounter(config.apiReadSuccessCount)
+      val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
+      val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
+      if (event.isValid(userDetails)) {
+        try {
+          // update organisation table
+          updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
+        } catch {
+          case ex: Exception =>
+            logger.info("Event throwing exception: ", JSONUtil.serialize(event))
+            throw ex
+        }
+        // delete managed users
+        if (event.managedUsers != null && !event.managedUsers.isEmpty) {
+          event.managedUsers.forEach(managedUser => {
+            // update user entry in user table
+            updateUser(managedUser)(config, cassandraUtil)
+          })
+        }
+
+      } else{
+        logger.info(s"The user details for the given Event is invalid: $event")
+        metrics.incCounter(config.skipCount)
+      }
+    }
+    else{
+      logger.info(s"The user details for the given Event is not found: ${event.userId}")
+      metrics.incCounter(config.skipCount)
+    }
   }
 
   def removeEntryFromKeycloak(userId: String)(implicit config: UserDeletionCleanupConfig): Unit = {
