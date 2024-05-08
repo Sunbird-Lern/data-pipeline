@@ -117,6 +117,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
       metrics.incCounter(config.apiReadSuccessCount)
       val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
       val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
+      logger.info(s"userdetails:${userDetails}")
       if (event.isValid(userDetails)) {
         try {
           // update organisation table
