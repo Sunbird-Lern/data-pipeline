@@ -115,11 +115,15 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
     }else if(400 == userReadResp.status){
       logger.info(s"User ${event.userId} is already deleted. Updating org table and removing managed users if any.")
       metrics.incCounter(config.apiReadSuccessCount)
-      logger.info(s"userReadResponse:${userReadResp}")
-      val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
-      logger.info(s"response:${response}")
-      val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
-      logger.info(s"userdetails:${userDetails}")
+      val query = QueryBuilder.select().column("userid").column("rootorgid")
+        .from(config.userKeyspace, config.userTable).
+        where(QueryBuilder.eq("userid", event.userId)).toString
+      val record: Row = cassandraUtil.findOne(query)
+      val recordMap: Map[String, AnyRef] = record.getColumnDefinitions.asList.asScala.toList.flatMap(column => {
+        Map(column.getName -> record.getObject(column.getName))
+      }).toMap[String, AnyRef]
+      val userDetails: util.HashMap[String, AnyRef] = new util.HashMap[String, AnyRef](recordMap.asJava)
+      logger.info(s"userDetails ${userDetails}")
       if (event.isValid(userDetails)) {
         try {
           // update organisation table
