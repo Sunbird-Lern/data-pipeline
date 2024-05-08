@@ -117,7 +117,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
       metrics.incCounter(config.apiReadSuccessCount)
       val query = QueryBuilder.select().column("userid").column("rootorgid")
         .from(config.userKeyspace, config.userTable).
-        where(QueryBuilder.eq("userid", event.userId)).toString
+        where(QueryBuilder.eq("userid", event.userId)).allowFiltering().toString
       val record: Row = cassandraUtil.findOne(query)
       val recordMap: Map[String, AnyRef] = record.getColumnDefinitions.asList.asScala.toList.flatMap(column => {
         Map(column.getName -> record.getObject(column.getName))
