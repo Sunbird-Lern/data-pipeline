@@ -267,7 +267,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
       .and(QueryBuilder.set(config.ORG_LEFT_DATE, getDateFormatter.format(new Date)))
       .where(QueryBuilder.eq(config.USERID, userId))
       .and(QueryBuilder.eq(config.ORGID, organisationId))
-
+    logger.info(s"query: $updateUserQuery")
     cassandraUtil.upsert(updateUserQuery.toString)
   }
 
