@@ -66,7 +66,8 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             // update ES
             updateES(batchesList, event)
 
-          } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
+          } else
+            logger.info(s"There is no active batches found for : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)
           throw new Exception("search-service not returning error:" + response.status)
@@ -78,7 +79,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
                              |            "mentors": ["${event.fromUserId}"],
                              |            "status": [0,1]
                              |        },
-                             |        "fields": ["identifier", "createdFor","batchId","courseId","startDate","enrollmentType","mentors]
+                             |        "fields": ["identifier", "createdFor","batchId","courseId","startDate","enrollmentType","mentors"]
                              |    }
                              |}""".stripMargin
 
@@ -96,15 +97,17 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
             // update ES
             updateES(batchesList, event)
-          } else throw new Exception(s"Could not fetch Batches of user : ${event.fromUserId}")
+          } else
+            logger.info(s"There is no active batches found as Mentor for : ${event.fromUserId}")
         } else {
           logger.info("search-service error: " + response.body)
           throw new Exception("search-service not returning error:" + response.status)
         }
+        logger.info(s"Ownership transfer processed successfully:${JSONUtil.serialize(event)}")
       } catch {
         case ex: Exception =>
           ex.printStackTrace()
-          logger.info("Event throwing exception: ", JSONUtil.serialize(event))
+          logger.info(s"Event throwing exception:${JSONUtil.serialize(event)}")
           throw ex
       }
     } else metrics.incCounter(config.skipCount)
@@ -122,6 +125,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
       val result = cassandraUtil.upsert(cqlBatch.toString)
       if (result) {
         metrics.incCounter(config.dbUpdateCount)
+        logger.info("DB update successful")
       } else {
         val msg = "Database update has failed: " + cqlBatch.toString
         logger.info(msg)
@@ -162,4 +166,3 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
     })
   }
 }
-
