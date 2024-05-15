@@ -47,7 +47,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
     val url = config.userOrgServiceBasePath + config.userReadApi + "/" + event.userId + "?identifier,rootOrgId"
     val userReadResp = httpUtil.get(url)
-
+    logger.info(s"userReadResp:$userReadResp")
     if (200 == userReadResp.status) {
       logger.info(s"The user is not yet deleted/blocked, processing the cleanup for: ${event.userId}")
       metrics.incCounter(config.apiReadSuccessCount)
