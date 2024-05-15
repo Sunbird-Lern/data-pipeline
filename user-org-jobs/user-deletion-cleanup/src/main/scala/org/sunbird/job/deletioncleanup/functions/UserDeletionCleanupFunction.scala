@@ -51,8 +51,8 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
     if (200 == userReadResp.status) {
       logger.info(s"The user is not yet deleted/blocked, processing the cleanup for: ${event.userId}")
       metrics.incCounter(config.apiReadSuccessCount)
-      val response = JSONUtil.deserialize[util.HashMap[String, AnyRef]](userReadResp.body)
-      val userDetails = response.getOrElse("result", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]].getOrElse("response", new util.HashMap[String, AnyRef]()).asInstanceOf[util.HashMap[String, AnyRef]]
+      val response = JSONUtil.deserialize[Map[String, AnyRef]](userReadResp.body)
+      val userDetails = response.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]].getOrElse("response", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
       val responseUserId = userDetails.getOrElse("identifier", "").asInstanceOf[String]
       val responseOrgId = userDetails.getOrElse("rootOrgId","").asInstanceOf[String]
       if(event.isValid(responseUserId,responseOrgId)) {
@@ -118,12 +118,12 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
         .from(config.userKeyspace, config.userTable).
         where(QueryBuilder.eq("userid", event.userId)).allowFiltering().toString
       val record: Row = cassandraUtil.findOne(query)
-      val recordMap: Map[String, AnyRef] = record.getColumnDefinitions.asList.asScala.toList.flatMap(column => {
+      val recordMap: Map[String, AnyRef] = record.getColumnDefinitions.asList.asScala.toList.flatMap { column =>
         Map(column.getName -> record.getObject(column.getName))
-      }).toMap[String, AnyRef]
-      val userDetails: util.HashMap[String, AnyRef] = new util.HashMap[String, AnyRef](recordMap.asJava)
-      val responseUserId = userDetails.getOrElse("userid", "").asInstanceOf[String]
-      val responseOrgId = userDetails.getOrElse("rootorgid", "").asInstanceOf[String]
+      }.toMap[String, AnyRef]
+      val userDetails: Seq[(String, AnyRef)] = recordMap.toSeq
+      val responseUserId: String = userDetails.find(_._1 == "userid").map(_._2.toString).getOrElse("")
+      val responseOrgId: String = userDetails.find(_._1 == "rootorgid").map(_._2.toString).getOrElse("")
       if (event.isValid(responseUserId,responseOrgId)) {
         try {
           // update organisation table
