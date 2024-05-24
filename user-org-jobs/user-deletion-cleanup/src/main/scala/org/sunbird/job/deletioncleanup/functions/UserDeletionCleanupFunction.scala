@@ -135,18 +135,19 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
         try {
           // update organisation table
           updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
+
+          // delete managed users
+          if (event.managedUsers != null && !event.managedUsers.isEmpty) {
+            event.managedUsers.forEach(managedUser => {
+              // update user entry in user table
+              updateUser(managedUser)(config, cassandraUtil)
+            })
+          }
         } catch {
           case ex: Exception =>
             val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context}error: ${ex}"
             logger.info(exitLog)
             throw ex
-        }
-        // delete managed users
-        if (event.managedUsers != null && !event.managedUsers.isEmpty) {
-          event.managedUsers.forEach(managedUser => {
-            // update user entry in user table
-            updateUser(managedUser)(config, cassandraUtil)
-          })
         }
         val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context}"
         logger.info(exitLog)
@@ -279,7 +280,6 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
       .and(QueryBuilder.set(config.ORG_LEFT_DATE, getDateFormatter.format(new Date)))
       .where(QueryBuilder.eq(config.USERID, userId))
       .and(QueryBuilder.eq(config.ORGID, organisationId))
-    logger.info(s"query: $updateUserQuery")
     cassandraUtil.upsert(updateUserQuery.toString)
   }
 
