@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import org.sunbird.job.domain.reader.{Event => BaseEvent}
 
 import java.util
+import scala.collection.JavaConverters._
 
 class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
@@ -21,8 +22,13 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
   def context: String = {
     val gson = new Gson()
-    val contextData = telemetry.read[util.Map[String, AnyRef]]("context").orNull
-    if (contextData != null) gson.toJson(contextData) else null
+    telemetry.read[Any]("context") match {
+      case Some(scalaMap: scala.collection.immutable.Map[_, _]) =>
+        gson.toJson(scalaMap.asJava)
+      case Some(javaMap: java.util.Map[_, _]) =>
+        gson.toJson(javaMap)
+      case _ => null
+    }
   }
 
   def suggestedUsers: util.ArrayList[util.Map[String, AnyRef]] = {
