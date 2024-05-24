@@ -18,6 +18,11 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
     telemetry.read[String]("edata.organisationId").orNull
   }
 
+  // Method to extract contextD
+  def context: String = {
+    telemetry.read[String]("context").orNull
+  }
+
   def suggestedUsers: util.ArrayList[util.Map[String, AnyRef]] = {
     telemetry.read[util.ArrayList[util.Map[String, AnyRef]]]("edata.suggested_users").orNull
   }
