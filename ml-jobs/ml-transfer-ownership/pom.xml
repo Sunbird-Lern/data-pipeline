@@ -4,9 +4,6 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <prerequisites>
-        <maven>3.0.1</maven>
-    </prerequisites>
     <parent>
         <groupId>org.sunbird</groupId>
         <artifactId>data-pipeline</artifactId>
@@ -14,13 +11,14 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>user-deletion-cleanup</artifactId>
+    <artifactId>ml-transfer-ownership</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>UserDeletionCleanup</name>
+    <name>MlTransferOwnership</name>
     <description>
-        Deletion of user PII data
+        Job to transfer assets ownership from deleted user to new user in mongodb for ML users
     </description>
+
 
     <properties>
         <encoding>UTF-8</encoding>
@@ -51,6 +49,7 @@
             <groupId>org.sunbird</groupId>
             <artifactId>jobs-core</artifactId>
             <version>1.0.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
@@ -60,9 +59,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.cassandraunit</groupId>
-            <artifactId>cassandra-unit</artifactId>
-            <version>3.11.2.0</version>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo</artifactId>
+            <version>2.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -83,21 +82,6 @@
             <artifactId>mockito-core</artifactId>
             <version>4.4.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-admin-client</artifactId>
-            <version>21.1.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>jaxrs-api</artifactId>
-            <version>3.0.11.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>4.7.9.Final</version>
         </dependency>
     </dependencies>
 
@@ -157,7 +141,7 @@
                 <configuration>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
-                    <filereports>userdeletioncleanup-testsuite.txt</filereports>
+                    <filereports>mluserdelete-testsuite.txt</filereports>
                 </configuration>
                 <executions>
                     <execution>

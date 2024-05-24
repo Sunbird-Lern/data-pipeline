@@ -1,7 +1,7 @@
 package org.sunbird.job.deletioncleanup.util
 
 import org.apache.commons.lang3.StringUtils
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder
+import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.KeycloakBuilder
 import org.slf4j.LoggerFactory
@@ -31,7 +31,7 @@ class KeyCloakConnectionProvider {
       return null
     }
 
-    val keycloakBuilder = KeycloakBuilder.builder.serverUrl(SSO_URL).realm(SSO_REALM).username(username).password(password).clientId(CLIENT_ID).resteasyClient(new ResteasyClientBuilder().connectionPoolSize(Integer.parseInt("SSO_POOL_SIZE")).build)
+    val keycloakBuilder = KeycloakBuilder.builder.serverUrl(SSO_URL).realm(SSO_REALM).username(username).password(password).clientId(CLIENT_ID).resteasyClient(new ResteasyClientBuilderImpl().connectionPoolSize(Integer.parseInt("SSO_POOL_SIZE")).build)
     if (StringUtils.isNotBlank(clientSecret)) {
       keycloakBuilder.clientSecret(clientSecret)
       logger.info("KeyCloakConnectionProvider:initialiseEnvConnection client sceret is provided.")

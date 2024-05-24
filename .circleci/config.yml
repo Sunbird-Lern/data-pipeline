@@ -1,4 +1,4 @@
-version: 2.0
+version: 2
 
 jobs:
   unit-tests:
@@ -11,12 +11,15 @@ jobs:
       - restore_cache:
           keys:
             - lern-jobs-dependency-cache-{{ checksum "pom.xml" }} # appends cache key with a hash of pom.xml fi
-            - lern-jobs-dependency-cache- # fallback in case previous cache key is not foun
+            - lern-jobs-dependency-cache- # fallback in case previous cache key is not found
       - run: 
           name: Installation of imagemagick
           command: |
-            sudo apt-get update || sudo apt-get update
+            sudo apt-get update --allow-releaseinfo-change || sudo apt-get update --allow-releaseinfo-change
             sudo apt-get install -y imagemagick
+      - run:
+          name: redis
+          command: sudo apt install redis-server -y
       - run:
           name: Execute coverage report
           command: |
