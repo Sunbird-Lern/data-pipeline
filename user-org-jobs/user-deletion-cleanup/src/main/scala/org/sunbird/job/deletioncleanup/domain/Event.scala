@@ -23,7 +23,7 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
   def context: String = {
     val gson = new Gson()
     telemetry.read[Any]("context") match {
-      case Some(scalaMap: scala.collection.immutable.Map[_, _]) =>
+      case Some(scalaMap: scala.collection.immutable.Map[String, AnyRef]) =>
         gson.toJson(scalaMap.asJava)
       case Some(javaMap: java.util.Map[_, _]) =>
         gson.toJson(javaMap)
