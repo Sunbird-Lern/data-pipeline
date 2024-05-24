@@ -1,5 +1,6 @@
 package org.sunbird.job.deletioncleanup.domain
 
+import com.google.gson.Gson
 import org.sunbird.job.domain.reader.{Event => BaseEvent}
 
 import java.util
@@ -18,9 +19,10 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
     telemetry.read[String]("edata.organisationId").orNull
   }
 
-  // Method to extract contextD
   def context: String = {
-    telemetry.read[String]("context").orNull
+    val gson = new Gson()
+    val contextData = telemetry.read[util.Map[String, AnyRef]]("context").orNull
+    if (contextData != null) gson.toJson(contextData) else null
   }
 
   def suggestedUsers: util.ArrayList[util.Map[String, AnyRef]] = {

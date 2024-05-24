@@ -42,6 +42,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   }
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
+    logger.info(s"${event}")
     val entryLog = s"Entry Log:UserDeletionCleanup, Message:Context ${event.context}"
     logger.info(entryLog)
     metrics.incCounter(config.totalEventsCount)
