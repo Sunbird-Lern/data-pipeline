@@ -31,12 +31,14 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
     val gson = new Gson()
     telemetry.read[Any]("context") match {
       case Some(scalaMap: scala.collection.immutable.Map[String, AnyRef]) =>
-        gson.toJson(scalaMap.asJava)
-      case Some(javaMap: java.util.Map[String, AnyRef]) =>
-        gson.toJson(javaMap)
+        val pdataMap = scalaMap("pdata").asInstanceOf[Map[String, String]]
+        val cdataMap = scalaMap("cdata").asInstanceOf[Map[String, String]]
+        val contextMap = Map("pdata" -> pdataMap, "cdata" -> cdataMap)
+        gson.toJson(contextMap.asJava)
       case _ => null
     }
   }
+
 
   def isValid()(metrics: Metrics, config:UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
     fromUserId.nonEmpty && toUserId.nonEmpty && validateUser(fromUserId, organisation)(metrics, config, httpUtil) && validateUser(toUserId, organisation)(metrics, config, httpUtil)
