@@ -1,12 +1,13 @@
 package org.sunbird.job.ownershiptransfer.domain
 
+import com.google.gson.Gson
 import org.sunbird.job.Metrics
 import org.sunbird.job.domain.reader.{Event => BaseEvent}
 import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
 import org.sunbird.job.util.{HttpUtil, JSONUtil}
 
 import java.util
-import scala.collection.convert.ImplicitConversions.`map AsScala`
+import scala.collection.JavaConverters._
 
 class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
@@ -24,6 +25,17 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
   def organisation: String = {
     telemetry.read[String]("edata.organisationId").orNull
+  }
+
+  def context: String = {
+    val gson = new Gson()
+    telemetry.read[Any]("context") match {
+      case Some(scalaMap: scala.collection.immutable.Map[String, AnyRef]) =>
+        gson.toJson(scalaMap.asJava)
+      case Some(javaMap: java.util.Map[_, _]) =>
+        gson.toJson(javaMap)
+      case _ => null
+    }
   }
 
   def isValid()(metrics: Metrics, config:UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {

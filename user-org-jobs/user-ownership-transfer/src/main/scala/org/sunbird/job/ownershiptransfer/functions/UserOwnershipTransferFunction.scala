@@ -37,6 +37,8 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
     logger.info(s"Processing ownership transfer event from user: ${event.fromUserId} to user: ${event.toUserId}")
+    val entryLog = s"Entry Log:UserDeletionCleanup, Message:Context ${event.context}"
+    logger.info(entryLog)
     metrics.incCounter(config.totalEventsCount)
     if(event.isValid()(metrics, config, httpUtil)) {
       try {
@@ -61,15 +63,20 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
             // course_batch update with createdBy to toUserId.
             val batchCreatedByQueries = getCreatedByUpdateQueries(batchesList, event.toUserId)
-            updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
+            updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries,event)(metrics)
 
             // update ES
             updateES(batchesList, event)
 
-          } else
-            logger.info(s"There is no active batches found for : ${event.fromUserId}")
+          } else{
+            val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}," +
+              s"There is no active batches found for :${event.fromUserId}"
+            logger.info(exitLog)
+          }
         } else {
-          logger.info("search-service error: " + response.body)
+          val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}," +
+            s"search-service error:${response.body}"
+          logger.info(exitLog)
           throw new Exception("search-service not returning error:" + response.status)
         }
 
@@ -97,27 +104,39 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
             // update ES
             updateES(batchesList, event)
-          } else
-            logger.info(s"There is no active batches found as Mentor for : ${event.fromUserId}")
+          } else {
+            val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}" +
+              s"There is no active batches found as Mentor for:${event.fromUserId}"
+            logger.info(exitLog)
+          }
         } else {
-          logger.info("search-service error: " + response.body)
+          val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}," +
+            s"search-service error:${response.body}"
+          logger.info(exitLog)
           throw new Exception("search-service not returning error:" + response.status)
         }
-        logger.info(s"Ownership transfer processed successfully:${JSONUtil.serialize(event)}")
+        val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}," +
+          s"Ownership transfer processed successfully:${JSONUtil.serialize(event)}"
+        logger.info(exitLog)
       } catch {
         case ex: Exception =>
           ex.printStackTrace()
-          logger.info(s"Event throwing exception:${JSONUtil.serialize(event)}")
+          val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context},error:${ex}"
+          logger.info(exitLog)
           throw ex
       }
-    } else metrics.incCounter(config.skipCount)
+    } else{
+      val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}"
+      logger.info(exitLog)
+      metrics.incCounter(config.skipCount)
+    }
   }
 
 
   /**
    * Method to update the specific table in a batch format.
    */
-  def updateDB(batchSize: Int, queriesList: List[Update.Where])(implicit metrics: Metrics): Unit = {
+  def updateDB(batchSize: Int, queriesList: List[Update.Where],event:Event)(implicit metrics: Metrics): Unit = {
     val groupedQueries = queriesList.grouped(batchSize).toList
     groupedQueries.foreach(queries => {
       val cqlBatch = QueryBuilder.batch()
@@ -128,7 +147,9 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
         logger.info("DB update successful")
       } else {
         val msg = "Database update has failed: " + cqlBatch.toString
-        logger.info(msg)
+        val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}"
+        +s"Database update has failed:${msg}"
+        logger.info(exitLog)
         throw new Exception(msg)
       }
     })
