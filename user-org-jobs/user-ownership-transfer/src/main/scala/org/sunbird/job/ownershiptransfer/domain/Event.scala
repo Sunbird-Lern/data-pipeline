@@ -32,7 +32,7 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
     telemetry.read[Any]("context") match {
       case Some(scalaMap: scala.collection.immutable.Map[String, AnyRef]) =>
         gson.toJson(scalaMap.asJava)
-      case Some(javaMap: java.util.Map[_, _]) =>
+      case Some(javaMap: java.util.Map[String, AnyRef]) =>
         gson.toJson(javaMap)
       case _ => null
     }
