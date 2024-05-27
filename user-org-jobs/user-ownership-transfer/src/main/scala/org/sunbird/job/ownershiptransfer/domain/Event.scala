@@ -31,8 +31,8 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
     val gson = new Gson()
     telemetry.read[Any]("context") match {
       case Some(scalaMap: scala.collection.immutable.Map[String, AnyRef]) =>
-        val pdataMap = scalaMap.getOrElse("pdata", Map.empty).asInstanceOf[Map[String, AnyRef]].mapValues(_.toString)
-        val cdataMap = scalaMap.getOrElse("cdata", Map.empty).asInstanceOf[Map[String, AnyRef]].mapValues(_.toString)
+        val pdataMap = scalaMap("pdata").asInstanceOf[Map[String, String]]
+        val cdataMap = scalaMap("cdata").asInstanceOf[Map[String, String]]
         val contextMap = Map("pdata" -> pdataMap, "cdata" -> cdataMap)
         gson.toJson(contextMap.asJava)
       case _ => null
