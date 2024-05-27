@@ -100,7 +100,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
             // course_batch update with mentors to toUserId.
             val batchCreatedByQueries = getMentorsUpdateQueries(batchesList, event.fromUserId, event.toUserId)
-            updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
+            updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries,event)(metrics)
 
             // update ES
             updateES(batchesList, event)
@@ -147,8 +147,8 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
         logger.info("DB update successful")
       } else {
         val msg = "Database update has failed: " + cqlBatch.toString
-        val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}"
-        +s"Database update has failed:${msg}"
+        val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}," +
+          s"Database update has failed:${msg}"
         logger.info(exitLog)
         throw new Exception(msg)
       }
