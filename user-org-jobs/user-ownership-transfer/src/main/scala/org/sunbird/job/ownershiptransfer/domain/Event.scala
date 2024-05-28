@@ -1,13 +1,13 @@
 package org.sunbird.job.ownershiptransfer.domain
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.sunbird.job.Metrics
 import org.sunbird.job.domain.reader.{Event => BaseEvent}
 import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
 import org.sunbird.job.util.{HttpUtil, JSONUtil}
 
 import java.util
-import scala.collection.JavaConverters._
 
 class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
@@ -28,15 +28,11 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
   }
 
   def context: String = {
-    val gson = new Gson()
-    telemetry.read[Any]("context") match {
-      case Some(scalaMap: scala.collection.immutable.Map[String, AnyRef]) =>
-        val pdataMap = scalaMap("pdata").asInstanceOf[Map[String, String]]
-        val cdataMap = scalaMap("cdata").asInstanceOf[Map[String, String]]
-        val contextMap = Map("pdata" -> pdataMap, "cdata" -> cdataMap)
-        gson.toJson(contextMap.asJava)
-      case _ => null
-    }
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    telemetry.read[Map[String, Any]]("context").map { contextMap =>
+      mapper.writeValueAsString(contextMap)
+    }.orNull
   }
 
 
