@@ -1,10 +1,10 @@
 package org.sunbird.job.deletioncleanup.domain
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.sunbird.job.domain.reader.{Event => BaseEvent}
 
 import java.util
-import scala.collection.JavaConverters._
 
 class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
@@ -21,14 +21,11 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
   }
 
   def context: String = {
-    val gson = new Gson()
-    telemetry.read[Any]("context") match {
-      case Some(scalaMap: scala.collection.immutable.Map[String, AnyRef]) =>
-        gson.toJson(scalaMap.asJava)
-      case Some(javaMap: java.util.Map[_, _]) =>
-        gson.toJson(javaMap)
-      case _ => null
-    }
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    telemetry.read[Map[String, Any]]("context").map { contextMap =>
+      mapper.writeValueAsString(contextMap)
+    }.orNull
   }
 
   def suggestedUsers: util.ArrayList[util.Map[String, AnyRef]] = {
