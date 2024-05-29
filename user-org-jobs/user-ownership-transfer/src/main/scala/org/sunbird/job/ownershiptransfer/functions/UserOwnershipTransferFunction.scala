@@ -63,7 +63,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
             // course_batch update with createdBy to toUserId.
             val batchCreatedByQueries = getCreatedByUpdateQueries(batchesList, event.toUserId)
-            updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries,event)(metrics)
+            updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
 
             // update ES
             updateES(batchesList, event)
@@ -98,7 +98,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
             // course_batch update with mentors to toUserId.
             val batchCreatedByQueries = getMentorsUpdateQueries(batchesList, event.fromUserId, event.toUserId)
-            updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries,event)(metrics)
+            updateDB(config.thresholdBatchWriteSize, batchCreatedByQueries)(metrics)
 
             // update ES
             updateES(batchesList, event)
@@ -132,7 +132,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
   /**
    * Method to update the specific table in a batch format.
    */
-  def updateDB(batchSize: Int, queriesList: List[Update.Where],event:Event)(implicit metrics: Metrics): Unit = {
+  def updateDB(batchSize: Int, queriesList: List[Update.Where])(implicit metrics: Metrics): Unit = {
     val groupedQueries = queriesList.grouped(batchSize).toList
     groupedQueries.foreach(queries => {
       val cqlBatch = QueryBuilder.batch()
@@ -143,7 +143,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
         logger.info("DB update successful")
       } else {
         val msg = "Database update has failed: " + cqlBatch.toString
-        logger.info(${msg})
+        logger.info(msg)
         throw new Exception(msg)
       }
     })
