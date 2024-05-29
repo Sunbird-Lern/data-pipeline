@@ -1,5 +1,7 @@
 package org.sunbird.job.deletioncleanup.domain
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.sunbird.job.domain.reader.{Event => BaseEvent}
 
 import java.util
@@ -16,6 +18,14 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
   def organisation: String = {
     telemetry.read[String]("edata.organisationId").orNull
+  }
+
+  def context: String = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    telemetry.read[Map[String, Any]]("context").map { contextMap =>
+      mapper.writeValueAsString(contextMap)
+    }.orNull
   }
 
   def suggestedUsers: util.ArrayList[util.Map[String, AnyRef]] = {

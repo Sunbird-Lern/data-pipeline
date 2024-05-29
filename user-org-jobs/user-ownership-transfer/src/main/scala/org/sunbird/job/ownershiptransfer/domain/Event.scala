@@ -1,12 +1,13 @@
 package org.sunbird.job.ownershiptransfer.domain
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.sunbird.job.Metrics
 import org.sunbird.job.domain.reader.{Event => BaseEvent}
 import org.sunbird.job.ownershiptransfer.task.UserOwnershipTransferConfig
 import org.sunbird.job.util.{HttpUtil, JSONUtil}
 
 import java.util
-import scala.collection.convert.ImplicitConversions.`map AsScala`
 
 class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
 
@@ -25,6 +26,15 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
   def organisation: String = {
     telemetry.read[String]("edata.organisationId").orNull
   }
+
+  def context: String = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    telemetry.read[Map[String, Any]]("context").map { contextMap =>
+      mapper.writeValueAsString(contextMap)
+    }.orNull
+  }
+
 
   def isValid()(metrics: Metrics, config:UserOwnershipTransferConfig, httpUtil: HttpUtil): Boolean = {
     fromUserId.nonEmpty && toUserId.nonEmpty && validateUser(fromUserId, organisation)(metrics, config, httpUtil) && validateUser(toUserId, organisation)(metrics, config, httpUtil)

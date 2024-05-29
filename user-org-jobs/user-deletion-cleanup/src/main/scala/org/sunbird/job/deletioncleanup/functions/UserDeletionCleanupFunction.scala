@@ -42,12 +42,12 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   }
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
-    logger.info(s"Processing deletion cleanup event from user: ${event.userId}")
+    logger.info(s"${event}")
+    val entryLog = s"Entry Log:UserDeletionCleanup, Message:Context ${event.context}"
+    logger.info(entryLog)
     metrics.incCounter(config.totalEventsCount)
-
     val url = config.userOrgServiceBasePath + config.userReadApi + "/" + event.userId + "?identifier,rootOrgId"
     val userReadResp = httpUtil.get(url)
-    logger.info(s"userReadResp:$userReadResp")
     if (200 == userReadResp.status) {
       logger.info(s"The user is not yet deleted/blocked, processing the cleanup for: ${event.userId}")
       metrics.incCounter(config.apiReadSuccessCount)
@@ -71,6 +71,8 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
               deletionStatus + ("keycloakCredentials" -> true)
             } catch {
               case ex: Exception =>
+                val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context},error:${ex}"
+                logger.info(exitLog)
                 logger.error("Error occurred : ", ex)
             }
 
@@ -104,11 +106,16 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
         } catch {
           case ex: Exception =>
-            logger.info("Event throwing exception: ", JSONUtil.serialize(event))
+            val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context},error:${ex}"
+            logger.info(exitLog)
             throw ex
         }
+        val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context}"
+        logger.info(exitLog)
       } else{
-        logger.info(s"The user details for the given Event is invalid: $event")
+        val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context},error:" +
+          s"The user details for the given Event is invalid"
+        logger.info(exitLog)
         metrics.incCounter(config.skipCount)
       }
     }else if(400 == userReadResp.status){
@@ -128,26 +135,33 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
         try {
           // update organisation table
           updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
+
+          // delete managed users
+          if (event.managedUsers != null && !event.managedUsers.isEmpty) {
+            event.managedUsers.forEach(managedUser => {
+              // update user entry in user table
+              updateUser(managedUser)(config, cassandraUtil)
+            })
+          }
         } catch {
           case ex: Exception =>
-            logger.info("Event throwing exception: ", JSONUtil.serialize(event))
+            val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context}error: ${ex}"
+            logger.info(exitLog)
             throw ex
         }
-        // delete managed users
-        if (event.managedUsers != null && !event.managedUsers.isEmpty) {
-          event.managedUsers.forEach(managedUser => {
-            // update user entry in user table
-            updateUser(managedUser)(config, cassandraUtil)
-          })
-        }
-
+        val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context}"
+        logger.info(exitLog)
       } else{
-        logger.info(s"The user details for the given Event is invalid: $event")
+        val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context},error:," +
+          s"The user details for the given Event is invalid"
+        logger.info(exitLog)
         metrics.incCounter(config.skipCount)
       }
     }
     else{
-      logger.info(s"The user details for the given Event is not found: ${event.userId}")
+      val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context},error:," +
+        s"The user details for the given Event is not found"
+      logger.info(exitLog)
       metrics.incCounter(config.skipCount)
     }
   }
@@ -161,7 +175,6 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
     } catch {
       case ex: Exception =>
         logger.error("Error occurred : ", ex)
-
         val userRep: UserRepresentation = resource.toRepresentation
         userRep.setEmail("")
         userRep.setEmailVerified(false)
