@@ -67,7 +67,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
             try {
               // remove user credentials from keycloak if exists
-              removeEntryFromKeycloak(event,event.userId)(config)
+              removeEntryFromKeycloak(event.userId)(config)
               deletionStatus + ("keycloakCredentials" -> true)
             } catch {
               case ex: Exception =>
@@ -166,7 +166,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
     }
   }
 
-  def removeEntryFromKeycloak(event:Event,userId: String)(implicit config: UserDeletionCleanupConfig): Unit = {
+  def removeEntryFromKeycloak(userId: String)(implicit config: UserDeletionCleanupConfig): Unit = {
     val keycloak = new KeyCloakConnectionProvider().getConnection
     val fedUserId = getFederatedUserId(userId)
     val resource: UserResource = keycloak.realm(System.getenv("SUNBIRD_SSO_RELAM")).users.get(fedUserId)
