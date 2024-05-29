@@ -174,8 +174,6 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
       if (null != resource) resource.remove()
     } catch {
       case ex: Exception =>
-        val exitLog = s"Exit Log: Message:Context ${event.context},error:${ex}"
-        logger.info(exitLog)
         logger.error("Error occurred : ", ex)
         val userRep: UserRepresentation = resource.toRepresentation
         userRep.setEmail("")
