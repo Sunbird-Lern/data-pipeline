@@ -69,9 +69,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             updateES(batchesList, event)
 
           } else{
-            val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}," +
-              s"There is no active batches found for :${event.fromUserId}"
-            logger.info(exitLog)
+            logger.info(s"There is no active batches found for :${event.fromUserId}")
           }
         } else {
           val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}," +
@@ -105,9 +103,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
             // update ES
             updateES(batchesList, event)
           } else {
-            val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}" +
-              s"There is no active batches found as Mentor for:${event.fromUserId}"
-            logger.info(exitLog)
+            logger.info(s"There is no active batches found as Mentor for:${event.fromUserId}")
           }
         } else {
           val exitLog = s"Exit Log:OwnershipTransfer, Message:Context ${event.context}," +
