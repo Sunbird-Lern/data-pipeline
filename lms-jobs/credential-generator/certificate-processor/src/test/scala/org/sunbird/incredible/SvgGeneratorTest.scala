@@ -18,7 +18,7 @@ class SvgGeneratorTest extends BaseTestSpec {
       issuer = issuerIn, signatoryList = Array(signatory), identifier = "8e57723e-4541-11eb-b378-0242ac130002", criteria = Criteria(narrative = "Course Completion"), tag = "0131685518070087685")
     val certificateGenerator = new CertificateGenerator
     val certificateExtension = certificateGenerator.getCertificateExtension(certModel)
-    val printUri = SvgGenerator.generate(certificateExtension, "encodedQr", "https://sunbirdstagingpublic.blob.core.windows.net/sunbird-content-staging/content/template_svg_03_staging/artifact/cbse.svg")
+    val printUri = SvgGenerator.generate(certificateExtension, "encodedQr", "https://sunbirdstagingpublic.blob.core.windows.net/sunbird-content-staging/content/template_svg_06_staging/artifact/ekstep-merit.svg")
     printUri should not be null
     printUri should startWith("data:image/svg+xml,")
   }
@@ -32,7 +32,7 @@ class SvgGeneratorTest extends BaseTestSpec {
     val certificateGenerator = new CertificateGenerator
     val certificateExtension = certificateGenerator.getCertificateExtension(certModel)
     intercept[FileNotFoundException] {
-      val printUri = SvgGenerator.generate(certificateExtension, "encodedQr", "https://sunbirdstagingpublic.blob.core.windows.net/sunbird-content-staging/content/template_svg_03_staging/artifact/cbse.sv")
+      val printUri = SvgGenerator.generate(certificateExtension, "encodedQr", "https://sunbirdstagingpublic.blob.core.windows.net/sunbird-content-staging/content/template_svg_06_staging/artifact/ekstep-merit.sv")
     }
   }
 }

@@ -83,6 +83,7 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val notificationEndPoint: String = "/v2/notification"
   val rcBaseUrl: String = config.getString("service.rc.basePath")
   val rcEntity: String = config.getString("service.rc.entity")
+  val rcApiKey: String = config.getString("service.rc.rcApiKey")
   val rcCreateApi: String = "service.rc.create.api"
   val rcDeleteApi: String = "service.rc.delete.api"
   val rcSearchApi: String = "service.rc.search.api"
@@ -119,7 +120,7 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val recipientUserIds = "recipientUserIds"
   val identifier = "identifier"
   val body = "body"
-  val notificationSmsBody = "Congratulations! Download your course certificate from your profile page. If you have a problem downloading it on the mobile, update your DIKSHA app"
+  val notificationSmsBody = s"Congratulations! Download your course certificate from your profile page. If you have a problem downloading it on the mobile, update your ${config.getString("sunbird_instance_name")} app"
   val request = "request"
   val filters = "filters"
   val fields = "fields"

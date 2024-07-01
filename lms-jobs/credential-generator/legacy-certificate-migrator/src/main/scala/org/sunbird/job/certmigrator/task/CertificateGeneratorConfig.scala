@@ -113,7 +113,6 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val recipientUserIds = "recipientUserIds"
   val identifier = "identifier"
   val body = "body"
-  val notificationSmsBody = "Congratulations! Download your course certificate from your profile page. If you have a problem downloading it on the mobile, update your DIKSHA app"
   val request = "request"
   val filters = "filters"
   val fields = "fields"

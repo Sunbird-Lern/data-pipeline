@@ -59,11 +59,12 @@ trait IssueCertificateHelper {
             val query = QueryBuilder.select().from(config.keyspace, config.userEnrolmentsTable)
               .where(QueryBuilder.eq(config.dbUserId, event.userId)).and(QueryBuilder.eq(config.dbCourseId, event.courseId))
               .and(QueryBuilder.eq(config.dbBatchId, event.batchId))
-          logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: query:: " + query.toString)
+            logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: query:: " + query.toString)
             val row = cassandraUtil.findOne(query.toString)
             metrics.incCounter(config.dbReadCount)
             val enrolmentAdditionProps = additionalProps.getOrElse(config.enrollment, List[String]())
             if(null != row){
+                logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: " + row.toString)
                 val active:Boolean = row.getBool(config.active)
                 val issuedCertificates = row.getList(config.issuedCertificates, TypeTokens.mapOf(classOf[String], classOf[String])).asScala.toList
                 val isCertIssued = issuedCertificates.nonEmpty && issuedCertificates.exists(cert => certName.equalsIgnoreCase(cert.getOrDefault(config.name, "")))
@@ -74,14 +75,18 @@ trait IssueCertificateHelper {
                 val userId = if(active && (criteriaStatus == status) && (!isCertIssued || event.reIssue)) event.userId else ""
                 val issuedOn = row.getTimestamp(config.completedOn)
                 val addProps = enrolmentAdditionProps.map(prop => prop -> row.getObject(prop.toLowerCase)).toMap
+                logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: userId: " + userId)
+                logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: oldId: " + oldId)
+                logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: issuedOn: " + issuedOn)
+                logger.info("IssueCertificateHelper:: validateEnrolmentCriteria:: row:: addProps: " + addProps)
                 EnrolledUser(userId, oldId, issuedOn, {if(addProps.nonEmpty) Map[String, Any](config.enrollment -> addProps) else Map()})
             } else EnrolledUser("", "")
         } else EnrolledUser(event.userId, "")
     }
 
     def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
-      logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: assessmentCriteria:: " + assessmentCriteria + " || enrolledUser:: " + enrolledUser)
-      if(assessmentCriteria.nonEmpty && enrolledUser.nonEmpty) {
+        logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: assessmentCriteria:: " + assessmentCriteria + " || enrolledUser:: " + enrolledUser)
+        if(assessmentCriteria.nonEmpty && enrolledUser.nonEmpty) {
             val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
             val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore))
             val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
@@ -90,7 +95,7 @@ trait IssueCertificateHelper {
             val addProps = getAddProps(additionalProps, scoreMap)(config)
             logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: addProps:: " + addProps)
             if(isValidAssessCriteria(assessmentCriteria, score)) {
-              logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: assessedUser " )
+                logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: assessedUser " )
                 AssessedUser(enrolledUser, {if(addProps.nonEmpty) Map[String, Any](config.assessment -> addProps) else Map()})
             } else AssessedUser("")
         } else AssessedUser(enrolledUser)
@@ -102,9 +107,12 @@ trait IssueCertificateHelper {
     }
 
     def validateUser(userId: String, userCriteria: Map[String, AnyRef])(metrics:Metrics, config:CollectionCertPreProcessorConfig, httpUtil: HttpUtil): Map[String, AnyRef] = {
+        logger.info("IssueCertificateHelper: validateUser: userId: " + userId)
         if(userId.nonEmpty) {
             val url = config.learnerBasePath + config.userReadApi + "/" + userId + "?organisations,roles,locations,declarations,externalIds"
+            logger.info("IssueCertificateHelper: validateUser: url: " + url)
             val result = getAPICall(url, "response")(config, httpUtil, metrics)
+            logger.info("IssueCertificateHelper: validateUser: result: " + result)
             if(userCriteria.isEmpty || userCriteria.size == userCriteria.count(uc => uc._2 == result.getOrElse(uc._1, null))) {
                 result
             } else Map[String, AnyRef]()
@@ -212,22 +220,22 @@ trait IssueCertificateHelper {
         val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
         val related = getRelatedData(event, enrolledUser, assessedUser, userDetails, additionalProps, certName, courseName)(config)
         val eData = Map[String, AnyRef] (
-                "issuedDate" -> dateFormatter.format(enrolledUser.issuedOn),
-                "data" -> List(Map[String, AnyRef]("recipientName" -> recipientName, "recipientId" -> event.userId)),
-                "criteria" -> Map[String, String]("narrative" -> certName),
-                "svgTemplate" -> template.getOrElse("url", "").replace(config.cloudStoreBasePathPlaceholder, config.baseUrl+"/"+config.contentCloudStorageContainer),
-                "oldId" -> enrolledUser.oldId,
-                "templateId" -> template.getOrElse(config.identifier, ""),
-                "userId" -> event.userId,
-                "orgId" -> userDetails.getOrElse("rootOrgId", ""),
-                "issuer" -> ScalaJsonUtil.deserialize[Map[String, AnyRef]](template.getOrElse(config.issuer, "{}")),
-                "signatoryList" -> ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](template.getOrElse(config.signatoryList, "[]")),
-                "courseName" -> courseName,
-                "basePath" -> config.certBasePath,
-                "related" ->  related,
-                "name" -> certName,
-                "tag" -> event.batchId
-            )
+            "issuedDate" -> dateFormatter.format(enrolledUser.issuedOn),
+            "data" -> List(Map[String, AnyRef]("recipientName" -> recipientName, "recipientId" -> event.userId)),
+            "criteria" -> Map[String, String]("narrative" -> certName),
+            "svgTemplate" -> template.getOrElse("url", "").replace(config.cloudStoreBasePathPlaceholder, config.baseUrl+"/"+config.contentCloudStorageContainer),
+            "oldId" -> enrolledUser.oldId,
+            "templateId" -> template.getOrElse(config.identifier, ""),
+            "userId" -> event.userId,
+            "orgId" -> userDetails.getOrElse("rootOrgId", ""),
+            "issuer" -> ScalaJsonUtil.deserialize[Map[String, AnyRef]](template.getOrElse(config.issuer, "{}")),
+            "signatoryList" -> ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](template.getOrElse(config.signatoryList, "[]")),
+            "courseName" -> courseName,
+            "basePath" -> config.certBasePath,
+            "related" ->  related,
+            "name" -> certName,
+            "tag" -> event.batchId
+        )
 
         logger.info("IssueCertificateHelper:: generateCertificateEvent:: eData:: " + eData)
         ScalaJsonUtil.serialize(BEJobRequestEvent(edata = eData, `object` = EventObject(id = event.userId)))

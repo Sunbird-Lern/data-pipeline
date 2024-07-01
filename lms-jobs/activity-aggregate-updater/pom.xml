@@ -66,9 +66,9 @@
             <classifier>tests</classifier>
         </dependency>
         <dependency>
-            <groupId>it.ozimov</groupId>
+            <groupId>com.github.codemonstur</groupId>
             <artifactId>embedded-redis</artifactId>
-            <version>0.7.1</version>
+            <version>${embedded-redis.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -101,18 +101,6 @@
             <artifactId>cassandra-unit</artifactId>
             <version>3.11.2.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>it.ozimov</groupId>
-            <artifactId>embedded-redis</artifactId>
-            <version>0.7.1</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 
@@ -205,7 +193,7 @@
 
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>${surefire.plugin.version}</version>
                 <configuration>
                     <skipTests>false</skipTests>
                 </configuration>

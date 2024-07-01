@@ -122,12 +122,19 @@ middleware_cassandra_user_activity_agg_table: user_activity_agg
 user_cache_updater_job_consumer_parallelism: 1
 user_cache_updater_job_parallelism: 1
 
+###  User-deletion-cleanup Job related Vars
+user_deletion_cleanup_job_consumer_parallelism: 1
+user_deletion_cleanup_job_parallelism: 1
+
 ### Program-User-Info Job vars
 programuserinfo_consumer_parallelism: 1
 programuserinfo_downstream_parallelism: 1
 programuserinfo_programuser_parallelism: 1
 middleware_cassandra_programuserinfo_keyspace: sunbird_programs
 middleware_cassandra_programuserinfo_table: program_enrollment
+
+### Ml-User-Delete Job Var
+ml_user_delete_job_parallelism: 1
 
 ### to be removed
 job_classname: ""
@@ -220,6 +227,20 @@ flink_job_names:
     taskslots: 1
     cpu_requests: 0.3
     scale_enabled: false
+  user-deletion-cleanup:
+    job_class_name: 'org.sunbird.job.deletioncleanup.task.UserDeletionCleanupStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
+  ml-user-delete:
+    job_class_name: 'org.sunbird.job.userdelete.task.UserDeleteStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskslots: 1
+    cpu_requests: 0.3
 
 
 ### Global vars
@@ -231,4 +252,3 @@ service_monitor_enabled: true
 ### controlling the flink jobs log level
 flink_jobs_console_log_level: INFO
 flink_libraries_log_level: ERROR
-

@@ -13,7 +13,7 @@ import scala.collection.mutable
 
 case class UserReadResult(result: java.util.HashMap[String, Any], responseCode: String, params: Params)
 case class Response(firstName: String, lastName: String, encEmail: String, encPhone: String, language: java.util.List[String], rootOrgId: String, profileUserType: java.util.HashMap[String, String],
-                    userLocations: java.util.ArrayList[java.util.Map[String, AnyRef]], rootOrg: RootOrgInfo, userId: String, framework: java.util.LinkedHashMap[String, java.util.List[String]], profileUserTypes: java.util.List[java.util.HashMap[String, String]])
+                    userLocations: java.util.ArrayList[java.util.Map[String, AnyRef]], rootOrg: RootOrgInfo, userId: String,status: String, framework: java.util.LinkedHashMap[String, java.util.List[String]], profileUserTypes: java.util.List[java.util.HashMap[String, String]])
 case class RootOrgInfo(orgName: String)
 case class Params(msgid: String, err: String, status: String, errmsg: String)
 
@@ -23,11 +23,11 @@ object UserMetadataUpdater {
 
   val logger = LoggerFactory.getLogger("UserMetadataUpdater")
 
-  def execute(userId: String, event: Event, metrics: Metrics, config: UserCacheUpdaterConfigV2, dataCache: DataCache, restUtil: RestUtil): mutable.Map[String, AnyRef] = {
+  def execute(userId: String, event: Event, metrics: Metrics, config: UserCacheUpdaterConfigV2, dataCache: DataCache, restUtil: RestUtil, fwCache: FrameworkCacheHandler): mutable.Map[String, AnyRef] = {
 
     val generalInfo = getGeneralInfo(userId, event, metrics, config, dataCache);
     val regdInfo = if (config.regdUserProducerPid.equals(event.producerPid())) {
-      getRegisteredUserInfo(userId, event, metrics, config, dataCache, restUtil)
+      getRegisteredUserInfo(userId, event, metrics, config, dataCache, restUtil, fwCache)
     } else mutable.Map[String, String]()
     generalInfo.++:(regdInfo);
   }
@@ -50,7 +50,7 @@ object UserMetadataUpdater {
 
   @throws(classOf[Exception])
   def getRegisteredUserInfo(userId: String, event: Event, metrics: Metrics, config: UserCacheUpdaterConfigV2, dataCache: DataCache,
-                            restUtil: RestUtil): mutable.Map[String, AnyRef] = {
+                            restUtil: RestUtil, fwCache: FrameworkCacheHandler): mutable.Map[String, AnyRef] = {
     var userCacheData: mutable.Map[String, AnyRef] = mutable.Map[String, AnyRef]()
 
     //?fields=locations is appended in url to get userLocation in API response
@@ -61,19 +61,26 @@ object UserMetadataUpdater {
 
       val response = gson.fromJson[Response](gson.toJson(userReadRes.result.get("response")), classOf[Response])
       val framework = response.framework
-      //flatten BGMS value
+
+      //flatten Framework Categories value
       /**
-        * Assumption: Board and Framework-id is single valued
+        * Assumption: Framework-id is single valued
         */
       if (!framework.isEmpty) {
-        val boardList = framework.getOrDefault("board", List().asJava)
-        val board = if (!boardList.isEmpty) boardList.get(0) else ""
-        val medium = framework.getOrDefault("medium", List().asJava)
-        val grade = framework.getOrDefault("gradeLevel", List().asJava)
-        val subject = framework.getOrDefault("subject", List().asJava)
-        val frameworkIdList = framework.getOrDefault("id", List().asJava)
-        val id = if (!frameworkIdList.isEmpty) frameworkIdList.get(0) else ""
-        userCacheData.+=("board" -> board, "medium" -> medium, "grade" -> grade, "subject" -> subject, "framework" -> id)
+        val fwIDList = framework.getOrDefault("id", List().asJava)
+
+        if (!fwIDList.isEmpty){
+          val fwID = fwIDList.get(0)
+          userCacheData.+=("framework_id" -> fwID)
+
+          val userFrameworkFields = fwCache.getFwCategories(fwID)
+          userFrameworkFields.map(key =>{
+            val frValue = framework.getOrDefault(key, List().asJava)
+            if (!frValue.isEmpty) {
+              userCacheData.+=("framework_" + key -> frValue)
+            }
+          })
+        }
       }
 
       //Location and School Information
@@ -104,6 +111,7 @@ object UserMetadataUpdater {
         config.rootOrgId -> response.rootOrgId,
         config.phone -> response.encPhone,
         config.email -> response.encEmail,
+        config.status -> response.status,
         config.userId -> response.userId)
 
     } else if (config.userReadApiErrors.contains(userReadRes.responseCode.toUpperCase) && userReadRes.params.err.equalsIgnoreCase(config.userAccBlockedErrCode)) { //Skip the events for which response is 400 Bad request
@@ -134,7 +142,15 @@ object UserMetadataUpdater {
   def removeEmptyFields(key: String, dataCache: DataCache, userMetaData: mutable.Map[String, AnyRef]):Unit = {
     val redisRec = dataCache.hgetAllWithRetry(key)
     val removableKeys = redisRec.keySet.diff(userMetaData.keySet)
+    logger.info(s"removeEmptyFields: ${key}: removableKeys: ${removableKeys}")
     if(removableKeys.nonEmpty) dataCache.hdelWithRetry(key, removableKeys.toSeq)
+  }
+
+  def removeFrameworkFields(key: String, dataCache: DataCache): Unit = {
+    val redisRec = dataCache.hgetAllWithRetry(key, false)
+    val frameworkKeys = redisRec.keySet.filter(k => k.contains("framework_"))
+    logger.info(s"removeFrameworkFields: ${key}: frameworkKeys: ${frameworkKeys}")
+    if (frameworkKeys.nonEmpty) dataCache.hdelWithRetry(key, frameworkKeys.toSeq)
   }
 
   def stringify(userData: mutable.Map[String, AnyRef]): mutable.Map[String, String] = {

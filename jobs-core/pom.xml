@@ -49,12 +49,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.10.0</version>
+            <version>${com.fasterxml.jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-scala_${scala.version}</artifactId>
-            <version>2.10.0</version>
+            <version>${com.fasterxml.jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>redis.clients</groupId>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -146,9 +146,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>it.ozimov</groupId>
+            <groupId>com.github.codemonstur</groupId>
             <artifactId>embedded-redis</artifactId>
-            <version>0.7.1</version>
+            <version>${embedded-redis.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -166,6 +166,26 @@
             <groupId>com.twitter</groupId>
             <artifactId>storehaus-cache_${scala.version}</artifactId>
             <version>0.15.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb.scala</groupId>
+            <artifactId>mongo-scala-bson_${scala.version}</artifactId>
+            <version>4.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb.scala</groupId>
+            <artifactId>mongo-scala-driver_${scala.version}</artifactId>
+            <version>4.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-reactivestreams</artifactId>
+            <version>4.10.1</version>
         </dependency>
     </dependencies>
 
@@ -185,7 +205,7 @@
 
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.20</version>
+                <version>${surefire.plugin.version}</version>
                 <configuration>
                     <skipTests>false</skipTests>
                 </configuration>

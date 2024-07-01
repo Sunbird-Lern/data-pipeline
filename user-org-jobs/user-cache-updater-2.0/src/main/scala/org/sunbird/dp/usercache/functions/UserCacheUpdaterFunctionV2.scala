@@ -6,7 +6,7 @@ import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
 import org.sunbird.dp.usercache.domain.Event
 import org.sunbird.dp.usercache.task.UserCacheUpdaterConfigV2
-import org.sunbird.dp.usercache.util.UserMetadataUpdater
+import org.sunbird.dp.usercache.util.{FrameworkCacheHandler, UserMetadataUpdater}
 
 import scala.collection.JavaConverters.mapAsJavaMap
 import scala.collection.mutable
@@ -22,6 +22,7 @@ class UserCacheUpdaterFunctionV2(config: UserCacheUpdaterConfigV2)(implicit val 
   private var dataCache: DataCache = _
 
   private var restUtil: RestUtil = _
+  private var fwCache: FrameworkCacheHandler = _
 
   override def metricsList(): List[String] = {
     List(config.userCacheHit, config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount)
@@ -32,6 +33,7 @@ class UserCacheUpdaterFunctionV2(config: UserCacheUpdaterConfigV2)(implicit val 
     dataCache = new DataCache(config, new RedisConnect(config.metaRedisHost, config.metaRedisPort, config), config.userStore, config.userFields)
     dataCache.init()
     restUtil = new RestUtil()
+    fwCache = new FrameworkCacheHandler(config, restUtil)
   }
 
   override def close(): Unit = {
@@ -46,17 +48,20 @@ class UserCacheUpdaterFunctionV2(config: UserCacheUpdaterConfigV2)(implicit val 
       Option(userId).map(id => {
         Option(event.getState).map(name => {
           val userData: mutable.Map[String, AnyRef] = name.toUpperCase match {
-            case "CREATE" | "CREATED" | "UPDATE" | "UPDATED" => {
-              UserMetadataUpdater.execute(id, event, metrics, config, dataCache, restUtil)
+            case "CREATE" | "CREATED" | "UPDATE" | "UPDATED" | "DELETE" | "DELETED" => {
+              UserMetadataUpdater.execute(id, event, metrics, config, dataCache, restUtil, fwCache)
             }
             case _ => {
-              logger.info(s"Invalid event state name either it should be(Create/Created/Update/Updated) but found $name for ${event.mid()}")
+              logger.info(s"Invalid event state name either it should be(Create/Created/Update/Updated/Delete) but found $name for ${event.mid()}")
               metrics.incCounter(config.skipCount)
               mutable.Map[String, AnyRef]()
             }
           }
           if (!userData.isEmpty) {
-            if (config.regdUserProducerPid.equals(event.producerPid())) UserMetadataUpdater.removeEmptyFields(config.userStoreKeyPrefix + id, dataCache, userData)
+            if (config.regdUserProducerPid.equals(event.producerPid())) {
+              UserMetadataUpdater.removeEmptyFields(config.userStoreKeyPrefix + id, dataCache, userData)
+              UserMetadataUpdater.removeFrameworkFields(config.userStoreKeyPrefix + id, dataCache)
+            }
             dataCache.hmSet(config.userStoreKeyPrefix + id, mapAsJavaMap(UserMetadataUpdater.stringify(userData)))
             logger.info(s"Data inserted into cache for user: ${userId} having mid: ${event.mid()}")
             metrics.incCounter(config.successCount)

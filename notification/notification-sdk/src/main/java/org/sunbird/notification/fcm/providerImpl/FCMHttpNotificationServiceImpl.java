@@ -2,20 +2,21 @@
 package org.sunbird.notification.fcm.providerImpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
+import kong.unirest.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.sunbird.notification.fcm.provider.IFCMNotificationService;
+import org.sunbird.notification.utils.FCMResponse;
+import org.sunbird.notification.utils.NotificationConstant;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.json.JSONObject;
-import org.sunbird.notification.fcm.provider.IFCMNotificationService;
-import org.sunbird.notification.utils.FCMResponse;
-import org.sunbird.notification.utils.NotificationConstant;
 
 /**
  * This notification service will make http call to send device notification.
@@ -25,7 +26,7 @@ import org.sunbird.notification.utils.NotificationConstant;
 public class FCMHttpNotificationServiceImpl implements IFCMNotificationService {
   private static Logger logger = LogManager.getLogger("FCMHttpNotificationServiceImpl");
   private static IFCMNotificationService iFCMNotificationService =  null;
-  
+
   public static IFCMNotificationService getInstance() {
     if(iFCMNotificationService ==  null) {
       iFCMNotificationService = new FCMHttpNotificationServiceImpl();

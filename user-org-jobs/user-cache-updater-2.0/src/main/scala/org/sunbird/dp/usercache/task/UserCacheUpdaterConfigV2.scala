@@ -5,6 +5,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.sunbird.dp.core.job.BaseJobConfig
 import org.sunbird.dp.usercache.domain.Event
+import scala.collection.JavaConverters._
 
 import java.util.{List => JList}
 
@@ -63,6 +64,7 @@ class UserCacheUpdaterConfigV2(override val config: Config) extends BaseJobConfi
   val language = "language"
   val email = "email"
   val phone = "phone"
+  val status = "status"
   val profileUserTypesKey = "profileusertypes"
 
   //user store key prefix
@@ -74,9 +76,12 @@ class UserCacheUpdaterConfigV2(override val config: Config) extends BaseJobConfi
   val userCacheUpdaterFunction = "UserCacheUpdaterFunctionV2"
 
   //User Read API
-  val userReadApiUrl = config.getString("user-read.api.url")
+  val userReadApiUrl = config.getString("service.userorg.basePath") + config.getString("user_read_api")
   val userReadApiFields = config.getString("user.read.url.fields")
   val userReadApiErrors: JList[String] = config.getStringList("user.read.api.error")
 
   val userAccBlockedErrCode = "UOS_USRRED0006"
+
+  // Framework Read API
+  val fwReadApiUrl = config.getString("service.taxonomy.basePath") + config.getString("framework_read_api")
 }

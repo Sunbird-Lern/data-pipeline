@@ -154,6 +154,13 @@ base_config: |
       port = "9042"
       isMultiDCEnabled = {{ cassandra_isMultiDCEnabled | lower }}
     }
+    ml-mongo {
+        host = "{{ mongo_connection_ip }}"
+        port = "27017"
+        database = "{{ ml_database }}"
+    }
+
+    sunbird_instance_name = "{{ sunbird_installation | default('Sunbird')}}"
 
 activity-aggregate-updater:
   activity-aggregate-updater: |+
@@ -328,7 +335,7 @@ collection-cert-pre-processor:
     content_read_api = "/content/v3/read"
     service {
       content.basePath = "{{ content_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
     }
     enable.suppress.exception = {{ collection_certificate_pre_processor_enable_suppress_exception | lower }}
     redis-meta {
@@ -389,10 +396,11 @@ collection-certificate-generator:
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"
+      rc.rcApiKey = "{{ sunbird_api_auth_token }}"
     }
     enable.suppress.exception = {{ collection_certificate_generator_enable_suppress_exception | lower }}
     enable.rc.certificate = {{ collection_certificate_generator_enable_rc_certificate | lower }}
@@ -440,7 +448,7 @@ legacy-certificate-migrator:
     cloud_storage_cname_url = "{{ cloud_storage_cname_url }}"
     service {
       certreg.basePath = "{{ cert_reg_service_base_url }}"
-      learner.basePath = "{{ learner_service_base_url }}"
+      learner.basePath = "{{ userorg_service_base_url }}"
       enc.basePath = "{{ enc_service_base_url }}"
       rc.basePath = "{{ cert_rc_base_url }}"
       rc.entity = "{{ cert_rc_entity }}"
@@ -570,8 +578,8 @@ user-cache-updater-v2:
   user-cache-updater-v2: |+
     include file("/data/flink/conf/base-config.conf")
     kafka {
-      input.topic = ${job.env}".telemetry.audit"
-      groupId = ${job.env}"-user-cache-updater-group"
+      input.topic = {{ kafka_topic_telemetry_audit }}
+      groupId = {{ kafka_group_user_cache_updater }}
     }
     task {
       restart-strategy.attempts = {{ restart_attempts }} # max 3 restart attempts
@@ -580,7 +588,7 @@ user-cache-updater-v2:
       parallelism = {{ user_cache_updater_job_parallelism }}
       usercache.updater.parallelism = {{ user_cache_updater_job_parallelism }}
     }
-    regd.user.producer.pid = "learner-service"
+    regd.user.producer.pid = "userorg-service"
     user.self.signin.types = ["google","self"]
     user.validated.types = ["sso"]
     user.self.signin.key = "Self-Signed-In"
@@ -595,7 +603,12 @@ user-cache-updater-v2:
       }
     }
     #(user read api details)
-    user-read.api.url = "http://{{private_ingressgateway_ip}}{{ user_read_api_endpoint }}"
+    user_read_api = "/private/user/v1/read/"
+    framework_read_api = "/api/framework/v1/read/"
+    service {
+      taxonomy.basePath = "{{ domain_url }}"
+      userorg.basePath = "{{ userorg_service_base_url }}"
+    }
 
 
   flink-conf: |+
@@ -637,3 +650,62 @@ program-user-info:
     jobmanager.execution.failover-strategy: region
     taskmanager.memory.network.fraction: 0.1
 
+user-deletion-cleanup:
+  user-deletion-cleanup: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = ${job.env}".delete.user"
+      groupId = ${job.env}"-delete-user-group"
+    }
+    task {
+      user.deletion.cleanup.parallelism = {{ user_deletion_cleanup_job_parallelism }}
+    }
+
+    service {
+        lms {
+            basePath = "{{ lms_service_base_url }}"
+        }
+        userorg {
+            basePath = "{{ userorg_service_base_url }}"
+        }
+    }
+
+    sunbird_keycloak_user_federation_provider_id={{core_vault_sunbird_keycloak_user_federation_provider_id}}
+    user_read_api = "/private/user/v1/read/"
+    batch_search_api = "/v1/course/batch/search"
+
+    user {
+        keyspace = "sunbird"
+        lookup.table = "user_lookup"
+        table = "user"
+        externalIdentity.table = "usr_external_identity"
+        org.table = "user_organisation"
+    }
+
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['user-deletion-cleanup'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['user-deletion-cleanup'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['user-deletion-cleanup'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
+
+ml-user-delete:
+  ml-user-delete: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = ${job.env}".delete.user"
+      groupId = ${job.env}"-ml-user-delete-group"
+    }
+    task {
+      ml.user.delete.parallelism = {{ ml_user_delete_job_parallelism }}
+    }
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['ml-user-delete'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['ml-user-delete'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['ml-user-delete'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1

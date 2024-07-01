@@ -27,7 +27,7 @@ class HTTPUtilSpec extends FlatSpec with Matchers {
       })
     }
 
-    val resp = httpUtil.post("https://diksha.gov.in/api/content/v1/search", JSONUtil.serialize(reqMap))
+    val resp = httpUtil.post("https://dev.sunbirded.org/api/content/v1/search", JSONUtil.serialize(reqMap))
     assert(resp.isSuccess)
   }
 
