@@ -1,0 +1,75 @@
+name: Build and Test
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+   
+
+jobs:
+  Run-test-cases:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Restore Maven cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: lern-jobs-dependency-cache-${{ hashFiles('pom.xml') }}
+          restore-keys: |
+            lern-jobs-dependency-cache-
+
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update || sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Build the code
+        run: mvn clean install -DskipTests
+
+      - name: Execute coverage report
+        run: mvn clean scoverage:report
+
+      - name: Save test results
+        if: always()
+        run: |
+          mkdir -p ~/test-results/junit/
+          find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: lern-jobs-dependency-cache-${{ hashFiles('pom.xml') }}
+
+      - name: Store test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: ~/test-results
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Run SonarQube analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+            mvn verify -DskipTests=true sonar:sonar -Dlog4j.configuration=./logs sonar:sonar -Dsonar.projectKey=Sunbird-Lern_data-pipeline -Dsonar.organization=sunbird-lern -Dsonar.host.url=https://sonarcloud.io -Dsonar.java.binaries=$(find . -path '*/build/classes/java' | xargs | tr ' ' ',') -Dsonar.coverage.exclusions=**/notification-sdk/**,**/notification/domain/** -Dsonar.test.exclusions=**/notification-sdk/** -Dsonar.exclusions=**/**.java -Dsonar.scala.coverage.reportPaths=/home/circleci/lern/target/scoverage.xml
