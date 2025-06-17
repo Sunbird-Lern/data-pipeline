@@ -19,11 +19,11 @@
     <value>org.apache.hadoop.fs.azure.NativeAzureFileSystem</value>
   </property>
   <property>
-        <name>fs.azure.account.auth.type</name>
-        <value>OAuth</value>
-    </property>
-    <property>
-        <name>fs.azure.account.oauth.provider.type</name>
-        <value>org.apache.hadoop.fs.azurebfs.oauth2.ManagedIdentityTokenProvider</value>
-    </property>
+    <name>fs.azure.account.auth.type</name>
+    <value>OAuth</value>
+  </property>
+  <property>
+    <name>fs.azure.account.oauth.provider.type</name>
+    <value>org.apache.hadoop.fs.azurebfs.oauth2.ManagedIdentityTokenProvider</value>
+  </property>
 </configuration>
