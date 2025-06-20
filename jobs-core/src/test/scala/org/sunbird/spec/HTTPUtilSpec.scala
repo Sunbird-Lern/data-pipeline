@@ -1,6 +1,7 @@
 package org.sunbird.spec
 
 import org.apache.commons.io.FileUtils
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.{FlatSpec, Matchers}
 import org.sunbird.job.util.{HTTPResponse, HttpUtil, JSONUtil, ScalaJsonUtil}
 
@@ -8,10 +9,13 @@ import java.io.File
 
 class HTTPUtilSpec extends FlatSpec with Matchers {
 
+  val config: Config = ConfigFactory.load("base-test.conf")
+  val imagePath = config.getString("blob.input.contentImagePath")
+  val videoPath = config.getString("blob.input.contentVideoPath")
   val httpUtil = new HttpUtil
 
   "get" should "return success response" in {
-    val resp: HTTPResponse = httpUtil.get("https://sunbirddev.blob.core.windows.net/sunbird-content-dev/content/do_113252367947718656186/artifact/do_113252367947718656186_1617720706250_gitkraken.png")
+    val resp: HTTPResponse = httpUtil.get(imagePath)
     assert(resp.isSuccess)
   }
 
@@ -32,13 +36,13 @@ class HTTPUtilSpec extends FlatSpec with Matchers {
   }
 
   "getSize" should "return file size" in {
-    val resp: Int = httpUtil.getSize("https://sunbirddev.blob.core.windows.net/sunbird-content-dev/content/do_113252367947718656186/artifact/do_113252367947718656186_1617720706250_gitkraken.png")
+    val resp: Int = httpUtil.getSize(imagePath)
     println(resp)
     assert(resp>0)
   }
 
   "downloadFile" should "download file from provided Url" in {
-    val fileUrl = "https://sunbirddev.blob.core.windows.net/sunbird-content-dev/content/do_113252367947718656186/artifact/do_113252367947718656186_1617720706250_gitkraken.png"
+    val fileUrl = imagePath
     val httpUtil = new HttpUtil
     val downloadPath = "/tmp/content" + File.separator + "_temp_" + System.currentTimeMillis
     val downloadedFile = httpUtil.downloadFile(fileUrl, downloadPath)
@@ -56,7 +60,7 @@ class HTTPUtilSpec extends FlatSpec with Matchers {
   }
 
   "downloadFile" should "download file with lower case name" in {
-    val fileUrl = "https://file-examples.com/wp-content/storage/2017/04/file_example_MP4_480_1_5MG.mp4"
+    val fileUrl = videoPath
     val httpUtil = new HttpUtil
     val downloadPath = "/tmp/content" + File.separator + "_temp_" + System.currentTimeMillis
     val downloadedFile = httpUtil.downloadFile(fileUrl, downloadPath)
