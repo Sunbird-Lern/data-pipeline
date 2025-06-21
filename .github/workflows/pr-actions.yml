@@ -1,0 +1,340 @@
+name: PR Code Coverage and SonarQube Analysis
+
+on:
+  pull_request:
+    branches: ['**']
+
+jobs:
+  root-pom-build-and-coverage-job-core:
+    runs-on: ubuntu-latest
+    outputs:
+      maven-cache-key: ${{ steps.cache-maven.outputs.cache-primary-key }}
+    env:
+      SCHEMA_BASE_PATH: ${{ vars.SCHEMA_BASE_PATH }}
+      BLOB_IMAGE_CONTENT_PATH: ${{ vars.BLOB_IMAGE_CONTENT_PATH }}
+      BLOB_VIDEO_CONTENT_PATH: ${{ vars.BLOB_VIDEO_CONTENT_PATH }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache Maven packages
+        id: cache-maven
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build root POM and job-core
+        run: |
+          mvn clean install -N -DskipTests
+          cd jobs-core
+          mvn clean install \
+            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:report \
+            surefire-report:report
+
+      - name: Test Summary
+        uses: dorny/test-reporter@v2.1.0
+        if: always()
+        with:
+          name: Test Results
+          path: 'jobs-core/target/surefire-reports/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+          only-summary: false
+          list-tests: 'all'
+
+      - name: Set up JDK17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run SonarQube Analysis for jobs-core
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        working-directory: jobs-core
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=sunbird-lern \
+            -Dsonar.organization=sunbird-lern \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
+      - name: Upload Maven local repository
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: maven-repo
+          path: ~/.m2/repository
+          retention-days: 1
+
+  coverage-notification:
+    needs: root-pom-build-and-coverage-job-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: Restore Maven local repository
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: maven-repo
+          path: ~/.m2/repository
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and Generate Coverage Report
+        run: |
+          cd notification
+          mvn clean test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:report \
+            surefire-report:report
+
+      - name: Test Summary
+        uses: dorny/test-reporter@v2.1.0
+        if: always()
+        with:
+          name: Test Results
+          path: 'notification/notification-job/target/surefire-reports/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+          only-summary: false
+          list-tests: 'all'
+
+      - name: Set up JDK17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run SonarQube Analysis for notification
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        working-directory: notification
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=sunbird-lern \
+            -Dsonar.organization=sunbird-lern \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=notification-job/target/site/jacoco/jacoco.xml
+
+  coverage-lms-jobs:
+    needs: root-pom-build-and-coverage-job-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Restore Maven local repository
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: maven-repo
+          path: ~/.m2/repository
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and Generate Coverage Report
+        run: |
+          cd lms-jobs
+          mvn clean test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:report \
+            surefire-report:report
+
+      - name: Test Summary
+        uses: dorny/test-reporter@v2.1.0
+        if: always()
+        with:
+          name: Test Results
+          path: |
+            lms-jobs/*/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: false
+          only-summary: false
+          list-tests: 'all'
+
+      - name: Set up JDK17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run SonarQube Analysis for lms-jobs
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        working-directory: lms-jobs
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=sunbird-lern \
+            -Dsonar.organization=sunbird-lern \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=*/target/site/jacoco/jacoco.xml
+
+  coverage-user-org-jobs:
+    needs: root-pom-build-and-coverage-job-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Restore Maven local repository
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: maven-repo
+          path: ~/.m2/repository
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and Generate Coverage Report
+        run: |
+          cd user-org-jobs
+          mvn clean test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:report \
+            surefire-report:report
+
+      - name: Test Summary
+        uses: dorny/test-reporter@v2.1.0
+        if: always()
+        with:
+          name: Test Results
+          path: 'user-org-jobs/*/target/surefire-reports/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+          only-summary: false
+          list-tests: 'all'
+
+      - name: Set up JDK17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run SonarQube Analysis for user-org-jobs
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        working-directory: user-org-jobs
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=sunbird-lern \
+            -Dsonar.organization=sunbird-lern \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
+  coverage-ml-jobs:
+    needs: root-pom-build-and-coverage-job-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Restore Maven local repository
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: maven-repo
+          path: ~/.m2/repository
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and Generate Coverage Report
+        run: |
+          cd ml-jobs
+          mvn clean test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:report \
+            surefire-report:report
+
+      - name: Test Summary
+        uses: dorny/test-reporter@v2.1.0
+        if: always()
+        with:
+          name: Test Results
+          path: 'ml-jobs/*/target/surefire-reports/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+          only-summary: false
+          list-tests: 'all'
+
+      - name: Set up JDK17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run SonarQube Analysis for ml-jobs
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        working-directory: ml-jobs
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=sunbird-lern \
+            -Dsonar.organization=sunbird-lern \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
