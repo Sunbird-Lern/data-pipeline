@@ -3,7 +3,7 @@ name: PR Code Coverage and SonarQube Analysis
 # Trigger workflow on pull requests to any branch
 # This workflow runs comprehensive testing and code quality analysis
 on:
-  pull_request:
+  push:
     branches: ['**']
 
 jobs:
