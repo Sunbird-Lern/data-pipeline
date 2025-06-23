@@ -57,12 +57,16 @@ jobs:
           mvn clean install -N -DskipTests
           
           # Then build and test the jobs-core module with code coverage
+          # prepare-agent: Prepare JaCoCo agent for coverage
+          # test: Run unit tests
+          # report: Generate coverage report
+          # surefire-report:report: Generate test report
           cd jobs-core
           mvn clean install \
-            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \  # Prepare JaCoCo agent for coverage
-            test \                                                # Run unit tests
-            org.jacoco:jacoco-maven-plugin:0.8.8:report \        # Generate coverage report
-            surefire-report:report                               # Generate test report
+            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:report \
+            surefire-report:report
 
       # Step 5: Generate test summary report
       # This creates a nice test summary in the GitHub UI
@@ -94,11 +98,16 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Authentication token for SonarCloud
         working-directory: jobs-core
         run: |
+          # SonarQube analysis with project configuration
+          # projectKey: SonarCloud project key
+          # organization: SonarCloud organization
+          # host.url: SonarCloud URL
+          # coverage.jacoco.xmlReportPaths: Coverage report path
           mvn sonar:sonar \
-            -Dsonar.projectKey=sunbird-lern \                    # SonarCloud project key
-            -Dsonar.organization=sunbird-lern \                  # SonarCloud organization
-            -Dsonar.host.url=https://sonarcloud.io \             # SonarCloud URL
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml  # Coverage report path
+            -Dsonar.projectKey=sunbird-lern \
+            -Dsonar.organization=sunbird-lern \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
       # Step 8: Upload Maven repository as artifact
       # This makes the built dependencies available to parallel jobs
