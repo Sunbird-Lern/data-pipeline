@@ -1,43 +1,19 @@
 name: Build and Push Docker Image
 
-# Trigger workflow on tag pushes (e.g., v1.0.0, release-1.2.3)
 on:
   push:
     #tags:
       #- '*'
     
 jobs:
-  # First job: Build all Maven modules and prepare dependencies
-  # This job builds the root POM and all sub-modules, then uploads the Maven repository
-  # as an artifact so the Docker build job can use the same dependencies
   root-pom-build:
     runs-on: ubuntu-latest
     outputs:
-      # Output the Maven cache key for potential use by other jobs
       maven-cache-key: ${{ steps.cache-maven.outputs.cache-primary-key }}
-    env:
-      # Environment variables for schema and blob paths (same as pr-actions.yml)
-      # These may be used by the application during build/test
-      SCHEMA_BASE_PATH: ${{ vars.SCHEMA_BASE_PATH }}
-      BLOB_IMAGE_CONTENT_PATH: ${{ vars.BLOB_IMAGE_CONTENT_PATH }}
-      BLOB_VIDEO_CONTENT_PATH: ${{ vars.BLOB_VIDEO_CONTENT_PATH }}
     steps:
-      # Step 1: Checkout the source code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Java 11 environment first (before caching, like pr-actions.yml)
-      # Uses Temurin distribution for better performance and reliability
-      - name: Set up JDK 11
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-          distribution: 'temurin'
-          cache: 'maven'  # Additional Maven caching provided by setup-java
-
-      # Step 3: Cache Maven dependencies to speed up builds
-      # This caches the ~/.m2/repository directory between workflow runs
-      # The cache key is based on the hash of all pom.xml files
       - name: Cache Maven packages
         id: cache-maven
         uses: actions/cache@v3
@@ -47,44 +23,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # Step 4: Build all Maven modules (optimized approach)
-      # This step builds the entire project in the correct dependency order
-      # Using the same pattern as pr-actions.yml for consistency
-      - name: Build root POM and all modules
-        run: |
-          # First, build only the root POM (parent project) without building modules
-          # -N flag means "non-recursive" - only build the current project
-          mvn clean install -N -DskipTests
-          
-          # Then build all modules recursively with optimized flags
-          # This will build: jobs-core, notification, lms-jobs, user-org-jobs, ml-jobs
-          # All dependencies will be resolved and installed to local Maven repository
-          mvn clean install -DskipTests
-
-      # Step 5: Upload Maven repository as artifact
-      # This makes the built dependencies available to the Docker build job
-      # The Docker job needs these dependencies to build jobs-distribution
-      - name: Upload Maven local repository
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: maven-repo
-          path: ~/.m2/repository
-          retention-days: 1  # Keep for 1 day to allow for debugging
-
-  # Second job: Build Docker image and push to registry
-  # This job depends on the first job and uses the Maven dependencies
-  # that were built and uploaded as artifacts
-  # Optimized with pr-actions.yml patterns
-  build-and-push-docker:
-    # Wait for the root-pom-build job to complete successfully
-    needs: root-pom-build
-    runs-on: ubuntu-latest
-    steps:
-      # Step 1: Checkout the source code (needed for Docker build context)
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Step 2: Set up Java 11 environment first (consistent with pr-actions.yml pattern)
       - name: Set up JDK 11
         uses: actions/setup-java@v3
         with:
@@ -92,16 +30,39 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Step 3: Download the Maven repository from the previous job
-      # This contains all the built dependencies needed for jobs-distribution
+      - name: Set up Maven 3.8.7
+        uses: s4u/setup-maven-action@v1.11.0
+        with:
+          maven-version: 3.8.7
+
+      - name: Build root POM and all modules
+        run: |
+          # Build root POM first
+          mvn clean install -N -DskipTests
+          
+          # Build all modules (jobs-core, notification, lms-jobs, user-org-jobs, ml-jobs)
+          mvn clean install -DskipTests
+
+      - name: Upload Maven local repository
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: maven-repo
+          path: ~/.m2/repository
+          retention-days: 1
+
+  build-and-push-docker:
+    needs: root-pom-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Restore Maven local repository
         uses: actions/download-artifact@v4.3.0
         with:
           name: maven-repo
           path: ~/.m2/repository
 
-      # Step 4: Cache Maven packages (same as first job)
-      # This ensures we have the same caching benefits in this job
       - name: Cache Maven packages
         uses: actions/cache@v3
         with:
@@ -110,26 +71,33 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # Step 5: Authenticate with Docker registry
-      # Supports multiple registry providers: GCP, Azure, Docker Hub, or GitHub Container Registry
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Set up Maven 3.8.7
+        uses: s4u/setup-maven-action@v1.11.0
+        with:
+          maven-version: 3.8.7
+
       - name: Login Docker Registry
         run: |        
           case "${{ vars.REGISTRY_PROVIDER }}" in
           "gcp")
-            # Google Cloud Platform Container Registry
             echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" | base64 --decode > $HOME/gcloud-key.json
             gcloud auth activate-service-account --key-file=$HOME/gcloud-key.json
             gcloud auth configure-docker ${{ secrets.REGISTRY_NAME }}
             REGISTRY_URL=$(echo "${{ secrets.REGISTRY_URL }}" | tr '[:upper:]' '[:lower:]') 
             ;;
           "azure" | "dockerhub")
-            # Azure Container Registry or Docker Hub
             echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login "${{ secrets.REGISTRY_NAME }}" \
             --username "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
             REGISTRY_URL="$(echo "${{ secrets.REGISTRY_URL }}/$(basename "${{ github.workspace }}")" | tr '[:upper:]' '[:lower:]')"
             ;;
           *)
-            # Default: GitHub Container Registry (ghcr.io)
             REPO_NAME_LOWERCASE=$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             REGISTRY_URL="ghcr.io/$REPO_NAME_LOWERCASE"
@@ -137,31 +105,19 @@ jobs:
             esac
             echo "REGISTRY_URL=${REGISTRY_URL}" >> $GITHUB_ENV
 
-      # Step 6: Build the jobs-distribution module
-      # This module creates the final distribution package that gets included in the Docker image
-      # It depends on all the modules built in the previous job
       - name: Build jobs-distribution
         working-directory: jobs-distribution
         run: |
-          # Package the distribution (creates jobs-distribution-1.0.tar.gz)
-          # This contains all the job JARs and dependencies
           mvn package -DskipTests
 
-      # Step 7: Build and push Docker image (combined step for efficiency)
-      # Uses the Dockerfile in jobs-distribution directory
-      # The image contains the Flink runtime and our job distribution
-      - name: Build and Push Docker Image
+      - name: Build Docker Image
         working-directory: jobs-distribution
         run: |
-          # Create image tag from git ref and commit SHA
-          # Format: <tag-name>_<first-7-chars-of-sha>
-          # Example: v1.0.0_a1b2c3d
           IMAGE_TAG=$(echo "${{ github.ref_name }}_$(echo $GITHUB_SHA | cut -c1-7)" | tr '[:upper:]' '[:lower:]')
-          
-          # Build the Docker image
-          # The Dockerfile copies jobs-distribution-1.0.tar.gz and extracts it
           docker build -t ${REGISTRY_URL}:${IMAGE_TAG} .
-          
-          # Push the tagged image to the configured registry immediately after build
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+     
+      - name: Push Docker Image
+        run: |
           docker push ${REGISTRY_URL}:${IMAGE_TAG}
-          echo "Successfully built and pushed Docker image: ${REGISTRY_URL}:${IMAGE_TAG}"
+          echo "Pushed Docker image: ${REGISTRY_URL}:${IMAGE_TAG}"
