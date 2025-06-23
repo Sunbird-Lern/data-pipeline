@@ -1,42 +1,28 @@
 name: PR Code Coverage and SonarQube Analysis
 
-# Trigger workflow on pull requests to any branch
-# This workflow runs comprehensive testing and code quality analysis
 on:
   push:
     branches: ['**']
 
 jobs:
-  # First job: Build root POM and test jobs-core module
-  # This job serves as the foundation for all other parallel jobs
-  # It builds the root POM, tests jobs-core, and uploads Maven repository
   root-pom-build-and-coverage-job-core:
     runs-on: ubuntu-latest
     outputs:
-      # Output the Maven cache key for potential use by other jobs
       maven-cache-key: ${{ steps.cache-maven.outputs.cache-primary-key }}
     env:
-      # Environment variables for schema and blob paths
-      # These are used by the application during testing
       SCHEMA_BASE_PATH: ${{ vars.SCHEMA_BASE_PATH }}
       BLOB_IMAGE_CONTENT_PATH: ${{ vars.BLOB_IMAGE_CONTENT_PATH }}
       BLOB_VIDEO_CONTENT_PATH: ${{ vars.BLOB_VIDEO_CONTENT_PATH }}
     steps:
-      # Step 1: Checkout the source code from the PR
       - uses: actions/checkout@v3
 
-      # Step 2: Set up Java 11 environment for building and testing
-      # Uses Temurin distribution for better performance and reliability
       - name: Set up JDK11
         uses: actions/setup-java@v3
         with:
           java-version: '11'
           distribution: 'temurin'
-          cache: 'maven'  # Additional Maven caching provided by setup-java
+          cache: 'maven'
 
-      # Step 3: Cache Maven dependencies to speed up builds
-      # This caches the ~/.m2/repository directory between workflow runs
-      # The cache key is based on the hash of all pom.xml files
       - name: Cache Maven packages
         id: cache-maven
         uses: actions/cache@v3
@@ -46,80 +32,57 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # Step 4: Build root POM and test jobs-core module
-      # This step performs a comprehensive build and test of the jobs-core module
-      # including code coverage analysis with JaCoCo
       - name: Build root POM and job-core
         run: |
-          # First, build only the root POM (parent project) without building modules
-          # -N flag means "non-recursive" - only build the current project
           mvn clean install -N -DskipTests
-          
-          # Then build and test the jobs-core module with code coverage
           cd jobs-core
           mvn clean install \
-            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \  # Prepare JaCoCo agent for coverage
-            test \                                                # Run unit tests
-            org.jacoco:jacoco-maven-plugin:0.8.8:report \        # Generate coverage report
-            surefire-report:report                               # Generate test report
+            org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.8:report \
+            surefire-report:report
 
-      # Step 5: Generate test summary report
-      # This creates a nice test summary in the GitHub UI
-      # Shows which tests passed/failed and their details
       - name: Test Summary
         uses: dorny/test-reporter@v2.1.0
-        if: always()  # Run even if tests fail
+        if: always()
         with:
           name: Test Results
-          path: 'jobs-core/target/surefire-reports/*.xml'  # Path to test results
+          path: 'jobs-core/target/surefire-reports/*.xml'
           reporter: java-junit
-          fail-on-error: false  # Don't fail the workflow if test reporting fails
-          only-summary: false   # Show detailed test information
-          list-tests: 'all'     # List all tests in the summary
+          fail-on-error: false
+          only-summary: false
+          list-tests: 'all'
 
-      # Step 6: Set up Java 17 for SonarQube analysis
-      # SonarQube analysis requires Java 17 for better analysis capabilities
       - name: Set up JDK17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 7: Run SonarQube code quality analysis
-      # This analyzes code quality, security, and maintainability
-      # Results are sent to SonarCloud for review
       - name: Run SonarQube Analysis for jobs-core
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Authentication token for SonarCloud
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         working-directory: jobs-core
         run: |
           mvn sonar:sonar \
-            -Dsonar.projectKey=sunbird-lern \                    # SonarCloud project key
-            -Dsonar.organization=sunbird-lern \                  # SonarCloud organization
-            -Dsonar.host.url=https://sonarcloud.io \             # SonarCloud URL
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml  # Coverage report path
+            -Dsonar.projectKey=sunbird-lern \
+            -Dsonar.organization=sunbird-lern \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
-      # Step 8: Upload Maven repository as artifact
-      # This makes the built dependencies available to parallel jobs
-      # All other jobs will download this to avoid rebuilding dependencies
       - name: Upload Maven local repository
         uses: actions/upload-artifact@v4.6.2
         with:
           name: maven-repo
           path: ~/.m2/repository
-          retention-days: 1  # Keep for 1 day to allow for debugging
+          retention-days: 1
 
-  # Second job: Test notification module in parallel
-  # This job runs independently and in parallel with other module jobs
-  # It downloads the Maven repository from the first job
   coverage-notification:
-    needs: root-pom-build-and-coverage-job-core  # Wait for first job to complete
+    needs: root-pom-build-and-coverage-job-core
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the source code
       - uses: actions/checkout@v3
 
-      # Step 2: Set up Java 11 environment
       - name: Set up JDK11
         uses: actions/setup-java@v3
         with:
@@ -127,22 +90,17 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Step 3: Install ImageMagick dependency
-      # The notification module requires ImageMagick for image processing
       - name: Install ImageMagick
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick
 
-      # Step 4: Download Maven repository from the first job
-      # This contains all the built dependencies, avoiding rebuild time
       - name: Restore Maven local repository
         uses: actions/download-artifact@v4.3.0
         with:
           name: maven-repo
           path: ~/.m2/repository
 
-      # Step 5: Cache Maven packages (same as first job)
       - name: Cache Maven packages
         uses: actions/cache@v3
         with:
@@ -151,7 +109,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # Step 6: Build and test notification module with coverage
       - name: Build and Generate Coverage Report
         run: |
           cd notification
@@ -161,7 +118,6 @@ jobs:
             org.jacoco:jacoco-maven-plugin:0.8.8:report \
             surefire-report:report
 
-      # Step 7: Generate test summary for notification module
       - name: Test Summary
         uses: dorny/test-reporter@v2.1.0
         if: always()
@@ -173,14 +129,12 @@ jobs:
           only-summary: false
           list-tests: 'all'
 
-      # Step 8: Set up Java 17 for SonarQube analysis
       - name: Set up JDK17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 9: Run SonarQube analysis for notification module
       - name: Run SonarQube Analysis for notification
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -192,16 +146,12 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.coverage.jacoco.xmlReportPaths=notification-job/target/site/jacoco/jacoco.xml
 
-  # Third job: Test lms-jobs module in parallel
-  # This job tests all sub-modules within the lms-jobs directory
   coverage-lms-jobs:
-    needs: root-pom-build-and-coverage-job-core  # Wait for first job to complete
+    needs: root-pom-build-and-coverage-job-core
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the source code
       - uses: actions/checkout@v3
 
-      # Step 2: Set up Java 11 environment
       - name: Set up JDK11
         uses: actions/setup-java@v3
         with:
@@ -209,14 +159,12 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Step 3: Download Maven repository from the first job
       - name: Restore Maven local repository
         uses: actions/download-artifact@v4.3.0
         with:
           name: maven-repo
           path: ~/.m2/repository
 
-      # Step 4: Cache Maven packages
       - name: Cache Maven packages
         uses: actions/cache@v3
         with:
@@ -225,8 +173,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # Step 5: Build and test all lms-jobs sub-modules with coverage
-      # This will test all modules within lms-jobs directory
       - name: Build and Generate Coverage Report
         run: |
           cd lms-jobs
@@ -236,29 +182,24 @@ jobs:
             org.jacoco:jacoco-maven-plugin:0.8.8:report \
             surefire-report:report
 
-      # Step 6: Generate test summary for all lms-jobs modules
-      # Uses wildcard pattern to find test reports from all sub-modules
       - name: Test Summary
         uses: dorny/test-reporter@v2.1.0
         if: always()
         with:
           name: Test Results
           path: |
-            lms-jobs/*/target/surefire-reports/*.xml  # All sub-modules
+            lms-jobs/*/target/surefire-reports/*.xml
           reporter: java-junit
           fail-on-error: false
           only-summary: false
           list-tests: 'all'
 
-      # Step 7: Set up Java 17 for SonarQube analysis
       - name: Set up JDK17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 8: Run SonarQube analysis for all lms-jobs modules
-      # Uses wildcard pattern to analyze all sub-modules
       - name: Run SonarQube Analysis for lms-jobs
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -268,17 +209,14 @@ jobs:
             -Dsonar.projectKey=sunbird-lern \
             -Dsonar.organization=sunbird-lern \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.coverage.jacoco.xmlReportPaths=*/target/site/jacoco/jacoco.xml  # All sub-modules
+            -Dsonar.coverage.jacoco.xmlReportPaths=*/target/site/jacoco/jacoco.xml
 
-  # Fourth job: Test user-org-jobs module in parallel
   coverage-user-org-jobs:
-    needs: root-pom-build-and-coverage-job-core  # Wait for first job to complete
+    needs: root-pom-build-and-coverage-job-core
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the source code
       - uses: actions/checkout@v3
 
-      # Step 2: Set up Java 11 environment
       - name: Set up JDK11
         uses: actions/setup-java@v3
         with:
@@ -286,14 +224,12 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Step 3: Download Maven repository from the first job
       - name: Restore Maven local repository
         uses: actions/download-artifact@v4.3.0
         with:
           name: maven-repo
           path: ~/.m2/repository
 
-      # Step 4: Cache Maven packages
       - name: Cache Maven packages
         uses: actions/cache@v3
         with:
@@ -302,7 +238,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # Step 5: Build and test all user-org-jobs sub-modules with coverage
       - name: Build and Generate Coverage Report
         run: |
           cd user-org-jobs
@@ -312,26 +247,23 @@ jobs:
             org.jacoco:jacoco-maven-plugin:0.8.8:report \
             surefire-report:report
 
-      # Step 6: Generate test summary for all user-org-jobs modules
       - name: Test Summary
         uses: dorny/test-reporter@v2.1.0
         if: always()
         with:
           name: Test Results
-          path: 'user-org-jobs/*/target/surefire-reports/*.xml'  # All sub-modules
+          path: 'user-org-jobs/*/target/surefire-reports/*.xml'
           reporter: java-junit
           fail-on-error: false
           only-summary: false
           list-tests: 'all'
 
-      # Step 7: Set up Java 17 for SonarQube analysis
       - name: Set up JDK17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 8: Run SonarQube analysis for user-org-jobs module
       - name: Run SonarQube Analysis for user-org-jobs
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -343,15 +275,12 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
-  # Fifth job: Test ml-jobs module in parallel
   coverage-ml-jobs:
-    needs: root-pom-build-and-coverage-job-core  # Wait for first job to complete
+    needs: root-pom-build-and-coverage-job-core
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the source code
       - uses: actions/checkout@v3
 
-      # Step 2: Set up Java 11 environment
       - name: Set up JDK11
         uses: actions/setup-java@v3
         with:
@@ -359,14 +288,12 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Step 3: Download Maven repository from the first job
       - name: Restore Maven local repository
         uses: actions/download-artifact@v4.3.0
         with:
           name: maven-repo
           path: ~/.m2/repository
 
-      # Step 4: Cache Maven packages
       - name: Cache Maven packages
         uses: actions/cache@v3
         with:
@@ -375,7 +302,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # Step 5: Build and test all ml-jobs sub-modules with coverage
       - name: Build and Generate Coverage Report
         run: |
           cd ml-jobs
@@ -385,26 +311,23 @@ jobs:
             org.jacoco:jacoco-maven-plugin:0.8.8:report \
             surefire-report:report
 
-      # Step 6: Generate test summary for all ml-jobs modules
       - name: Test Summary
         uses: dorny/test-reporter@v2.1.0
         if: always()
         with:
           name: Test Results
-          path: 'ml-jobs/*/target/surefire-reports/*.xml'  # All sub-modules
+          path: 'ml-jobs/*/target/surefire-reports/*.xml'
           reporter: java-junit
           fail-on-error: false
           only-summary: false
           list-tests: 'all'
 
-      # Step 7: Set up Java 17 for SonarQube analysis
       - name: Set up JDK17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 8: Run SonarQube analysis for ml-jobs module
       - name: Run SonarQube Analysis for ml-jobs
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
