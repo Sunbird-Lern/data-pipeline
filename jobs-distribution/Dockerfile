@@ -1,8 +1,11 @@
 FROM sunbirded.azurecr.io/flink:1.13.5-scala_2.12-java11
 
 USER root
-RUN apt-get update
-RUN apt-get install -y imagemagick
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends imagemagick \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY target/jobs-distribution-1.0.tar.gz /tmp
 USER flink
