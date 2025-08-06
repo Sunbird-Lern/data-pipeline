@@ -14,7 +14,7 @@ import org.elasticsearch.action.update.UpdateRequest
 import org.elasticsearch.client.indices.{CreateIndexRequest, CreateIndexResponse}
 import org.elasticsearch.client.{Request, RequestOptions, Response, RestClient, RestClientBuilder, RestHighLevelClient}
 import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.xcontent.XContentType
+import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.LoggerFactory
 
 import java.io.IOException
