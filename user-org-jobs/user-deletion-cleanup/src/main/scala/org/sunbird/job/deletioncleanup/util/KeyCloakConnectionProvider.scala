@@ -28,7 +28,7 @@ class KeyCloakConnectionProvider(config: UserDeletionCleanupConfig) {
     val SSO_REALM = config.keycloakRealm
     val SSO_POOL_SIZE = config.keycloakPoolSize
     if (StringUtils.isBlank(SSO_URL) || StringUtils.isBlank(username) || StringUtils.isBlank(password) || StringUtils.isBlank(CLIENT_ID) || StringUtils.isBlank(SSO_REALM)) {
-      logger.info("key cloak connection is not provided by Environment variable.")
+      logger.info("Keycloak connection is not provided by the configuration.")
       return null
     }
 
