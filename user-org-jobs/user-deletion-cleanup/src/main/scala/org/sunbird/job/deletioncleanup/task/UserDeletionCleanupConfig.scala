@@ -67,7 +67,7 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val userTable: String = config.getString("user.table")
   val userExternalIdentityTable: String = config.getString("user.externalIdentity.table")
 
-  //Keycloak
+  //Keycloak configurations that are needed for authentication when the delete api fails to delete the user
   val keycloakBaseUrl: String = config.getString("sunbird_sso_url")
   val keycloakRealm: String = config.getString("sunbird_sso_realm")
   val keycloakClientId: String = config.getString("sunbird_sso_client_id")
