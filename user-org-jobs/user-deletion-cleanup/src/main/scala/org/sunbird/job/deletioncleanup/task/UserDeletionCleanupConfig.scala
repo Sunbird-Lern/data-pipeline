@@ -67,13 +67,20 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val userTable: String = config.getString("user.table")
   val userExternalIdentityTable: String = config.getString("user.externalIdentity.table")
 
+  //Keycloak
+  val keycloakBaseUrl: String = config.getString("sunbird_sso_url")
+  val keycloakRealm: String = config.getString("sunbird_sso_realm")
+  val keycloakClientId: String = config.getString("sunbird_sso_client_id")
+  val keycloakClientSecret: String = config.getString("sunbird_sso_client_secret")
+  val keycloakPassword: String = config.getString("sunbird_sso_password")
+  val keycloakUsername: String = config.getString("sunbird_sso_username")
+  val keycloakPoolSize: Int = if (config.hasPath("sunbird_sso_pool_size")) config.getInt("sunbird_sso_pool_size") else 2
+  val SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID: String = config.getString("sunbird_keycloak_user_federation_provider_id")
+
   // Consumers
   val userDeletionCleanupConsumer: String = "user-deletion-cleanup-consumer"
 
   // Functions
   val userDeletionCleanupFunction: String = "UserDeletionCleanupFunction"
-
-  val SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID: String = config.getString("sunbird_keycloak_user_federation_provider_id")
-
 
 }
