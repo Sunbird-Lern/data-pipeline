@@ -47,7 +47,9 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
     logger.info(entryLog)
     metrics.incCounter(config.totalEventsCount)
     val url = config.userOrgServiceBasePath + config.userReadApi + "/" + event.userId + "?identifier,rootOrgId"
+    logger.info(s"UserDeletionCleanupFunction:: Reading user details from URL: ${url}")
     val userReadResp = httpUtil.get(url)
+    logger.info(s"UserDeletionCleanupFunction:: User read response status: ${userReadResp.status}")
     if (200 == userReadResp.status) {
       logger.info(s"The user is not yet deleted/blocked, processing the cleanup for: ${event.userId}")
       metrics.incCounter(config.apiReadSuccessCount)
@@ -68,7 +70,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
             try {
               // remove user credentials from keycloak if exists
               removeEntryFromKeycloak(event.userId)(config)
-              deletionStatus + ("keycloakCredentials" -> true)
+              deletionStatus = deletionStatus + ("keycloakCredentials" -> true)
             } catch {
               case ex: Exception =>
                 val exitLog = s"Exit Log:UserDeletionCleanup, Message:Context ${event.context},error:${ex}"
@@ -78,16 +80,16 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
             // remove user entries from lookup table
             removeEntryFromUserLookUp(userDetails)(config, cassandraUtil)
-            deletionStatus + ("userLookUpTable" -> true)
+            deletionStatus = deletionStatus + ("userLookUpTable" -> true)
 
             // update user entry in user table
             updateUser(event.userId)(config, cassandraUtil)
-            deletionStatus + ("userTable" -> true)
+            deletionStatus = deletionStatus + ("userTable" -> true)
 
             // remove user entries from externalId table
             val dbUserExternalIds: List[Map[String, String]] = getUserExternalIds(event.userId)(config, cassandraUtil)
             if(dbUserExternalIds.nonEmpty) deleteUserExternalIds(dbUserExternalIds)(config, cassandraUtil)
-            deletionStatus + ("userExternalIdTable" -> true)
+            deletionStatus = deletionStatus + ("userExternalIdTable" -> true)
 
 
             //Generate AUDIT telemetry event
@@ -167,9 +169,9 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   }
 
   def removeEntryFromKeycloak(userId: String)(implicit config: UserDeletionCleanupConfig): Unit = {
-    val keycloak = new KeyCloakConnectionProvider().getConnection
+    val keycloak = new KeyCloakConnectionProvider(config).getConnection
     val fedUserId = getFederatedUserId(userId)
-    val resource: UserResource = keycloak.realm(System.getenv("SUNBIRD_SSO_RELAM")).users.get(fedUserId)
+    val resource: UserResource = keycloak.realm(config.keycloakRealm).users.get(fedUserId)
     try {
       if (null != resource) resource.remove()
     } catch {
