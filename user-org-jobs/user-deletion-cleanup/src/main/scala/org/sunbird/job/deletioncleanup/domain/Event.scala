@@ -41,7 +41,9 @@ class Event(eventMap: util.Map[String, Any]) extends BaseEvent(eventMap) {
         if (s.isEmpty) new util.ArrayList[String]()
         else {
           val out = new util.ArrayList[String]()
-          s.foreach(v => out.add(String.valueOf(v)))
+          s.foreach { v =>
+            if (v != null) out.add(String.valueOf(v))
+          }
           out
         }
       case Some(l: util.List[_]) => new util.ArrayList[String](l.asInstanceOf[util.List[String]])
