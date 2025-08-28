@@ -78,6 +78,7 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val SUNBIRD_KEYCLOAK_USER_FEDERATION_PROVIDER_ID: String = config.getString("sunbird_keycloak_user_federation_provider_id")
 
   //Redis configurations required to delete the user cache
+  //Redis configurations required to delete the user cache. DB index 12 is the dedicated index for user data in our system
   val userDBIndex: Int = if (config.hasPath("user.redis.store")) config.getInt("user.redis.store") else 12
   val userStoreKeyPrefix: String = "user:"
   // Consumers
