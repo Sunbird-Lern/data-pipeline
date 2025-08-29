@@ -25,6 +25,7 @@
     <properties>
         <encoding>UTF-8</encoding>
         <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
+        <redis.server.version>0.7.3</redis.server.version>
     </properties>
 
     <dependencies>
@@ -98,6 +99,12 @@
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
             <version>4.7.9.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>it.ozimov</groupId>
+            <artifactId>embedded-redis</artifactId>
+            <version>${redis.server.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

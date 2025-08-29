@@ -15,6 +15,7 @@ import org.sunbird.job.deletioncleanup.task.UserDeletionCleanupConfig
 import org.sunbird.job.deletioncleanup.util.KeyCloakConnectionProvider
 import org.sunbird.job.util.{CassandraUtil, HttpUtil, JSONUtil}
 import org.sunbird.job.{BaseProcessFunction, Metrics}
+import org.sunbird.job.cache.{DataCache, RedisConnect}
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -26,6 +27,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
 
   private[this] val logger = LoggerFactory.getLogger(classOf[UserDeletionCleanupFunction])
   lazy private val gson = new Gson()
+  private var dataCache: DataCache = _
 
   override def metricsList(): List[String] = {
     List(config.skipCount, config.successCount, config.totalEventsCount, config.apiReadMissCount, config.apiReadSuccessCount, config.dbUpdateCount)
@@ -34,10 +36,13 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
+    dataCache = new DataCache(config, new RedisConnect(config, Option(config.redisHost), Option(config.redisPort)), config.userDBIndex, List())
+    dataCache.init()
   }
 
   override def close(): Unit = {
     cassandraUtil.close()
+    dataCache.close()
     super.close()
   }
 
@@ -65,7 +70,7 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
           updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
 
           if(userDBMap.getOrElse(config.STATUS, 0).asInstanceOf[Int] != config.DELETION_STATUS) {
-            var deletionStatus: Map[String, Boolean] = Map[String, Boolean]("keycloakCredentials" -> false, "userLookUpTable" -> false, "userExternalIdTable" -> false, "userTable" -> false)
+            var deletionStatus: Map[String, Boolean] = Map[String, Boolean]("keycloakCredentials" -> false, "userLookUpTable" -> false, "userExternalIdTable" -> false, "userTable" -> false, "redisCache" -> false)
 
             try {
               // remove user credentials from keycloak if exists
@@ -85,6 +90,13 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
             // update user entry in user table
             updateUser(event.userId)(config, cassandraUtil)
             deletionStatus = deletionStatus + ("userTable" -> true)
+
+            // clear user cache
+            val key: String = config.userStoreKeyPrefix + event.userId
+            logger.info(s"UserDeletionCleanupFunction:processElement: Clearing user cache with key: $key")
+            dataCache.del(key)
+            logger.info(s"UserDeletionCleanupFunction:processElement: User cache with $key cleared")
+            deletionStatus = deletionStatus + ("redisCache" -> true)
 
             // remove user entries from externalId table
             val dbUserExternalIds: List[Map[String, String]] = getUserExternalIds(event.userId)(config, cassandraUtil)
@@ -137,6 +149,12 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
         try {
           // update organisation table
           updateUserOrg(event.userId, event.organisation)(config, cassandraUtil)
+
+          // clear user cache
+          val key: String = config.userStoreKeyPrefix + event.userId
+          logger.info(s"UserDeletionCleanupFunction:processElement: Clearing user cache with key: $key")
+          dataCache.del(key)
+          logger.info(s"UserDeletionCleanupFunction:processElement: User cache with $key cleared")
 
           // delete managed users
           if (event.managedUsers != null && !event.managedUsers.isEmpty) {
