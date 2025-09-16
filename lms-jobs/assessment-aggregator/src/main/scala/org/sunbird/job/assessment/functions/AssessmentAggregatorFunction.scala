@@ -233,15 +233,31 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
   def getQuestionCountFromCache(contentId: String)(metrics: Metrics) = {
     val result = contentCache.getWithRetry(contentId)
     metrics.incCounter(config.cacheHitCount)
-    result.getOrElse("totalQuestions", 0.0).asInstanceOf[Double].toInt
+    result.get("totalquestions") match {
+      case Some(i: java.lang.Integer) => i.toInt
+      case Some(d: java.lang.Double) => d.toInt
+      case Some(n: java.lang.Number) => n.intValue()
+      case Some(s: String) => try { s.toInt } catch { case _: NumberFormatException => 0 }
+      case _ => 0
+    }
   }
 
   def getQuestionCountFromAPI(contentId: String)(metrics: Metrics) = {
     val contentReadResp = JSONUtil.deserialize[util.HashMap[String, AnyRef]](restUtil.get(config.contentReadAPI.concat(contentId)))
     if (contentReadResp.get("responseCode").asInstanceOf[String].toUpperCase.equalsIgnoreCase("OK")) {
       metrics.incCounter(config.apiHitSuccessCount)
-      val result = contentReadResp.getOrDefault("result", new util.HashMap()).asInstanceOf[util.Map[String, AnyRef]]
-      val content = result.getOrDefault("content", new util.HashMap()).asInstanceOf[util.Map[String, Any]]
+      val resultObj = contentReadResp.getOrDefault("result", new util.HashMap())
+      val result: java.util.Map[String, AnyRef] = resultObj match {
+        case m: java.util.Map[_, _] => m.asInstanceOf[java.util.Map[String, AnyRef]]
+        case m: scala.collection.Map[_, _] => m.asInstanceOf[scala.collection.Map[String, AnyRef]].asJava
+        case _ => new util.HashMap[String, AnyRef]()
+      }
+      val contentObj = result.getOrDefault("content", new util.HashMap())
+      val content: java.util.Map[String, Any] = contentObj match {
+        case m: java.util.Map[_, _] => m.asInstanceOf[java.util.Map[String, Any]]
+        case m: scala.collection.Map[_, _] => m.asInstanceOf[scala.collection.Map[String, Any]].asJava
+        case _ => new util.HashMap[String, Any]()
+      }
       val totalQuestions = content.getOrDefault("totalQuestions", null)
       logger.info(s"Fetched the totalQuestion Value from the Content Read API - ContentId:$contentId, TotalQuestionCount:$totalQuestions")
       totalQuestions
@@ -279,4 +295,3 @@ class AssessmentAggregatorFunction(config: AssessmentAggregatorConfig,
   }
 
 }
-
