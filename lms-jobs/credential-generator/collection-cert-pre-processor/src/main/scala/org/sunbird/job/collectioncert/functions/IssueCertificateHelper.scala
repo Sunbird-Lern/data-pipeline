@@ -179,7 +179,7 @@ trait IssueCertificateHelper {
                     config.assessmentContentTypes.contains(contentType)
                 } else {
                     // Fallback: Try to fetch metadata from API
-                    logger.info(s"IssueCertificateHelper:: getMaxScore:: Metadata cache not available for: $key, attempting API fallback")
+                    logger.info(s"IssueCertificateHelper:: getMaxScore:: Metadata not available in cache for: $key, attempting API fallback")
                     val apiMetadata = getContentMetadataFromAPI(key)(config, httpUtil)
                     
                     if (apiMetadata.nonEmpty) {
@@ -190,7 +190,7 @@ trait IssueCertificateHelper {
                         logger.error(s"IssueCertificateHelper:: getMaxScore:: Suppressed exception: Metadata not available in cache or API for: $key")
                         false
                     } else {
-                        throw new Exception("Metadata cache not available for: " + key)
+                        throw new Exception("Metadata not available in cache or API " + key)
                     }
                 }
             })
