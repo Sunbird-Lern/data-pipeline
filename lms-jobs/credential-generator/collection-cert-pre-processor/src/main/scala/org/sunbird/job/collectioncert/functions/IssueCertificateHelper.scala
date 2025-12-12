@@ -29,7 +29,7 @@ trait IssueCertificateHelper {
         logger.info("IssueCertificateHelper:: issueCertificate:: enrolledUser:: "+enrolledUser)
 
         //validateAssessmentCriteria
-        val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps)(metrics, cassandraUtil, contentCache, config)
+        val assessedUser = validateAssessmentCriteria(event, criteria.getOrElse(config.assessment, Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]], enrolledUser.userId, additionalProps)(metrics, cassandraUtil, contentCache, config, httpUtil)
         logger.info("IssueCertificateHelper:: issueCertificate:: assessedUser:: "+assessedUser)
 
         //validateUserCriteria
@@ -84,10 +84,10 @@ trait IssueCertificateHelper {
         } else EnrolledUser(event.userId, "")
     }
 
-    def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig):AssessedUser = {
+    def validateAssessmentCriteria(event: Event, assessmentCriteria: Map[String, AnyRef], enrolledUser: String, additionalProps: Map[String, List[String]])(metrics:Metrics, cassandraUtil: CassandraUtil, contentCache: DataCache, config:CollectionCertPreProcessorConfig, httpUtil: HttpUtil):AssessedUser = {
         logger.info("IssueCertificateHelper:: validateAssessmentCriteria:: assessmentCriteria:: " + assessmentCriteria + " || enrolledUser:: " + enrolledUser)
         if(assessmentCriteria.nonEmpty && enrolledUser.nonEmpty) {
-            val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache)
+            val filteredUserAssessments = getMaxScore(event)(metrics, cassandraUtil, config, contentCache, httpUtil)
             val scoreMap = filteredUserAssessments.map(sc => sc._1 -> (sc._2.head.score * 100 / sc._2.head.totalScore))
             val score:Double = if (scoreMap.nonEmpty) scoreMap.values.max else 0d
 
@@ -119,7 +119,38 @@ trait IssueCertificateHelper {
         } else Map[String, AnyRef]()
     }
 
-    def getMaxScore(event: Event)(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig, contentCache: DataCache):Map[String, Set[AssessmentUserAttempt]] = {
+    def getContentMetadataFromAPI(contentId: String)(config: CollectionCertPreProcessorConfig, httpUtil: HttpUtil): Map[String, AnyRef] = {
+        try {
+            val contentReadUrl = config.contentBasePath + config.contentReadApi + "/" + contentId
+            logger.info(s"IssueCertificateHelper:: getContentMetadataFromAPI:: Fetching content metadata for contentId: $contentId from API: $contentReadUrl")
+            
+            val httpResponse = httpUtil.get(contentReadUrl, config.defaultHeaders)
+            
+            if (httpResponse.isSuccess) {
+                val contentReadResp = ScalaJsonUtil.deserialize[Map[String, AnyRef]](httpResponse.body)
+                val responseCode = contentReadResp.getOrElse("responseCode", "").asInstanceOf[String]
+                
+                if (responseCode.equalsIgnoreCase("OK")) {
+                    val result = contentReadResp.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
+                    val content = result.getOrElse("content", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
+                    logger.info(s"IssueCertificateHelper:: getContentMetadataFromAPI:: Successfully fetched metadata for contentId: $contentId, contentType: ${content.getOrElse("contentType", "")}")
+                    content
+                } else {
+                    logger.error(s"IssueCertificateHelper:: getContentMetadataFromAPI:: Failed to fetch content metadata for contentId: $contentId, responseCode: $responseCode")
+                    Map[String, AnyRef]()
+                }
+            } else {
+                logger.error(s"IssueCertificateHelper:: getContentMetadataFromAPI:: HTTP request failed for contentId: $contentId, status: ${httpResponse.status}")
+                Map[String, AnyRef]()
+            }
+        } catch {
+            case e: Exception =>
+                logger.error(s"IssueCertificateHelper:: getContentMetadataFromAPI:: Exception while fetching content metadata for contentId: $contentId, error: ${e.getMessage}", e)
+                Map[String, AnyRef]()
+        }
+    }
+
+    def getMaxScore(event: Event)(metrics:Metrics, cassandraUtil: CassandraUtil, config:CollectionCertPreProcessorConfig, contentCache: DataCache, httpUtil: HttpUtil):Map[String, Set[AssessmentUserAttempt]] = {
         val contextId = "cb:" + event.batchId
         val query = QueryBuilder.select().column("aggregates").column("agg").from(config.keyspace, config.userActivityAggTable)
           .where(QueryBuilder.eq("activity_type", "Course")).and(QueryBuilder.eq("activity_id", event.courseId))
@@ -143,12 +174,25 @@ trait IssueCertificateHelper {
             val filteredUserAssessments = userAssessments.filterKeys(key => {
                 val metadata = contentCache.getWithRetry(key)
                 if (metadata.nonEmpty) {
-                    val contentType = metadata.getOrElse("contenttype", "")
+                    // Check both lowercase and camelCase variants for contentType
+                    val contentType = metadata.getOrElse("contentType", metadata.getOrElse("contenttype", "")).toString
                     config.assessmentContentTypes.contains(contentType)
-                } else if(metadata.isEmpty && config.enableSuppressException){
-                    logger.error("Suppressed exception: Metadata cache not available for: " + key)
-                    false
-                } else throw new Exception("Metadata cache not available for: " + key)
+                } else {
+                    // Fallback: Try to fetch metadata from API
+                    logger.info(s"IssueCertificateHelper:: getMaxScore:: Metadata not available in cache for: $key, attempting API fallback")
+                    val apiMetadata = getContentMetadataFromAPI(key)(config, httpUtil)
+                    
+                    if (apiMetadata.nonEmpty) {
+                        val contentType = apiMetadata.getOrElse("contentType", apiMetadata.getOrElse("contenttype", "")).toString
+                        logger.info(s"IssueCertificateHelper:: getMaxScore:: Successfully fetched metadata from API for: $key, contentType: $contentType")
+                        config.assessmentContentTypes.contains(contentType)
+                    } else if (config.enableSuppressException) {
+                        logger.error(s"IssueCertificateHelper:: getMaxScore:: Suppressed exception: Metadata not available in cache or API for: $key")
+                        false
+                    } else {
+                        throw new Exception("Metadata not available in cache or API " + key)
+                    }
+                }
             })
             // TODO: Here we have an assumption that, we will consider max percentage from all the available attempts of different assessment contents.
             if (filteredUserAssessments.nonEmpty) filteredUserAssessments else Map()
