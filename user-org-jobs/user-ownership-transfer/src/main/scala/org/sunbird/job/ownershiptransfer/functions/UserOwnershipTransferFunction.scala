@@ -1,6 +1,7 @@
 package org.sunbird.job.ownershiptransfer.functions
 
 import com.datastax.driver.core.querybuilder.{QueryBuilder, Update}
+import com.datastax.driver.core.BatchStatement
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
@@ -130,17 +131,20 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
 
   /**
-   * Method to update the specific table.
-   * Modified for YugabyteDB compatibility - executes queries individually instead of using batch statements.
+   * Method to update the specific table using YugabyteDB batch operations.
+   * Uses BatchStatement and cassandraUtil.update() for proper execution.
    */
   def updateDB(batchSize: Int, queriesList: List[Update.Where])(implicit metrics: Metrics): Unit = {
-    queriesList.foreach(query => {
-      val result = cassandraUtil.upsert(query.toString)
+    val groupedQueries = queriesList.grouped(batchSize).toList
+    groupedQueries.foreach(queries => {
+      val batch = new BatchStatement()
+      queries.foreach(query => batch.add(query))
+      val result = cassandraUtil.update(batch)  // Use update() instead of upsert()
       if (result) {
         metrics.incCounter(config.dbUpdateCount)
         logger.info("DB update successful")
       } else {
-        val msg = "Database update has failed: " + query.toString
+        val msg = "Database update has failed: " + batch.toString
         logger.info(msg)
         throw new Exception(msg)
       }

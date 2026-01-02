@@ -2,6 +2,7 @@ package org.sunbird.job.recounciliation.functions
 
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.querybuilder.{QueryBuilder, Select, Update}
+import com.datastax.driver.core.BatchStatement
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.twitter.storehaus.cache.TTLCache
@@ -298,16 +299,19 @@ class EnrolmentReconciliationFn(config: EnrolmentReconciliationConfig,  httpUtil
   }
 
   /**
-   * Method to update the specific table.
-   * Modified for YugabyteDB compatibility - executes queries individually instead of using batch statements.
+   * Method to update the specific table using YugabyteDB batch operations.
+   * Uses BatchStatement and cassandraUtil.update() for proper execution.
    */
   def updateDB(batchSize: Int, queriesList: List[Update.Where])(implicit metrics: Metrics): Unit = {
-    queriesList.foreach(query => {
-      val result = cassandraUtil.upsert(query.toString)
+    val groupedQueries = queriesList.grouped(batchSize).toList
+    groupedQueries.foreach(queries => {
+      val batch = new BatchStatement()
+      queries.foreach(query => batch.add(query))
+      val result = cassandraUtil.update(batch)  // Use update() instead of upsert()
       if (result) {
         metrics.incCounter(config.dbUpdateCount)
       } else {
-        val msg = "Database update has failed: " + query.toString
+        val msg = "Database update has failed: " + batch.toString
         logger.error(msg)
         throw new Exception(msg)
       }
