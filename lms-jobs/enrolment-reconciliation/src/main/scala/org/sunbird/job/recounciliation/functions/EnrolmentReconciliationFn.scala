@@ -298,18 +298,16 @@ class EnrolmentReconciliationFn(config: EnrolmentReconciliationConfig,  httpUtil
   }
 
   /**
-   * Method to update the specific table in a batch format.
+   * Method to update the specific table.
+   * Modified for YugabyteDB compatibility - executes queries individually instead of using batch statements.
    */
   def updateDB(batchSize: Int, queriesList: List[Update.Where])(implicit metrics: Metrics): Unit = {
-    val groupedQueries = queriesList.grouped(batchSize).toList
-    groupedQueries.foreach(queries => {
-      val cqlBatch = QueryBuilder.batch()
-      queries.map(query => cqlBatch.add(query))
-      val result = cassandraUtil.upsert(cqlBatch.toString)
+    queriesList.foreach(query => {
+      val result = cassandraUtil.upsert(query.toString)
       if (result) {
         metrics.incCounter(config.dbUpdateCount)
       } else {
-        val msg = "Database update has failed: " + cqlBatch.toString
+        val msg = "Database update has failed: " + query.toString
         logger.error(msg)
         throw new Exception(msg)
       }

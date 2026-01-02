@@ -103,21 +103,19 @@ class CollectionProgressCompleteFunction(config: ActivityAggregateUpdaterConfig)
   }
 
   /**
-   * Method to update the specific table in a batch format.
+   * Method to update the specific table.
+   * Modified for YugabyteDB compatibility - executes queries individually instead of using batch statements.
    */
   def updateDB(batchSize: Int, queriesList: List[Update.Where])(implicit metrics: Metrics): Unit = {
-    val groupedQueries = queriesList.grouped(batchSize).toList
-    groupedQueries.foreach(queries => {
-      val cqlBatch = QueryBuilder.batch()
-      queries.map(query => cqlBatch.add(query))
+    queriesList.foreach(query => {
       logger.info("is cassandra cluster available =>"+(null !=cassandraUtil.session))
-      val result = cassandraUtil.upsert(cqlBatch.toString)
+      val result = cassandraUtil.upsert(query.toString)
       logger.info("result after update => "+result)
       if (result) {
         metrics.incCounter(config.dbUpdateCount)
         metrics.incCounter(config.enrolmentCompleteCount)
       } else {
-        val msg = "Database update has failed" + cqlBatch.toString
+        val msg = "Database update has failed: " + query.toString
         logger.error(msg)
         throw new Exception(msg)
       }
