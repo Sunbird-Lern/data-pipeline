@@ -3,7 +3,6 @@ package org.sunbird.job.aggregate.functions
 import java.util.UUID
 
 import com.datastax.driver.core.querybuilder.{QueryBuilder, Select, Update}
-import com.datastax.driver.core.BatchStatement
 import com.google.gson.Gson
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
@@ -104,22 +103,21 @@ class CollectionProgressCompleteFunction(config: ActivityAggregateUpdaterConfig)
   }
 
   /**
-   * Method to update the specific table using YugabyteDB batch operations.
-   * Uses BatchStatement and cassandraUtil.update() for proper execution.
+   * Method to update the specific table in a batch format.
    */
   def updateDB(batchSize: Int, queriesList: List[Update.Where])(implicit metrics: Metrics): Unit = {
     val groupedQueries = queriesList.grouped(batchSize).toList
     groupedQueries.foreach(queries => {
-      val batch = new BatchStatement()
-      queries.foreach(query => batch.add(query))
+      val cqlBatch = QueryBuilder.batch()
+      queries.map(query => cqlBatch.add(query))
       logger.info("is cassandra cluster available =>"+(null !=cassandraUtil.session))
-      val result = cassandraUtil.update(batch)  // Use update() instead of upsert()
+      val result = cassandraUtil.upsert(cqlBatch.toString)
       logger.info("result after update => "+result)
       if (result) {
         metrics.incCounter(config.dbUpdateCount)
         metrics.incCounter(config.enrolmentCompleteCount)
       } else {
-        val msg = "Database update has failed: " + batch.toString
+        val msg = "Database update has failed" + cqlBatch.toString
         logger.error(msg)
         throw new Exception(msg)
       }
