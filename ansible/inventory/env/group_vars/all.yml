@@ -160,7 +160,6 @@ kafka_topic_telemetry_audit:  "{{env_name}}.telemetry.audit"
 ## LERN BB specific kafka groups,have to be overridden in private devops repo to include BB Name for integrators.
 kafka_group_activity_agg: "{{env_name}}-activity-aggregate-group"
 kafka_group_relation_cache_updater: "{{env_name}}-relation-cache-updater-group"
-kafka_group_enrolment_reconciliation: "{{env_name}}-enrolment-reconciliation-group"
 kafka_group_collection_pre_processor: "{{env_name}}-collection-cert-pre-processor-group"
 kafka_group_certificate_generator: "{{env_name}}-certificate-generator-group"
 kafka_group_certificate_migrator: "{{env_name}}-certificate-migrator-group"

@@ -15,7 +15,6 @@
         <module>relation-cache-updater</module>
         <module>activity-aggregate-updater</module>
         <module>credential-generator</module>
-        <module>enrolment-reconciliation</module>
         <module>assessment-aggregator</module>
     </modules>
 
