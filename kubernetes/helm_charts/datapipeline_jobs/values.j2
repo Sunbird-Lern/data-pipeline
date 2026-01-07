@@ -464,36 +464,6 @@ legacy-certificate-migrator:
     taskmanager.memory.network.fraction: 0.1
 
 
-merge-user-courses:
-  merge-user-courses: |+
-    include file("/data/flink/conf/base-config.conf")
-    kafka {
-      input.topic = {{ kafka_topic_lms_user_account }}
-      output.failed.topic = {{ kafka_topic_learning_failed }}
-      groupId = {{ kafka_group_merge_courses }}
-      output.course.batch.updater.topic = {{ kafka_topic_course_batch_job_request }}
-    }
-    task {
-      consumer.parallelism = {{ merge_user_courses_consumer_parallelism }}
-      parallelism = {{ merge_user_courses_parallelism }}
-      course_batch_updater.parallelism = {{ merge_user_courses_course_batch_parallelism }}
-    }
-    lms-cassandra {
-      keyspace = "{{ middleware_course_keyspace }}"
-      content_consumption.table = "{{ middleware_consumption_table }}"
-      user_enrolments.table = "{{ middleware_user_enrolments_table }}"
-      user_activity_agg.table = "{{ middleware_user_activity_agg_table }}"
-    }
-    course.date.format = "{{ merge_user_courses_course_date_format }}"
-
-  flink-conf: |+
-    jobmanager.memory.flink.size: {{ flink_job_names['merge-user-courses'].jobmanager_memory }}
-    taskmanager.memory.flink.size: {{ flink_job_names['merge-user-courses'].taskmanager_memory }}
-    taskmanager.numberOfTaskSlots: {{ flink_job_names['merge-user-courses'].taskslots }}
-    parallelism.default: 1
-    jobmanager.execution.failover-strategy: region
-    taskmanager.memory.network.fraction: 0.1
-
 assessment-aggregator:
   assessment-aggregator: |+
     include file("/data/flink/conf/base-config.conf")

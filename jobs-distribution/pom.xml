@@ -58,7 +58,6 @@
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
-            <artifactId>merge-user-courses</artifactId>
             <version>1.0.0</version>
             <type>jar</type>
         </dependency>
