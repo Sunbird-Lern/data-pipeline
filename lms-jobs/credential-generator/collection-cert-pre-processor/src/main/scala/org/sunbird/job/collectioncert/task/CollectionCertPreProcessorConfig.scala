@@ -30,8 +30,11 @@ class CollectionCertPreProcessorConfig(override val config: Config) extends Base
     //Tags
     val generateCertificateOutputTagName = "generate-certificate-request"
     val generateCertificateOutputTag: OutputTag[String] = OutputTag[String](generateCertificateOutputTagName)
+    val failedEventOutputTagName = "failed-events"
+    val failedEventOutputTag: OutputTag[String] = OutputTag[String](failedEventOutputTagName)
+    val kafkaFailedTopic: String = config.getString("kafka.output.failed.topic")
 
-    //Cassandra config
+    //Cassandra configfailedEventOutputTag
     val dbHost: String = config.getString("lms-cassandra.host")
     val dbPort: Int = config.getInt("lms-cassandra.port")
     val keyspace: String = config.getString("lms-cassandra.keyspace")
