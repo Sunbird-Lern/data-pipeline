@@ -52,11 +52,6 @@
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
-            <version>1.0.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>org.sunbird</groupId>
             <artifactId>assessment-aggregator</artifactId>
             <version>1.0.0</version>
             <type>jar</type>
