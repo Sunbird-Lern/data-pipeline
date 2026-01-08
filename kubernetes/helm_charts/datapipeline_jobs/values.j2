@@ -495,51 +495,6 @@ notification-job:
     taskmanager.memory.network.fraction: 0.1
 
 
-user-cache-updater-v2:
-  user-cache-updater-v2: |+
-    include file("/data/flink/conf/base-config.conf")
-    kafka {
-      input.topic = {{ kafka_topic_telemetry_audit }}
-      groupId = {{ kafka_group_user_cache_updater }}
-    }
-    task {
-      restart-strategy.attempts = {{ restart_attempts }} # max 3 restart attempts
-      restart-strategy.delay = 240000 # in milli-seconds # on max restarts (3) within 4 min the job will fail.
-      consumer.parallelism = {{ user_cache_updater_job_consumer_parallelism }}
-      parallelism = {{ user_cache_updater_job_parallelism }}
-      usercache.updater.parallelism = {{ user_cache_updater_job_parallelism }}
-    }
-    regd.user.producer.pid = "userorg-service"
-    user.self.signin.types = ["google","self"]
-    user.validated.types = ["sso"]
-    user.self.signin.key = "Self-Signed-In"
-    user.valid.key = "Validated"
-    user.read.url.fields = "locations,organisations"
-    user.read.api.error = ["CLIENT_ERROR"]
-    # redis-metadata
-    redis-meta {
-      database {
-        userstore.id = {{ redis_meta_database_user_index | default(12) }}
-        key.expiry.seconds = 3600
-      }
-    }
-    #(user read api details)
-    user_read_api = "/private/user/v1/read/"
-    framework_read_api = "/api/framework/v1/read/"
-    service {
-      taxonomy.basePath = "{{ domain_url }}"
-      userorg.basePath = "{{ userorg_service_base_url }}"
-    }
-
-
-  flink-conf: |+
-    jobmanager.memory.flink.size: {{ flink_job_names['user-cache-updater-v2'].jobmanager_memory }}
-    taskmanager.memory.flink.size: {{ flink_job_names['user-cache-updater-v2'].taskmanager_memory }}
-    taskmanager.numberOfTaskSlots: {{ flink_job_names['user-cache-updater-v2'].taskslots }}
-    parallelism.default: 1
-    jobmanager.execution.failover-strategy: region
-    taskmanager.memory.network.fraction: 0.1
-
 program-user-info:
   program-user-info: |+
     include file("/data/flink/conf/base-config.conf")

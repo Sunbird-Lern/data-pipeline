@@ -167,7 +167,6 @@ kafka_group_merge_courses: "{{env_name}}-merge-courses-group"
 kafka_group_assessment_aggregator: "{{env_name}}-assessment-aggregator-group"
 kafka_group_lms_notification: "{{env_name}}-lms-notification"
 kafka_group_programuser_info: "{{env_name}}-programuser-group"
-kafka_group_user_cache_updater: "{{env_name}}-user-cache-updater-group"
 
 ## Checkpoint Config
 cloud_storage_key: "{{ cloud_public_storage_accountname }}"
