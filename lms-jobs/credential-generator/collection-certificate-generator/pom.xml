@@ -85,6 +85,11 @@
 			<version>3.11.2.0</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.sunbird</groupId>
+			<artifactId>collection-cert-pre-processor</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 
 

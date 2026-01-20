@@ -11,7 +11,7 @@ import org.sunbird.job.cache.{DataCache, RedisConnect}
 import org.sunbird.job.collectioncert.domain.Event
 import org.sunbird.job.collectioncert.task.CollectionCertPreProcessorConfig
 import org.sunbird.job.exception.InvalidEventException
-import org.sunbird.job.util.{CassandraUtil, HttpUtil}
+import org.sunbird.job.util.{CassandraUtil, HttpUtil, ScalaJsonUtil}
 import org.sunbird.job.{BaseProcessKeyedFunction, Metrics}
 
 import scala.collection.JavaConverters._
@@ -75,7 +75,8 @@ class CollectionCertPreProcessorFn(config: CollectionCertPreProcessorConfig, htt
         } catch {
             case ex: Exception => {
                 metrics.incCounter(config.failedEventCount)
-                throw new InvalidEventException(ex.getMessage, Map("partition" -> event.partition, "offset" -> event.offset), ex)
+                logger.error(s"CollectionCertPreProcessorFn:: processElement:: Exception while processing event: ${event}", ex)
+                context.output(config.failedEventOutputTag, ScalaJsonUtil.serialize(event))
             }
         }
         
