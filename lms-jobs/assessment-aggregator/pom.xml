@@ -140,12 +140,7 @@
                                         <exclude>META-INF/*.RSA</exclude>
                                     </excludes>
                                 </filter>
-                                <filter>
-                                    <artifact>org.neo4j.driver:neo4j-java-driver</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/maven/io.netty/**</exclude>
-                                    </excludes>
-                                </filter>
+
                             </filters>
                             <transformers>
                                 <transformer
