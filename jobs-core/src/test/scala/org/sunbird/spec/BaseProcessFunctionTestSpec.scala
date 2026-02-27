@@ -2,8 +2,8 @@ package org.sunbird.spec
 
 import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
-import net.manub.embeddedkafka.EmbeddedKafka._
-import net.manub.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
+import io.github.embeddedkafka.EmbeddedKafka._
+import io.github.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.test.util.MiniClusterWithClientResource

@@ -3,7 +3,6 @@ FROM sunbird/flink:1.13.5-scala_2.12-java11
 USER root
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends imagemagick \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

@@ -35,6 +35,12 @@
             <groupId>org.sunbird</groupId>
             <artifactId>notification-sdk</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.tika</groupId>
+                    <artifactId>tika-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.sunbird</groupId>
@@ -147,6 +153,7 @@
                                         <exclude>META-INF/*.RSA</exclude>
                                     </excludes>
                                 </filter>
+
                             </filters>
                             <transformers>
                                 <transformer
