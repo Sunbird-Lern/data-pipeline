@@ -164,14 +164,22 @@
 				<version>9.4.57.v20241219</version>
 			</dependency>
 			<dependency>
-				<groupId>org.yaml</groupId>
-				<artifactId>snakeyaml</artifactId>
-				<version>2.0</version>
-			</dependency>
-			<dependency>
 				<groupId>org.cassandraunit</groupId>
 				<artifactId>cassandra-unit</artifactId>
 				<version>3.11.2.0</version>
+				<scope>test</scope>
+				<exclusions>
+					<exclusion>
+						<groupId>org.yaml</groupId>
+						<artifactId>snakeyaml</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<!-- Use SnakeYAML 1.33 for cassandra-unit (test scope only) to avoid breaking API changes in 2.0 -->
+			<dependency>
+				<groupId>org.yaml</groupId>
+				<artifactId>snakeyaml</artifactId>
+				<version>1.33</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
