@@ -3,9 +3,15 @@ FROM sunbird/flink:1.13.5-scala_2.12-java11
 USER root
 RUN apt-get update \
     && apt-get upgrade -y \
+    && apt-get install -y wget \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN rm -f /opt/flink/lib/log4j-*.jar && \
+    wget -q https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar -P /opt/flink/lib/ && \
+    wget -q https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.17.1/log4j-api-2.17.1.jar -P /opt/flink/lib/ && \
+    wget -q https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-slf4j-impl/2.17.1/log4j-slf4j-impl-2.17.1.jar -P /opt/flink/lib/ && \
+    wget -q https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-1.2-api/2.17.1/log4j-1.2-api-2.17.1.jar -P /opt/flink/lib/
 COPY target/jobs-distribution-1.0.tar.gz /tmp
 USER flink
 RUN tar -xvf /tmp/jobs-distribution-1.0.tar.gz -C $FLINK_HOME/lib/
