@@ -35,7 +35,7 @@
 		<flink.version>1.13.5</flink.version>
 		<kafka.version>3.7.1</kafka.version>
 		<jackson-jaxrs.version>1.9.13</jackson-jaxrs.version>
-		<com.fasterxml.jackson.version>2.15.3</com.fasterxml.jackson.version>
+		<com.fasterxml.jackson.version>2.18.6</com.fasterxml.jackson.version>
 		<embedded-redis.version>1.1.0</embedded-redis.version>
 		<junit.version>4.13.2</junit.version>
 		<surefire.plugin.version>2.22.2</surefire.plugin.version>
@@ -81,7 +81,7 @@
 			<dependency>
 				<groupId>com.fasterxml.jackson.dataformat</groupId>
 				<artifactId>jackson-dataformat-cbor</artifactId>
-				<version>2.15.3</version>
+				<version>2.18.6</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.code.gson</groupId>
@@ -164,14 +164,22 @@
 				<version>9.4.57.v20241219</version>
 			</dependency>
 			<dependency>
-				<groupId>org.yaml</groupId>
-				<artifactId>snakeyaml</artifactId>
-				<version>1.33</version>
-			</dependency>
-			<dependency>
 				<groupId>org.cassandraunit</groupId>
 				<artifactId>cassandra-unit</artifactId>
 				<version>3.11.2.0</version>
+				<scope>test</scope>
+				<exclusions>
+					<exclusion>
+						<groupId>org.yaml</groupId>
+						<artifactId>snakeyaml</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<!-- Use SnakeYAML 1.33 for cassandra-unit (test scope only) to avoid breaking API changes in 2.0 -->
+			<dependency>
+				<groupId>org.yaml</groupId>
+				<artifactId>snakeyaml</artifactId>
+				<version>1.33</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
