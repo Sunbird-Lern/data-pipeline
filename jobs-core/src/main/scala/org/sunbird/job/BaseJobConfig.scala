@@ -26,12 +26,12 @@ class BaseJobConfig(val config: Config, val jobName: String) extends Serializabl
 
   // Redis
   val redisEnabled: Boolean = getBoolean("redis.enabled", false)
-  val redisHost: String = Option(config.getString("redis.host")).getOrElse("localhost")
-  val redisPort: Int = Option(config.getInt("redis.port")).getOrElse(6379)
+  val redisHost: String = getString("redis.host", "localhost")
+  val redisPort: Int = getInt("redis.port", 6379)
 //  val redisConnectionTimeout: Int = Option(config.getInt("redisdb.connection.timeout")).getOrElse(30000)
 
-  val metaRedisHost: String = Option(config.getString("redis-meta.host")).getOrElse("localhost")
-  val metaRedisPort: Int = Option(config.getInt("redis-meta.port")).getOrElse(6379)
+  val metaRedisHost: String = getString("redis-meta.host", "localhost")
+  val metaRedisPort: Int = getInt("redis-meta.port", 6379)
 
   // Checkpointing config
   val enableCompressedCheckpointing: Boolean = config.getBoolean("task.checkpointing.compressed")
