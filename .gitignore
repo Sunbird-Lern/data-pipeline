@@ -16,3 +16,4 @@ kubernetes/config
 .factorypath
 bin/
 .settings/
+.claude

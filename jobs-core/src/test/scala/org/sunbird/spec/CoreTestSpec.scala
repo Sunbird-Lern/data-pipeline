@@ -15,7 +15,7 @@ import redis.clients.jedis.exceptions.JedisDataException
 
 class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
 
-  val config: Config = ConfigFactory.load("base-test.conf")
+  val config: Config = ConfigFactory.parseString("redis.enabled = true").withFallback(ConfigFactory.load("base-test.conf"))
   val baseConfig: BaseJobConfig = new BaseJobConfig(config, "base-job")
 
   "RedisConnect functionality" should "be able to connect to redis" in {

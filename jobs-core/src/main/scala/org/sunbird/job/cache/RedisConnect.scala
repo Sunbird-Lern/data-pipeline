@@ -10,6 +10,7 @@ class RedisConnect(jobConfig: BaseJobConfig, host: Option[String] = None, port: 
   private val serialVersionUID = -396824011996012513L
 
   val config: Config = jobConfig.config
+  val redisEnabled: Boolean = jobConfig.redisEnabled
   val redisHost: String = host.getOrElse(Option(config.getString("redis.host")).getOrElse("localhost"))
   val redisPort: Int = port.getOrElse(Option(config.getInt("redis.port")).getOrElse(6379))
   private val logger = LoggerFactory.getLogger(classOf[RedisConnect])
