@@ -28,18 +28,20 @@ class CollectionCertPreProcessorFn(config: CollectionCertPreProcessorConfig, htt
     override def open(parameters: Configuration): Unit = {
         super.open(parameters)
         cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
-        val redisConnect = new RedisConnect(config)
-        cache = new DataCache(config, redisConnect, config.collectionCacheStore, List())
-        cache.init()
-
-      val metaRedisConn = new RedisConnect(config, Option(config.metaRedisHost), Option(config.metaRedisPort))
-      contentCache = new DataCache(config, metaRedisConn, config.contentCacheStore, List())
-      contentCache.init()
+        if (config.redisEnabled) {
+          val redisConnect = new RedisConnect(config)
+          cache = new DataCache(config, redisConnect, config.collectionCacheStore, List())
+          cache.init()
+          val metaRedisConn = new RedisConnect(config, Option(config.metaRedisHost), Option(config.metaRedisPort))
+          contentCache = new DataCache(config, metaRedisConn, config.contentCacheStore, List())
+          contentCache.init()
+        }
     }
 
     override def close(): Unit = {
         cassandraUtil.close()
-        cache.close()
+        if (cache != null) cache.close()
+        if (contentCache != null) contentCache.close()
         super.close()
     }
 

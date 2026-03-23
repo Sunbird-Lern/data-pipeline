@@ -13,10 +13,10 @@ class CollectionCertPreProcessorConfig(override val config: Config) extends Base
     implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
     
     //Redis config
-    val collectionCacheStore: Int = config.getInt("redis.database.collectionCache.id")
-    val contentCacheStore: Int = config.getInt("redis.database.contentCache.id")
-    override val metaRedisHost: String = config.getString("redis-meta.host")
-    override val metaRedisPort: Int = config.getInt("redis-meta.port")
+    val collectionCacheStore: Int = if (config.hasPath("redis.database.collectionCache.id")) config.getInt("redis.database.collectionCache.id") else 0
+    val contentCacheStore: Int = if (config.hasPath("redis.database.contentCache.id")) config.getInt("redis.database.contentCache.id") else 5
+    override val metaRedisHost: String = if (config.hasPath("redis-meta.host")) config.getString("redis-meta.host") else "localhost"
+    override val metaRedisPort: Int = if (config.hasPath("redis-meta.port")) config.getInt("redis-meta.port") else 6379
 
     
     //kafka config
