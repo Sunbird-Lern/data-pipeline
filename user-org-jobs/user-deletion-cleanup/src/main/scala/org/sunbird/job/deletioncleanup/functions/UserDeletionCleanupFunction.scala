@@ -36,15 +36,13 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
     cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
-    if (config.redisEnabled) {
-      dataCache = new DataCache(config, new RedisConnect(config, Option(config.redisHost), Option(config.redisPort)), config.userDBIndex, List())
-      dataCache.init()
-    }
+    dataCache = new DataCache(config, new RedisConnect(config, Option(config.redisHost), Option(config.redisPort)), config.userDBIndex, List())
+    dataCache.init()
   }
 
   override def close(): Unit = {
     cassandraUtil.close()
-    if (dataCache != null) dataCache.close()
+    dataCache.close()
     super.close()
   }
 
