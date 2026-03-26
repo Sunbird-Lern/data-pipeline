@@ -11,7 +11,6 @@
     <properties>
         <encoding>UTF-8</encoding>
         <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
-        <cloud-storage-sdk.version>2.0.1</cloud-storage-sdk.version>
     </properties>
     <artifactId>certificate-processor</artifactId>
     <dependencies>
@@ -20,17 +19,6 @@
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.sunbird</groupId>
-            <artifactId>cloud-storage-sdk-api</artifactId>
-            <version>${cloud-storage-sdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.sunbird</groupId>
-            <artifactId>cloud-storage-sdk-azure</artifactId>
-            <version>${cloud-storage-sdk.version}</version>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>

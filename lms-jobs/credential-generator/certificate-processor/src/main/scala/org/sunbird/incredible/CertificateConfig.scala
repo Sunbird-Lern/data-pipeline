@@ -4,4 +4,3 @@ case class CertificateConfig(basePath: String, encryptionServiceUrl: String, con
                              issuerUrl: String, signatoryExtension: String, accessCodeLength: Double = 6)
 
 
-case class StorageParams(cloudStorageType: String, storageKey: String, storageSecret: String, containerName: String, storageEndpoint: String, cloudStorageAuthType: String)

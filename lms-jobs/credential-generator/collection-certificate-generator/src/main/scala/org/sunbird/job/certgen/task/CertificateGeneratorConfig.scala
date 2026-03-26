@@ -68,12 +68,6 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val certificateGeneratorConsumer = "certificate"
 
   // env vars
-  val storageType: String = config.getString("cert_cloud_storage_type")
-  val containerName: String = config.getString("cert_container_name")
-  val storageSecret: String = config.getString("cert_cloud_storage_secret")
-  val storageEndpoint: String = config.getString("cert_cloud_storage_endpoint")
-  val storageKey: String = config.getString("cert_cloud_storage_key")
-  val cloudStorageAuthType: String = config.getString("cert_cloud_storage_auth_type")
   val domainUrl: String = config.getString("cert_domain_url")
   val encServiceUrl: String = config.getString("service.enc.basePath")
   val certRegistryBaseUrl: String = config.getString("service.certreg.basePath")

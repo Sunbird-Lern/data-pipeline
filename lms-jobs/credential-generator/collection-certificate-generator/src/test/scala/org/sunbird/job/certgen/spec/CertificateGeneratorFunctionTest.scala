@@ -11,8 +11,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, when}
 import org.sunbird.incredible.processor.CertModel
-import org.sunbird.incredible.processor.store.StorageService
-import org.sunbird.incredible.{CertificateConfig, JsonKeys, ScalaModuleJsonUtils, StorageParams}
+import org.sunbird.incredible.{CertificateConfig, JsonKeys, ScalaModuleJsonUtils}
 import org.sunbird.job.Metrics
 import org.sunbird.job.certgen.domain._
 import org.sunbird.job.certgen.exceptions.ServerException
@@ -34,8 +33,6 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
   lazy val jobConfig: CertificateGeneratorConfig = new CertificateGeneratorConfig(config)
   val httpUtil: HttpUtil = new HttpUtil
   val mockHttpUtil = mock[HttpUtil](Mockito.withSettings().serializable())
-  val storageParams: StorageParams = StorageParams(jobConfig.storageType, jobConfig.storageKey, jobConfig.storageSecret, jobConfig.containerName, jobConfig.storageEndpoint, jobConfig.cloudStorageAuthType)
-  val storageService: StorageService = new StorageService(storageParams)
   val metricJson = s"""{"${jobConfig.enrollmentDbReadCount}": 0, "${jobConfig.skippedEventCount}": 0}"""
   val mockMetrics = mock[Metrics](Mockito.withSettings().serializable())
   val certificateConfig: CertificateConfig = CertificateConfig(basePath = jobConfig.basePath, encryptionServiceUrl = jobConfig.encServiceUrl, contextUrl = jobConfig.CONTEXT, issuerUrl = jobConfig.ISSUER_URL,
@@ -70,17 +67,17 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
 
   "Certificate generation process " should " not throw exception on enabled suppress exception for signatorylist with empty field values" in {
     val event = new Event(JSONUtil.deserialize[java.util.Map[String, Any]](EventFixture.EVENT_4), 0, 0)
-    noException should be thrownBy new CertificateGeneratorFunction(jobConfig, httpUtil, storageService, cassandraUtil).processElement(event, null, mockMetrics)
+    noException should be thrownBy new CertificateGeneratorFunction(jobConfig, httpUtil, cassandraUtil).processElement(event, null, mockMetrics)
   }
 
   "Certificate rc delete api call for valid identifier " should " not throw serverException " in {
     when(mockHttpUtil.delete(any[String])).thenReturn(HTTPResponse(200, """{}"""))
-    noException should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcDeleteApi, "validId", null)
+    noException should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, cassandraUtil).callCertificateRc(jobConfig.rcDeleteApi, "validId", null)
   }
 
   "Certificate rc delete api call for invalid identifier " should " throw serverException " in {
     when(mockHttpUtil.delete(any[String])).thenReturn(HTTPResponse(500, """{}"""))
-    an [ServerException] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcDeleteApi, "invalidId", null)
+    an [ServerException] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, cassandraUtil).callCertificateRc(jobConfig.rcDeleteApi, "invalidId", null)
   }
 
   "Certificate rc create api call for for !200 response status " should " not throw serverException and returns validId" in {
@@ -91,7 +88,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(certReq), headers)).thenReturn(HTTPResponse(200, """{"id":"sunbird-rc.registry.create","ver":"1.0","ets":1646765130993,"params":{"resmsgid":"","msgid":"cca2e242-fce7-47ec-b5d0-61cebe56c31d","err":"","status":"SUCCESSFUL","errmsg":""},"responseCode":"OK","result":{"TrainingCertificate":{"osid":"validId"}}}"""))
     var id: String = null
     noException should be thrownBy {
-       id = new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  certReq)
+       id = new CertificateGeneratorFunction(jobConfig, mockHttpUtil, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  certReq)
     }
     assert(id equals "validId")
   }
@@ -102,7 +99,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
       JsonKeys.CERTIFICATE_NAME -> "name"
     )
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(certReq), headers)).thenReturn(HTTPResponse(500, """{}"""))
-    an [ServerException] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  certReq)
+    an [ServerException] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  certReq)
   }
 
   "Certificate Update enrolment with valid event " should " not throw exception " in {
@@ -119,7 +116,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/PublicKey/search", ScalaModuleJsonUtils.serialize(req))).thenReturn(HTTPResponse(200, """[{"osUpdatedAt":"2022-03-17T06:43:48.070698Z","osCreatedAt":"2022-03-17T06:43:48.070698Z","osUpdatedBy":"anonymous","osCreatedBy":"anonymous","osid":"1-25a8c96b-b254-4720-bbc9-29b37c3c2bec","value":"keyvalue","alg":"RSA"}]"""))
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(createCertReq))).thenReturn(HTTPResponse(200, """{"id":"sunbird-rc.registry.create","ver":"1.0","ets":1646765130993,"params":{"resmsgid":"","msgid":"cca2e242-fce7-47ec-b5d0-61cebe56c31d","err":"","status":"SUCCESSFUL","errmsg":""},"responseCode":"OK","result":{"TrainingCertificate":{"osid":"validId"}}}"""))
     when(mockCassandraUtil.find("SELECT * FROM sunbird_courses.user_enrolments WHERE userid='"+event.userId+"' AND batchid='"+batchId+"' AND courseid='"+courseId+"';")).thenReturn(new util.ArrayList[Row]())
-    noException should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).updateUserEnrollmentTable(event,userEnrollmentData,null )(mockMetrics)
+    noException should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil).updateUserEnrollmentTable(event,userEnrollmentData,null )(mockMetrics)
   }
 
   "Certificate generation with valid event " should " not throw exception " in {
@@ -131,7 +128,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/PublicKey/search", ScalaModuleJsonUtils.serialize(req))).thenReturn(HTTPResponse(200, """[{"osUpdatedAt":"2022-03-17T06:43:48.070698Z","osCreatedAt":"2022-03-17T06:43:48.070698Z","osUpdatedBy":"anonymous","osCreatedBy":"anonymous","osid":"1-25a8c96b-b254-4720-bbc9-29b37c3c2bec","value":"keyvalue","alg":"RSA"}]"""))
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity, ScalaModuleJsonUtils.serialize(createCertReq), headers)).thenReturn(HTTPResponse(200, """{"id":"sunbird-rc.registry.create","ver":"1.0","ets":1646765130993,"params":{"resmsgid":"","msgid":"cca2e242-fce7-47ec-b5d0-61cebe56c31d","err":"","status":"SUCCESSFUL","errmsg":""},"responseCode":"OK","result":{"TrainingCertificate":{"osid":"validId"}}}"""))
     when(mockCassandraUtil.find("SELECT * FROM sunbird_courses.user_enrolments WHERE userid='"+event.userId+"' AND batchid='"+batchId+"' AND courseid='"+courseId+"';")).thenReturn(new util.ArrayList[Row]())
-    noException should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).generateCertificateUsingRC(event, null)(mockMetrics)
+    noException should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil).generateCertificateUsingRC(event, null)(mockMetrics)
 
   }
 
@@ -159,7 +156,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     val createCertReq = generateRequest(event)
     var id: String = null
     noException should be thrownBy {
-      id = new CertificateGeneratorFunction(jobConfig, httpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  createCertReq)
+      id = new CertificateGeneratorFunction(jobConfig, httpUtil, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  createCertReq)
     }
     assert(id != null)
   }
@@ -168,7 +165,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     val createCertReq = Map[String, AnyRef]()
     var id: String = null
     an [ServerException] should be thrownBy {
-      id = new CertificateGeneratorFunction(jobConfig, httpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  createCertReq)
+      id = new CertificateGeneratorFunction(jobConfig, httpUtil, cassandraUtil).callCertificateRc(jobConfig.rcCreateApi, null,  createCertReq)
     }
     assert(id == null)
   }*/
@@ -176,7 +173,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
   "Certificate rc delete api call for for missing id " should " throw server Exception " in {
     when(mockHttpUtil.delete(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity + "/" +"missingId")).thenReturn(HTTPResponse(500, """{}"""))
     an [ServerException] should be thrownBy {
-      new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, cassandraUtil).callCertificateRc(jobConfig.rcDeleteApi, "missingId",  null)
+      new CertificateGeneratorFunction(jobConfig, mockHttpUtil, cassandraUtil).callCertificateRc(jobConfig.rcDeleteApi, "missingId",  null)
     }
   }
 
@@ -187,7 +184,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
       .ifExists
     when(mockCassandraUtil.executePreparedStatement(query.toString)).thenReturn(new util.ArrayList[Row]())
     noException should be thrownBy {
-      new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).deleteOldRegistry("missingId")
+      new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil).deleteOldRegistry("missingId")
     }
   }
 
@@ -199,7 +196,7 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
       .ifExists
     when(mockCassandraUtil.executePreparedStatement(query.toString)).thenReturn(new util.ArrayList[Row]())
     noException should be thrownBy {
-      new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).deleteOldRegistry("validId")
+      new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil).deleteOldRegistry("validId")
     }
   }
 
@@ -209,21 +206,21 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     val courseId = event.related.getOrElse(jobConfig.BATCH_ID, "").asInstanceOf[String]
     when(mockHttpUtil.delete(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity + "/" +event.oldId)).thenReturn(HTTPResponse(500, """{}"""))
     when(mockCassandraUtil.find("SELECT * FROM sunbird_courses.user_enrolments WHERE userid='"+event.userId+"' AND batchid='"+batchId+"' AND courseid='"+courseId+"';")).thenReturn(new util.ArrayList[Row]())
-    an [Exception] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).generateCertificateUsingRC(event, null)(mockMetrics)
+    an [Exception] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil).generateCertificateUsingRC(event, null)(mockMetrics)
 
   }
 
   "Certificate generation for event with connection issue on rc " should " not throw unirest exception while re issuing" in {
     val event = new Event(JSONUtil.deserialize[java.util.Map[String, Any]](EventFixture.EVENT_1), 0, 0)
     when(mockHttpUtil.delete(jobConfig.rcBaseUrl + "/" + jobConfig.rcEntity + "/" +event.oldId)).thenThrow(new UnirestException(""))
-    an [Exception] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).generateCertificateUsingRC(event, null)(mockMetrics)
+    an [Exception] should be thrownBy new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil).generateCertificateUsingRC(event, null)(mockMetrics)
 
   }
 
   "Certificate rc search api call for publicKey with valid request" should " returns id" in {
     val req = Map("filters" -> Map())
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/PublicKey/search", ScalaModuleJsonUtils.serialize(req))).thenReturn(HTTPResponse(200, """[{"osUpdatedAt":"2022-03-17T06:43:48.070698Z","osCreatedAt":"2022-03-17T06:43:48.070698Z","osUpdatedBy":"anonymous","osCreatedBy":"anonymous","osid":"1-25a8c96b-b254-4720-bbc9-29b37c3c2bec","value":"keyvalue","alg":"RSA"}]"""))
-    val id: String = new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).callCertificateRc(jobConfig.rcSearchApi, null,  req)
+    val id: String = new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil).callCertificateRc(jobConfig.rcSearchApi, null,  req)
     assert(id != null)
 }
 
@@ -231,13 +228,13 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     var id: String = null
     val req = Map("key"->"")
     when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/PublicKey/search", ScalaModuleJsonUtils.serialize(req))).thenReturn(HTTPResponse(200, """{"id":"sunbird-rc.registry.search","ver":"1.0","ets":1647501412770,"params":{"resmsgid":"","msgid":"1c33747f-c2f5-4c36-89d9-7efdf8b4021a","err":"","status":"UNSUCCESSFUL","errmsg":"filters or queries missing from search request!"},"responseCode":"OK","result":""}p"""))
-    an [Exception] should be thrownBy  new CertificateGeneratorFunction(jobConfig, mockHttpUtil, storageService, mockCassandraUtil).callCertificateRc(jobConfig.rcSearchApi, null,  req)
+    an [Exception] should be thrownBy  new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil).callCertificateRc(jobConfig.rcSearchApi, null,  req)
   }
 
   //Functional test case for search service
 /*  "Certificate rc search api call for publicKey with invalid request" should " returns id" in {
     val req = Map("filters" -> Map())
-    val id: String = new CertificateGeneratorFunction(jobConfig, httpUtil, storageService, mockCassandraUtil).callCertificateRc(jobConfig.rcSearchApi, null,  req)
+    val id: String = new CertificateGeneratorFunction(jobConfig, httpUtil, mockCassandraUtil).callCertificateRc(jobConfig.rcSearchApi, null,  req)
     assert(id != null)
   }*/
 }

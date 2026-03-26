@@ -16,7 +16,6 @@
     <properties>
         <encoding>UTF-8</encoding>
         <scoverage.plugin.version>1.4.0</scoverage.plugin.version>
-        <cloud-storage-sdk.version>2.0.1</cloud-storage-sdk.version>
     </properties>
     <dependencies>
         <dependency>
@@ -113,17 +112,6 @@
             <groupId>com.moparisthebest</groupId>
             <artifactId>junidecode</artifactId>
             <version>0.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.sunbird</groupId>
-            <artifactId>cloud-storage-sdk-api</artifactId>
-            <version>${cloud-storage-sdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.sunbird</groupId>
-            <artifactId>cloud-storage-sdk-azure</artifactId>
-            <version>${cloud-storage-sdk.version}</version>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
