@@ -57,7 +57,6 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     metrics.incCounter(config.totalEventsCount)
     try {
       val certValidator = new CertValidator()
-      logger.info("Certificate generator | is rc integration enabled: " + config.enableRcCertificate)
       certValidator.validateGenerateCertRequest(event, config.enableSuppressException)
       if(certValidator.isNotIssued(event)(config, metrics, cassandraUtil)) {
         generateCertificateUsingRC(event, context)(metrics)
