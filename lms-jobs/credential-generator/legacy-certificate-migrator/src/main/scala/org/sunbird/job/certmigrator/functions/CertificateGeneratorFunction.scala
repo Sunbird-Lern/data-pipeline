@@ -62,7 +62,6 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     try {
       val certValidator = new CertValidator()
       val certId = event.identifier
-      logger.info("Certificate migrator | is rc integration enabled: " + config.enableRcCertificate)
       certValidator.validateGenerateCertRequest(event, config.enableSuppressException)
       var stage = getStage(event)
       var rcCertId: String = ""

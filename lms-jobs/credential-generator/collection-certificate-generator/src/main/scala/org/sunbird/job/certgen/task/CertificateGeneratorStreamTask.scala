@@ -8,8 +8,6 @@ import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-import org.sunbird.incredible.StorageParams
-import org.sunbird.incredible.processor.store.StorageService
 import org.sunbird.job.certgen.domain.Event
 import org.sunbird.job.certgen.functions.{CertificateGeneratorFunction, CreateUserFeedFunction, NotificationMetaData, NotifierFunction, UserFeedMetaData}
 import org.sunbird.job.collectioncert.functions.CollectionCertPreProcessorFn
@@ -17,7 +15,7 @@ import org.sunbird.job.collectioncert.task.CollectionCertPreProcessorConfig
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.util.{FlinkUtil, HttpUtil, ScalaJsonUtil}
 
-class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaConnector: FlinkKafkaConnector, httpUtil: HttpUtil, storageService: StorageService) {
+class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaConnector: FlinkKafkaConnector, httpUtil: HttpUtil) {
 
   def process(): Unit = {
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
@@ -49,7 +47,7 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
     val processStreamTask = preProcessedStream.getSideOutput(preProcessorConfig.generateCertificateOutputTag)
       .map(jsonString => new Event(ScalaJsonUtil.deserialize[util.Map[String, Any]](jsonString), 0, 0))
       .keyBy(new CertificateGeneratorKeySelector)
-      .process(new CertificateGeneratorFunction(config, httpUtil, storageService))
+      .process(new CertificateGeneratorFunction(config, httpUtil))
       .name("collection-certificate-generator")
       .uid("collection-certificate-generator")
       .setParallelism(config.parallelism)
@@ -88,9 +86,7 @@ object CertificateGeneratorStreamTask {
     val ccgConfig = new CertificateGeneratorConfig(config)
     val kafkaUtil = new FlinkKafkaConnector(ccgConfig)
     val httpUtil = new HttpUtil
-    val storageParams: StorageParams = StorageParams(ccgConfig.storageType, ccgConfig.storageKey, ccgConfig.storageSecret, ccgConfig.containerName,Option(ccgConfig.storageEndpoint))
-    val storageService: StorageService = new StorageService(storageParams)
-    val task = new CertificateGeneratorStreamTask(ccgConfig, kafkaUtil, httpUtil, storageService)
+    val task = new CertificateGeneratorStreamTask(ccgConfig, kafkaUtil, httpUtil)
     task.process()
   }
 }

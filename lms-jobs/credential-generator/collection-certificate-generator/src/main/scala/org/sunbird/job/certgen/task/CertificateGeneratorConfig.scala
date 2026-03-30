@@ -23,7 +23,6 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val kafkaAuditEventTopic: String = config.getString("kafka.output.audit.topic")
 
   val enableSuppressException: Boolean = if(config.hasPath("enable.suppress.exception")) config.getBoolean("enable.suppress.exception") else false
-  val enableRcCertificate: Boolean = if(config.hasPath("enable.rc.certificate")) config.getBoolean("enable.rc.certificate") else false
 
 
   // Producers
@@ -68,11 +67,6 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val certificateGeneratorConsumer = "certificate"
 
   // env vars
-  val storageType: String = config.getString("cert_cloud_storage_type")
-  val containerName: String = config.getString("cert_container_name")
-  val storageSecret: String = config.getString("cert_cloud_storage_secret")
-  val storageEndpoint: String = config.getString("cert_cloud_storage_endpoint")
-  val storageKey: String = config.getString("cert_cloud_storage_key")
   val domainUrl: String = config.getString("cert_domain_url")
   val encServiceUrl: String = config.getString("service.enc.basePath")
   val certRegistryBaseUrl: String = config.getString("service.certreg.basePath")
