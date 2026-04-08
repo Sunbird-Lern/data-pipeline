@@ -1,55 +1,98 @@
 package org.sunbird.job.connector
 
 import java.util
-import org.apache.flink.streaming.api.functions.sink.SinkFunction
-import org.apache.flink.streaming.api.functions.source.SourceFunction
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer.Semantic
-import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer, FlinkKafkaProducer}
+import org.apache.flink.connector.kafka.source.KafkaSource
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer
+import org.apache.flink.connector.kafka.sink.KafkaSink
+import org.apache.flink.connector.base.DeliveryGuarantee
 import org.sunbird.job.BaseJobConfig
 import org.sunbird.job.domain.reader.{Event, JobRequest}
 import org.sunbird.job.serde.{ByteDeserializationSchema, ByteSerializationSchema, EventDeserializationSchema, EventSerializationSchema, JobRequestDeserializationSchema, JobRequestSerializationSchema, MapDeserializationSchema, MapSerializationSchema, StringDeserializationSchema, StringSerializationSchema}
 
 class FlinkKafkaConnector(config: BaseJobConfig) extends Serializable {
-  def kafkaMapSource(kafkaTopic: String): SourceFunction[util.Map[String, AnyRef]] = {
-    new FlinkKafkaConsumer[util.Map[String, AnyRef]](kafkaTopic, new MapDeserializationSchema, config.kafkaConsumerProperties)
+  def kafkaMapSource(kafkaTopic: String): KafkaSource[util.Map[String, AnyRef]] = {
+    KafkaSource.builder[util.Map[String, AnyRef]]()
+      .setTopics(kafkaTopic)
+      .setDeserializer(new MapDeserializationSchema)
+      .setProperties(config.kafkaConsumerProperties)
+      .setStartingOffsets(OffsetsInitializer.committedOffsets())
+      .build()
   }
 
-  def kafkaMapSink(kafkaTopic: String): SinkFunction[util.Map[String, AnyRef]] = {
-    new FlinkKafkaProducer[util.Map[String, AnyRef]](kafkaTopic, new MapSerializationSchema(kafkaTopic), config.kafkaProducerProperties, Semantic.AT_LEAST_ONCE)
+  def kafkaMapSink(kafkaTopic: String): KafkaSink[util.Map[String, AnyRef]] = {
+    KafkaSink.builder[util.Map[String, AnyRef]]()
+      .setRecordSerializer(new MapSerializationSchema(kafkaTopic))
+      .setKafkaProducerConfig(config.kafkaProducerProperties)
+      .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+      .build()
   }
 
-  def kafkaStringSource(kafkaTopic: String): SourceFunction[String] = {
-    new FlinkKafkaConsumer[String](kafkaTopic, new StringDeserializationSchema, config.kafkaConsumerProperties)
+  def kafkaStringSource(kafkaTopic: String): KafkaSource[String] = {
+    KafkaSource.builder[String]()
+      .setTopics(kafkaTopic)
+      .setDeserializer(new StringDeserializationSchema)
+      .setProperties(config.kafkaConsumerProperties)
+      .setStartingOffsets(OffsetsInitializer.committedOffsets())
+      .build()
   }
 
-  def kafkaStringSink(kafkaTopic: String): SinkFunction[String] = {
-    new FlinkKafkaProducer[String](kafkaTopic, new StringSerializationSchema(kafkaTopic), config.kafkaProducerProperties, Semantic.AT_LEAST_ONCE)
+  def kafkaStringSink(kafkaTopic: String): KafkaSink[String] = {
+    KafkaSink.builder[String]()
+      .setRecordSerializer(new StringSerializationSchema(kafkaTopic))
+      .setKafkaProducerConfig(config.kafkaProducerProperties)
+      .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+      .build()
   }
 
-  def kafkaJobRequestSource[T <: JobRequest](kafkaTopic: String)(implicit m: Manifest[T]): SourceFunction[T] = {
-    new FlinkKafkaConsumer[T](kafkaTopic, new JobRequestDeserializationSchema[T], config.kafkaConsumerProperties)
+  def kafkaJobRequestSource[T <: JobRequest](kafkaTopic: String)(implicit m: Manifest[T]): KafkaSource[T] = {
+    KafkaSource.builder[T]()
+      .setTopics(kafkaTopic)
+      .setDeserializer(new JobRequestDeserializationSchema[T])
+      .setProperties(config.kafkaConsumerProperties)
+      .setStartingOffsets(OffsetsInitializer.committedOffsets())
+      .build()
   }
 
-  def kafkaJobRequestSink[T <: JobRequest](kafkaTopic: String)(implicit m: Manifest[T]): SinkFunction[T] = {
-    new FlinkKafkaProducer[T](kafkaTopic,
-      new JobRequestSerializationSchema[T](kafkaTopic), config.kafkaProducerProperties, Semantic.AT_LEAST_ONCE)
+  def kafkaJobRequestSink[T <: JobRequest](kafkaTopic: String)(implicit m: Manifest[T]): KafkaSink[T] = {
+    KafkaSink.builder[T]()
+      .setRecordSerializer(new JobRequestSerializationSchema[T](kafkaTopic))
+      .setKafkaProducerConfig(config.kafkaProducerProperties)
+      .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+      .build()
   }
 
-  def kafkaEventSource[T <: Event](kafkaTopic: String)(implicit m: Manifest[T]): SourceFunction[T] = {
-    new FlinkKafkaConsumer[T](kafkaTopic, new EventDeserializationSchema[T], config.kafkaConsumerProperties)
+  def kafkaEventSource[T <: Event](kafkaTopic: String)(implicit m: Manifest[T]): KafkaSource[T] = {
+    KafkaSource.builder[T]()
+      .setTopics(kafkaTopic)
+      .setDeserializer(new EventDeserializationSchema[T])
+      .setProperties(config.kafkaConsumerProperties)
+      .setStartingOffsets(OffsetsInitializer.committedOffsets())
+      .build()
   }
 
-  def kafkaEventSink[T <: Event](kafkaTopic: String)(implicit m: Manifest[T]): SinkFunction[T] = {
-    new FlinkKafkaProducer[T](kafkaTopic,
-      new EventSerializationSchema[T](kafkaTopic), config.kafkaProducerProperties, Semantic.AT_LEAST_ONCE)
+  def kafkaEventSink[T <: Event](kafkaTopic: String)(implicit m: Manifest[T]): KafkaSink[T] = {
+    KafkaSink.builder[T]()
+      .setRecordSerializer(new EventSerializationSchema[T](kafkaTopic))
+      .setKafkaProducerConfig(config.kafkaProducerProperties)
+      .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+      .build()
   }
 
-  def kafkaBytesSource(kafkaTopic: String): SourceFunction[Array[Byte]] = {
-    new FlinkKafkaConsumer[Array[Byte]](kafkaTopic, new ByteDeserializationSchema, config.kafkaConsumerProperties)
+  def kafkaBytesSource(kafkaTopic: String): KafkaSource[Array[Byte]] = {
+    KafkaSource.builder[Array[Byte]]()
+      .setTopics(kafkaTopic)
+      .setDeserializer(new ByteDeserializationSchema)
+      .setProperties(config.kafkaConsumerProperties)
+      .setStartingOffsets(OffsetsInitializer.committedOffsets())
+      .build()
   }
 
-  def kafkaBytesSink(kafkaTopic: String): SinkFunction[Array[Byte]] = {
-    new FlinkKafkaProducer[Array[Byte]](kafkaTopic, new ByteSerializationSchema(kafkaTopic), config.kafkaProducerProperties, Semantic.AT_LEAST_ONCE)
+  def kafkaBytesSink(kafkaTopic: String): KafkaSink[Array[Byte]] = {
+    KafkaSink.builder[Array[Byte]]()
+      .setRecordSerializer(new ByteSerializationSchema(kafkaTopic))
+      .setKafkaProducerConfig(config.kafkaProducerProperties)
+      .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+      .build()
   }
 
 }
