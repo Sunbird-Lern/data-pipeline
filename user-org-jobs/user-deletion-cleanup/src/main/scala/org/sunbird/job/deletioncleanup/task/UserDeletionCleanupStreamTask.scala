@@ -5,6 +5,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.deletioncleanup.domain.Event
@@ -18,7 +19,7 @@ class UserDeletionCleanupStreamTask(config: UserDeletionCleanupConfig, httpUtil:
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
     implicit val mapTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     val source = kafkaConnector.kafkaEventSource[Event](config.inputTopic)
-    env.addSource(source).name(config.userDeletionCleanupConsumer).uid(config.userDeletionCleanupConsumer).
+    env.fromSource(source, WatermarkStrategy.noWatermarks(), config.userDeletionCleanupConsumer).uid(config.userDeletionCleanupConsumer).
       setParallelism(config.userDeletionCleanupParallelism).rebalance
       .process(new UserDeletionCleanupFunction(config, httpUtil))
       .name(config.userDeletionCleanupFunction).uid(config.userDeletionCleanupFunction)

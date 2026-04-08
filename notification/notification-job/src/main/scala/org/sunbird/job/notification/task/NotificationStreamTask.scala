@@ -7,6 +7,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.slf4j.LoggerFactory
 import org.sunbird.job.connector.FlinkKafkaConnector
@@ -22,8 +23,7 @@ class NotificationStreamTask(config: NotificationConfig, kafkaConnector: FlinkKa
         implicit val notificationFailedMetaTypeInfo: TypeInformation[NotificationMessage] = TypeExtractor.getForClass(classOf[NotificationMessage])
     
     
-        val processStreamTask = env.addSource(kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic))
-            .name(config.notificationConsumer)
+        val processStreamTask = env.fromSource(kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic), WatermarkStrategy.noWatermarks(), config.notificationConsumer)
             .uid(config.notificationConsumer).setParallelism(config.kafkaConsumerParallelism)
             .rebalance
             .keyBy(new NotificationKeySelector)
@@ -33,7 +33,7 @@ class NotificationStreamTask(config: NotificationConfig, kafkaConnector: FlinkKa
             .setParallelism(config.parallelism)
         
         processStreamTask.getSideOutput(config.notificationFailedOutputTag)
-            .addSink(kafkaConnector.kafkaStringSink(config.kafkaInputTopic))
+            .sinkTo(kafkaConnector.kafkaStringSink(config.kafkaInputTopic))
             .name(config.notificationFailedProducer)
             .uid(config.notificationFailedProducer)
         

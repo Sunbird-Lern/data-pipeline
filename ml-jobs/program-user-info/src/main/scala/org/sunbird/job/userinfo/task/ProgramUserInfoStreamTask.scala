@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.userinfo.domain.Event
@@ -22,7 +23,7 @@ class ProgramUserInfoStreamTask(config: ProgramUserInfoConfig, kafkaConnector: F
       implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
       val source = kafkaConnector.kafkaEventSource[Event](config.kafkaInputTopic)
 
-      env.addSource(source).name(config.programUserConsumer)
+      env.fromSource(source, WatermarkStrategy.noWatermarks(), config.programUserConsumer)
         .uid(config.programUserConsumer).setParallelism(config.kafkaConsumerParallelism).rebalance
         .process(new ProgramUserInfoFunction(config))
         .name(config.programUserInfoFunction).uid(config.programUserInfoFunction)

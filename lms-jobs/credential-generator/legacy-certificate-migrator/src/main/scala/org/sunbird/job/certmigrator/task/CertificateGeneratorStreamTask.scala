@@ -7,6 +7,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.sunbird.job.certmigrator.domain.Event
 import org.sunbird.job.certmigrator.functions.CertificateGeneratorFunction
@@ -23,8 +24,7 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
 
     val source = kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic)
 
-    val processStreamTask = env.addSource(source)
-      .name(config.certificateGeneratorConsumer)
+    val processStreamTask = env.fromSource(source, WatermarkStrategy.noWatermarks(), config.certificateGeneratorConsumer)
       .uid(config.certificateGeneratorConsumer).setParallelism(config.kafkaConsumerParallelism)
       .rebalance
       .keyBy(new CertificateGeneratorKeySelector)
@@ -34,7 +34,7 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
       .setParallelism(config.parallelism)
 
     processStreamTask.getSideOutput(config.auditEventOutputTag)
-      .addSink(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
+      .sinkTo(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
       .name(config.certificateGeneratorAuditProducer)
       .uid(config.certificateGeneratorAuditProducer)
 

@@ -7,6 +7,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.sunbird.job.certgen.domain.Event
 import org.sunbird.job.certgen.functions.{CertificateGeneratorFunction, CreateUserFeedFunction, NotificationMetaData, NotifierFunction, UserFeedMetaData}
@@ -29,8 +30,7 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
     val preProcessorConfig = new CollectionCertPreProcessorConfig(config.config)
     val source = kafkaConnector.kafkaJobRequestSource[org.sunbird.job.collectioncert.domain.Event](preProcessorConfig.kafkaInputTopic)
 
-    val preProcessedStream = env.addSource(source)
-      .name(preProcessorConfig.certificatePreProcessorConsumer)
+    val preProcessedStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), preProcessorConfig.certificatePreProcessorConsumer)
       .uid(preProcessorConfig.certificatePreProcessorConsumer).setParallelism(config.kafkaConsumerParallelism)
       .rebalance
       .keyBy(new CollectionCertPreProcessorKeySelector)
@@ -40,7 +40,7 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
       .setParallelism(config.parallelism)
 
     preProcessedStream.getSideOutput(preProcessorConfig.failedEventOutputTag)
-      .addSink(kafkaConnector.kafkaStringSink(preProcessorConfig.kafkaFailedTopic))
+      .sinkTo(kafkaConnector.kafkaStringSink(preProcessorConfig.kafkaFailedTopic))
       .name("pre-processor-failed-sink")
       .uid("pre-processor-failed-sink")
 
@@ -53,7 +53,7 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
       .setParallelism(config.parallelism)
 
     processStreamTask.getSideOutput(config.auditEventOutputTag)
-      .addSink(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
+      .sinkTo(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
       .name(config.certificateGeneratorAuditProducer)
       .uid(config.certificateGeneratorAuditProducer)
 
