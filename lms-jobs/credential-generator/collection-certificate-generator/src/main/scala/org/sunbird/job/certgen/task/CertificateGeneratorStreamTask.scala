@@ -8,7 +8,7 @@ import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.common.eventtime.WatermarkStrategy
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.sunbird.job.certgen.domain.Event
 import org.sunbird.job.certgen.functions.{CertificateGeneratorFunction, CreateUserFeedFunction, NotificationMetaData, NotifierFunction, UserFeedMetaData}
 import org.sunbird.job.collectioncert.functions.CollectionCertPreProcessorFn
@@ -18,21 +18,34 @@ import org.sunbird.job.util.{FlinkUtil, HttpUtil, ScalaJsonUtil}
 
 class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaConnector: FlinkKafkaConnector, httpUtil: HttpUtil) {
 
+  implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+  implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
+  implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
+  implicit val notificationMetaTypeInfo: TypeInformation[NotificationMetaData] = TypeExtractor.getForClass(classOf[NotificationMetaData])
+  implicit val userFeedMetaTypeInfo: TypeInformation[UserFeedMetaData] = TypeExtractor.getForClass(classOf[UserFeedMetaData])
+  implicit val preProcessorEventTypeInfo: TypeInformation[org.sunbird.job.collectioncert.domain.Event] = TypeExtractor.getForClass(classOf[org.sunbird.job.collectioncert.domain.Event])
+
   def process(): Unit = {
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
-    implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
-    implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
-    implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
-    implicit val notificationMetaTypeInfo: TypeInformation[NotificationMetaData] = TypeExtractor.getForClass(classOf[NotificationMetaData])
-    implicit val userFeedMetaTypeInfo: TypeInformation[UserFeedMetaData] = TypeExtractor.getForClass(classOf[UserFeedMetaData])
-    implicit val preProcessorEventTypeInfo: TypeInformation[org.sunbird.job.collectioncert.domain.Event] = TypeExtractor.getForClass(classOf[org.sunbird.job.collectioncert.domain.Event])
 
     val preProcessorConfig = new CollectionCertPreProcessorConfig(config.config)
     val source = kafkaConnector.kafkaJobRequestSource[org.sunbird.job.collectioncert.domain.Event](preProcessorConfig.kafkaInputTopic)
-
-    val preProcessedStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), preProcessorConfig.certificatePreProcessorConsumer)
+    val inputStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), preProcessorConfig.certificatePreProcessorConsumer)
       .uid(preProcessorConfig.certificatePreProcessorConsumer).setParallelism(config.kafkaConsumerParallelism)
       .rebalance
+    buildGraph(env, inputStream)
+    env.execute(config.jobName)
+  }
+
+  def processForTest(env: StreamExecutionEnvironment, inputStream: DataStream[org.sunbird.job.collectioncert.domain.Event]): Unit = {
+    buildGraph(env, inputStream)
+    env.execute(config.jobName)
+  }
+
+  private def buildGraph(env: StreamExecutionEnvironment, inputStream: DataStream[org.sunbird.job.collectioncert.domain.Event]): Unit = {
+    val preProcessorConfig = new CollectionCertPreProcessorConfig(config.config)
+
+    val preProcessedStream = inputStream
       .keyBy(new CollectionCertPreProcessorKeySelector)
       .process(new CollectionCertPreProcessorFn(preProcessorConfig, httpUtil))
       .name("collection-cert-pre-processor")
@@ -68,9 +81,6 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
       .name("user-feed")
       .uid("user-feed")
       .setParallelism(config.userFeedParallelism)
-
-
-    env.execute(config.jobName)
   }
 
 }

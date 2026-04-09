@@ -7,13 +7,14 @@ import de.flapdoodle.embed.mongo.{MongodExecutable, MongodProcess, MongodStarter
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.transferownership.domain.Event
 import org.sunbird.job.transferownership.task.{TransferOwnershipConfig, TransferOwnershipStreamTask}
-import org.sunbird.job.util.MongoUtil
+import org.sunbird.job.util.{FlinkUtil, MongoUtil}
 import org.sunbird.spec.BaseTestSpec
 import org.sunbird.transferownership.fixture.LoadMongoData
 
@@ -57,10 +58,10 @@ class TransferOwnershipFunctionTestSpec extends BaseTestSpec {
     flinkCluster.after()
   }
 
-  def initialize() {
-    when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.inputTopic))
-      .thenReturn(new TransferOwnershipEventSource)
-    when(mockKafkaUtil.kafkaStringSink(jobConfig.inputTopic)).thenReturn(new GenerateTransferOwnershipSink)
+  def createTestStream(env: StreamExecutionEnvironment): org.apache.flink.streaming.api.scala.DataStream[Event] = {
+    implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+    env.addSource(new TransferOwnershipEventSource).name(jobConfig.mlTransferOwnershipConsumer)
+      .uid(jobConfig.mlTransferOwnershipConsumer).setParallelism(jobConfig.mlTransferOwnershipParallelism).rebalance
   }
 
   val mongoCollection = new MongoUtil("localhost", port, "ml-service")
@@ -78,8 +79,9 @@ class TransferOwnershipFunctionTestSpec extends BaseTestSpec {
   }
 
   "TransferOwnership for one-to-one solution asset " should "execute successfully " in {
-    initialize()
-    new TransferOwnershipStreamTask(jobConfig, mockKafkaUtil).process()
+    implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(jobConfig)
+    val inputStream = createTestStream(env)
+    new TransferOwnershipStreamTask(jobConfig, mockKafkaUtil).processForTest(env, inputStream)
   }
 
 }

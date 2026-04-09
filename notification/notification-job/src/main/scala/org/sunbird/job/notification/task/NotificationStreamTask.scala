@@ -8,7 +8,7 @@ import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.common.eventtime.WatermarkStrategy
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.slf4j.LoggerFactory
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.util.FlinkUtil
@@ -16,31 +16,39 @@ import org.sunbird.job.notification.domain.{Event, NotificationMessage}
 import org.sunbird.job.notification.function.NotificationFunction
 
 class NotificationStreamTask(config: NotificationConfig, kafkaConnector: FlinkKafkaConnector) {
+
+    implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+    implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
+    implicit val notificationFailedMetaTypeInfo: TypeInformation[NotificationMessage] = TypeExtractor.getForClass(classOf[NotificationMessage])
+
     def process(): Unit = {
         implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
-        implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
-        implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
-        implicit val notificationFailedMetaTypeInfo: TypeInformation[NotificationMessage] = TypeExtractor.getForClass(classOf[NotificationMessage])
-    
-    
-        val processStreamTask = env.fromSource(kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic), WatermarkStrategy.noWatermarks(), config.notificationConsumer)
+        val source = env.fromSource(kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic), WatermarkStrategy.noWatermarks(), config.notificationConsumer)
             .uid(config.notificationConsumer).setParallelism(config.kafkaConsumerParallelism)
             .rebalance
+        buildGraph(env, source)
+        env.execute(config.jobName)
+    }
+
+    def processForTest(env: StreamExecutionEnvironment, inputStream: DataStream[Event]): Unit = {
+        buildGraph(env, inputStream)
+        env.execute(config.jobName)
+    }
+
+    private def buildGraph(env: StreamExecutionEnvironment, inputStream: DataStream[Event]): Unit = {
+        val processStreamTask = inputStream
             .keyBy(new NotificationKeySelector)
             .process(new NotificationFunction(config))
             .name("notification-trigger")
             .uid("notification-trigger")
             .setParallelism(config.parallelism)
-        
+
         processStreamTask.getSideOutput(config.notificationFailedOutputTag)
             .sinkTo(kafkaConnector.kafkaStringSink(config.kafkaInputTopic))
             .name(config.notificationFailedProducer)
             .uid(config.notificationFailedProducer)
-        
-        env.execute(config.jobName)
-        
     }
-    
+
 }
 
 // $COVERAGE-OFF$ Disabling scoverage as the below code can only be invoked within flink cluster
