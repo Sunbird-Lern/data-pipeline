@@ -65,6 +65,7 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
 
   // Consumers
   val certificateGeneratorConsumer = "certificate"
+  val notificationConsumer = "notification-consumer"
 
   // env vars
   val domainUrl: String = config.getString("cert_domain_url")
