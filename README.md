@@ -225,7 +225,7 @@ If no profile is specified, the default build targets Azure.
 | Service | URL |
 |---------|-----|
 | Elasticsearch | http://localhost:9200 |
-| YugabyteDB UI | http://localhost:9000 |
+| YugabyteDB UI | http://localhost:9001 |
 | YugabyteDB (CQL) | localhost:9042 |
 | Kafka | localhost:9092 |
 
