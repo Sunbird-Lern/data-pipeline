@@ -6,14 +6,18 @@ import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
+import org.apache.flink.connector.base.DeliveryGuarantee
+import org.apache.flink.connector.kafka.sink.KafkaSink
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.Mockito
+import org.sunbird.job.serde.StringSerializationSchema
 import org.scalatest.DoNotDiscover
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.notification.domain.Event
@@ -55,7 +59,16 @@ class NotificationFunctionTaskTestSpec extends BaseTestSpec {
         flinkCluster.after()
     }
 
+    private def dummyStringSink(): KafkaSink[String] = {
+        KafkaSink.builder[String]()
+            .setRecordSerializer(new StringSerializationSchema("dummy-topic"))
+            .setKafkaProducerConfig(new java.util.Properties() {{ put("bootstrap.servers", "localhost:9092") }})
+            .setDeliveryGuarantee(DeliveryGuarantee.NONE)
+            .build()
+    }
+
     "NotificationStreamTaskProcessor " should "validate metrics " in {
+        when(mockKafkaUtil.kafkaStringSink(any[String])).thenReturn(dummyStringSink())
         implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(jobConfig)
         val inputStream = env.addSource(new NotificationEventSource).name(jobConfig.notificationConsumer)
             .uid(jobConfig.notificationConsumer).setParallelism(jobConfig.kafkaConsumerParallelism)
