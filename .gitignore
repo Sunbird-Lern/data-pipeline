@@ -17,3 +17,4 @@ kubernetes/config
 bin/
 .settings/
 .claude
+docker/.migrations

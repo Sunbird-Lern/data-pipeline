@@ -6,19 +6,24 @@ import com.google.gson.Gson
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
+import org.apache.flink.connector.base.DeliveryGuarantee
+import org.apache.flink.connector.kafka.sink.KafkaSink
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.Mockito
+import org.sunbird.job.serde.StringSerializationSchema
 import org.scalatest.DoNotDiscover
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.notification.domain.Event
 import org.sunbird.job.notification.fixture.EventFixture
 import org.sunbird.job.notification.task.{NotificationConfig, NotificationStreamTask}
-import org.sunbird.job.util.{CassandraUtil, JSONUtil}
+import org.sunbird.job.util.{CassandraUtil, FlinkUtil, JSONUtil}
 import org.sunbird.spec.{BaseMetricsReporter, BaseTestSpec}
 
 @DoNotDiscover
@@ -54,14 +59,21 @@ class NotificationFunctionTaskTestSpec extends BaseTestSpec {
         flinkCluster.after()
     }
 
-    def initialize() {
-        when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.kafkaInputTopic))
-            .thenReturn(new NotificationEventSource)
-        when(mockKafkaUtil.kafkaStringSink(jobConfig.kafkaInputTopic)).thenReturn(new GenerateNotificationSink)
+    private def dummyStringSink(): KafkaSink[String] = {
+        KafkaSink.builder[String]()
+            .setRecordSerializer(new StringSerializationSchema("dummy-topic"))
+            .setKafkaProducerConfig(new java.util.Properties() {{ put("bootstrap.servers", "localhost:9092") }})
+            .setDeliveryGuarantee(DeliveryGuarantee.NONE)
+            .build()
     }
+
     "NotificationStreamTaskProcessor " should "validate metrics " in {
-        initialize()
-        new NotificationStreamTask(jobConfig, mockKafkaUtil).process()
+        when(mockKafkaUtil.kafkaStringSink(any[String])).thenReturn(dummyStringSink())
+        implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(jobConfig)
+        val inputStream = env.addSource(new NotificationEventSource).name(jobConfig.notificationConsumer)
+            .uid(jobConfig.notificationConsumer).setParallelism(jobConfig.kafkaConsumerParallelism)
+            .rebalance
+        new NotificationStreamTask(jobConfig, mockKafkaUtil).processForTest(env, inputStream)
         BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(1)
     }
 
@@ -86,4 +98,3 @@ class GenerateNotificationSink extends SinkFunction[String] {
 object GenerateNotificationSink {
     val values: util.List[String] = new util.ArrayList()
 }
-

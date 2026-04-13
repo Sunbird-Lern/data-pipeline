@@ -7,6 +7,7 @@ import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.cassandraunit.CQLDataLoader
 import org.cassandraunit.dataset.cql.FileCQLDataSet
@@ -17,7 +18,7 @@ import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.fixture.EventFixture
 import org.sunbird.job.userinfo.domain.Event
 import org.sunbird.job.userinfo.task.{ProgramUserInfoConfig, ProgramUserInfoStreamTask}
-import org.sunbird.job.util.{CassandraUtil, JSONUtil}
+import org.sunbird.job.util.{CassandraUtil, FlinkUtil, JSONUtil}
 import org.sunbird.spec.{BaseMetricsReporter, BaseTestSpec}
 
 import java.util
@@ -84,9 +85,12 @@ class ProgramUserInfoTaskTestSpec extends BaseTestSpec {
 
 
   it should "get data from Kafka" in {
-    when(mockKafkaUtil.kafkaEventSource[Event](programUserConfig.kafkaInputTopic)).thenReturn(new ProgramUserInfoEventSource)
-    val task = new ProgramUserInfoStreamTask(programUserConfig,mockKafkaUtil)
-    task.process()
+    implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(programUserConfig)
+    implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+    val inputStream = env.addSource(new ProgramUserInfoEventSource).name(programUserConfig.programUserConsumer)
+      .uid(programUserConfig.programUserConsumer).setParallelism(programUserConfig.kafkaConsumerParallelism).rebalance
+    val task = new ProgramUserInfoStreamTask(programUserConfig, mockKafkaUtil)
+    task.processForTest(env, inputStream)
   }
 
   def testCassandraUtil(cassandraUtil: CassandraUtil): Unit = {

@@ -7,6 +7,7 @@ import de.flapdoodle.embed.mongo.{MongodExecutable, MongodProcess, MongodStarter
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.mockito.Mockito
 import org.mockito.Mockito.when
@@ -14,7 +15,7 @@ import org.mongodb.scala.model.Filters
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.userdelete.domain.Event
 import org.sunbird.job.userdelete.task.{UserDeleteConfig, UserDeleteStreamTask}
-import org.sunbird.job.util.MongoUtil
+import org.sunbird.job.util.{FlinkUtil, MongoUtil}
 import org.sunbird.spec.BaseTestSpec
 import org.sunbird.userdelete.fixture.LoadMongoData
 
@@ -58,10 +59,10 @@ class UserDeleteFunctionTestSpec extends BaseTestSpec {
     flinkCluster.after()
   }
 
-  def initialize() {
-    when(mockKafkaUtil.kafkaJobRequestSource[Event](jobConfig.inputTopic))
-      .thenReturn(new UserDeleteEventSource)
-    when(mockKafkaUtil.kafkaStringSink(jobConfig.inputTopic)).thenReturn(new GenerateUserDeleteSink)
+  def createTestStream(env: StreamExecutionEnvironment): org.apache.flink.streaming.api.scala.DataStream[Event] = {
+    implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+    env.addSource(new UserDeleteEventSource).name(jobConfig.mlUserDeleteConsumer)
+      .uid(jobConfig.mlUserDeleteConsumer).setParallelism(jobConfig.mlUserDeleteParallelism).rebalance
   }
 
   val mongoCollection = new MongoUtil("localhost", port, "ml-service")
@@ -79,9 +80,9 @@ class UserDeleteFunctionTestSpec extends BaseTestSpec {
 
 
   "UserDeleteStreamTask" should "execute successfully " in {
-    initialize()
-
-    new UserDeleteStreamTask(jobConfig, mockKafkaUtil).process()
+    implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(jobConfig)
+    val inputStream = createTestStream(env)
+    new UserDeleteStreamTask(jobConfig, mockKafkaUtil).processForTest(env, inputStream)
     val filter = Filters.equal("createdBy", "5deed393-6e04-449a-b98d-7f0fbf88f22e")
     val obsData = mongoCollection.find("observations", filter)
 
