@@ -36,13 +36,13 @@ class UserDeletionCleanupFunctionTestSpec extends BaseTestSpec {
   val jobConfig: UserDeletionCleanupConfig = new UserDeletionCleanupConfig(config)
   var mockHttpUtil: HttpUtil = mock[HttpUtil](Mockito.withSettings().serializable())
   var cassandraUtil: CassandraUtil = _
-  // var redisServer: RedisServer = _
+  var redisServer: RedisServer = _
 
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    // redisServer = new RedisServer(6340)
-    // redisServer.start()
+    redisServer = new RedisServer(6340)
+    redisServer.start()
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000L)
     cassandraUtil = new CassandraUtil(jobConfig.dbHost, jobConfig.dbPort, jobConfig.isMultiDCEnabled)
     val session = cassandraUtil.session
@@ -58,7 +58,7 @@ class UserDeletionCleanupFunctionTestSpec extends BaseTestSpec {
 
   override protected def afterAll(): Unit = {
     super.afterAll()
-    // redisServer.stop()
+    redisServer.stop()
     flinkCluster.after()
   }
 
