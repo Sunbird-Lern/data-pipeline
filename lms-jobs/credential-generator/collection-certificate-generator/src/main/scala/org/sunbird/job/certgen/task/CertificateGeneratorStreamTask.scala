@@ -7,38 +7,66 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-import org.sunbird.incredible.StorageParams
-import org.sunbird.incredible.processor.store.StorageService
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.sunbird.job.certgen.domain.Event
 import org.sunbird.job.certgen.functions.{CertificateGeneratorFunction, CreateUserFeedFunction, NotificationMetaData, NotifierFunction, UserFeedMetaData}
+import org.sunbird.job.collectioncert.functions.CollectionCertPreProcessorFn
+import org.sunbird.job.collectioncert.task.CollectionCertPreProcessorConfig
 import org.sunbird.job.connector.FlinkKafkaConnector
-import org.sunbird.job.util.{FlinkUtil, HttpUtil}
+import org.sunbird.job.util.{FlinkUtil, HttpUtil, ScalaJsonUtil}
 
-class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaConnector: FlinkKafkaConnector, httpUtil: HttpUtil, storageService: StorageService) {
+class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaConnector: FlinkKafkaConnector, httpUtil: HttpUtil) {
+
+  implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+  implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
+  implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
+  implicit val notificationMetaTypeInfo: TypeInformation[NotificationMetaData] = TypeExtractor.getForClass(classOf[NotificationMetaData])
+  implicit val userFeedMetaTypeInfo: TypeInformation[UserFeedMetaData] = TypeExtractor.getForClass(classOf[UserFeedMetaData])
+  implicit val preProcessorEventTypeInfo: TypeInformation[org.sunbird.job.collectioncert.domain.Event] = TypeExtractor.getForClass(classOf[org.sunbird.job.collectioncert.domain.Event])
 
   def process(): Unit = {
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
-    implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
-    implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
-    implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
-    implicit val notificationMetaTypeInfo: TypeInformation[NotificationMetaData] = TypeExtractor.getForClass(classOf[NotificationMetaData])
-    implicit val userFeedMetaTypeInfo: TypeInformation[UserFeedMetaData] = TypeExtractor.getForClass(classOf[UserFeedMetaData])
 
-    val source = kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic)
-
-    val processStreamTask = env.addSource(source)
-      .name(config.certificateGeneratorConsumer)
-      .uid(config.certificateGeneratorConsumer).setParallelism(config.kafkaConsumerParallelism)
+    val preProcessorConfig = new CollectionCertPreProcessorConfig(config.config)
+    val source = kafkaConnector.kafkaJobRequestSource[org.sunbird.job.collectioncert.domain.Event](preProcessorConfig.kafkaInputTopic)
+    val inputStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), preProcessorConfig.certificatePreProcessorConsumer)
+      .uid(preProcessorConfig.certificatePreProcessorConsumer).setParallelism(config.kafkaConsumerParallelism)
       .rebalance
+    buildGraph(env, inputStream)
+    env.execute(config.jobName)
+  }
+
+  def processForTest(env: StreamExecutionEnvironment, inputStream: DataStream[org.sunbird.job.collectioncert.domain.Event]): Unit = {
+    buildGraph(env, inputStream)
+    env.execute(config.jobName)
+  }
+
+  private def buildGraph(env: StreamExecutionEnvironment, inputStream: DataStream[org.sunbird.job.collectioncert.domain.Event]): Unit = {
+    val preProcessorConfig = new CollectionCertPreProcessorConfig(config.config)
+
+    val preProcessedStream = inputStream
+      .keyBy(new CollectionCertPreProcessorKeySelector)
+      .process(new CollectionCertPreProcessorFn(preProcessorConfig, httpUtil))
+      .name("collection-cert-pre-processor")
+      .uid("collection-cert-pre-processor")
+      .setParallelism(config.parallelism)
+
+    preProcessedStream.getSideOutput(preProcessorConfig.failedEventOutputTag)
+      .sinkTo(kafkaConnector.kafkaStringSink(preProcessorConfig.kafkaFailedTopic))
+      .name("pre-processor-failed-sink")
+      .uid("pre-processor-failed-sink")
+
+    val processStreamTask = preProcessedStream.getSideOutput(preProcessorConfig.generateCertificateOutputTag)
+      .map(jsonString => new Event(ScalaJsonUtil.deserialize[util.Map[String, Any]](jsonString), 0, 0))
       .keyBy(new CertificateGeneratorKeySelector)
-      .process(new CertificateGeneratorFunction(config, httpUtil, storageService))
+      .process(new CertificateGeneratorFunction(config, httpUtil))
       .name("collection-certificate-generator")
       .uid("collection-certificate-generator")
       .setParallelism(config.parallelism)
 
     processStreamTask.getSideOutput(config.auditEventOutputTag)
-      .addSink(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
+      .sinkTo(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
       .name(config.certificateGeneratorAuditProducer)
       .uid(config.certificateGeneratorAuditProducer)
 
@@ -53,9 +81,6 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
       .name("user-feed")
       .uid("user-feed")
       .setParallelism(config.userFeedParallelism)
-
-
-    env.execute(config.jobName)
   }
 
 }
@@ -71,9 +96,7 @@ object CertificateGeneratorStreamTask {
     val ccgConfig = new CertificateGeneratorConfig(config)
     val kafkaUtil = new FlinkKafkaConnector(ccgConfig)
     val httpUtil = new HttpUtil
-    val storageParams: StorageParams = StorageParams(ccgConfig.storageType, ccgConfig.storageKey, ccgConfig.storageSecret, ccgConfig.containerName,Option(ccgConfig.storageEndpoint))
-    val storageService: StorageService = new StorageService(storageParams)
-    val task = new CertificateGeneratorStreamTask(ccgConfig, kafkaUtil, httpUtil, storageService)
+    val task = new CertificateGeneratorStreamTask(ccgConfig, kafkaUtil, httpUtil)
     task.process()
   }
 }
@@ -82,4 +105,8 @@ object CertificateGeneratorStreamTask {
 
 class CertificateGeneratorKeySelector extends KeySelector[Event, String] {
   override def getKey(event: Event): String = Set(event.userId, event.courseId, event.batchId).mkString("_")
+}
+
+class CollectionCertPreProcessorKeySelector extends KeySelector[org.sunbird.job.collectioncert.domain.Event, String] {
+  override def getKey(event: org.sunbird.job.collectioncert.domain.Event): String = Set(event.userId, event.courseId, event.batchId).mkString("_")
 }

@@ -16,3 +16,5 @@ kubernetes/config
 .factorypath
 bin/
 .settings/
+.claude
+docker/.migrations

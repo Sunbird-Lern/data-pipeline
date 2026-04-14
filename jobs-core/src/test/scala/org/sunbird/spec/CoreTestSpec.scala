@@ -9,13 +9,14 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.sunbird.fixture.EventFixture
 import org.sunbird.job.BaseJobConfig
 import org.sunbird.job.cache.{DataCache, RedisConnect}
+import org.apache.flink.util.Collector
 import org.sunbird.job.serde.{MapDeserializationSchema, MapSerializationSchema, StringDeserializationSchema, StringSerializationSchema}
 import org.sunbird.job.util.FlinkUtil
 import redis.clients.jedis.exceptions.JedisDataException
 
 class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
 
-  val config: Config = ConfigFactory.load("base-test.conf")
+  val config: Config = ConfigFactory.parseString("redis.enabled = true").withFallback(ConfigFactory.load("base-test.conf"))
   val baseConfig: BaseJobConfig = new BaseJobConfig(config, "base-job")
 
   "RedisConnect functionality" should "be able to connect to redis" in {
@@ -63,13 +64,16 @@ class CoreTestSpec extends BaseSpec with Matchers with MockitoSugar {
     val mapDeSerialization = new MapDeserializationSchema()
     import org.apache.kafka.clients.consumer.ConsumerRecord
     val cRecord: ConsumerRecord[Array[Byte], Array[Byte]] = new ConsumerRecord[Array[Byte], Array[Byte]](topic, partition, offset, key, value)
-    stringDeSerialization.deserialize(cRecord)
-    stringSerialization.serialize("test", System.currentTimeMillis())
-    stringDeSerialization.isEndOfStream("") should be(false)
+    val stringCollector = new java.util.ArrayList[String]()
+    stringDeSerialization.deserialize(cRecord, new Collector[String] {
+      override def collect(record: String): Unit = stringCollector.add(record)
+      override def close(): Unit = {}
+    })
+    stringSerialization.serialize("test", null, System.currentTimeMillis())
     val map = new util.HashMap[String, AnyRef]()
     map.put("country_code", "IN")
     map.put("country", "INDIA")
-    mapSerialization.serialize(map, System.currentTimeMillis())
+    mapSerialization.serialize(map, null, System.currentTimeMillis())
   }
 
   "DataCache" should "be able to add the data into redis" in intercept[JedisDataException]{

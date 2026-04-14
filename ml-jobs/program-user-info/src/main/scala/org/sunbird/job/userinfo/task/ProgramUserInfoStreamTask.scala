@@ -4,7 +4,8 @@ import com.typesafe.config.ConfigFactory
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.userinfo.domain.Event
 import org.sunbird.job.userinfo.functions.ProgramUserInfoFunction
@@ -15,21 +16,28 @@ import java.io.File
 class ProgramUserInfoStreamTask(config: ProgramUserInfoConfig, kafkaConnector: FlinkKafkaConnector) {
 
   private val serialVersionUID = -7729362727131516112L
+  implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
 
   def process(): Unit = {
-
       implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
-      implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
       val source = kafkaConnector.kafkaEventSource[Event](config.kafkaInputTopic)
-
-      env.addSource(source).name(config.programUserConsumer)
+      val inputStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), config.programUserConsumer)
         .uid(config.programUserConsumer).setParallelism(config.kafkaConsumerParallelism).rebalance
-        .process(new ProgramUserInfoFunction(config))
-        .name(config.programUserInfoFunction).uid(config.programUserInfoFunction)
-        .setParallelism(config.programUserParallelism)
-
+      buildGraph(inputStream)
       env.execute(config.jobName)
     }
+
+  def processForTest(env: StreamExecutionEnvironment, inputStream: DataStream[Event]): Unit = {
+    buildGraph(inputStream)
+    env.execute(config.jobName)
+  }
+
+  private def buildGraph(inputStream: DataStream[Event]): Unit = {
+    inputStream
+      .process(new ProgramUserInfoFunction(config))
+      .name(config.programUserInfoFunction).uid(config.programUserInfoFunction)
+      .setParallelism(config.programUserParallelism)
+  }
 }
 
 object ProgramUserInfoStreamTask {

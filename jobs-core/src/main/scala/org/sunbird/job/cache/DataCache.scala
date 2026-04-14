@@ -16,16 +16,24 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
   private[this] val logger = LoggerFactory.getLogger(classOf[DataCache])
   private var redisConnection: Jedis = _
   val gson = new Gson()
+  private val redisEnabled: Boolean = redisConnect.redisEnabled
 
   def init() {
-    this.redisConnection = redisConnect.getConnection(dbIndex)
+    if (redisEnabled) {
+      this.redisConnection = redisConnect.getConnection(dbIndex)
+    } else {
+      logger.warn("Redis disabled (redis.enabled=false). DataCache[db={}] is a no-op.", dbIndex.asInstanceOf[AnyRef])
+    }
   }
 
   def close() {
-    this.redisConnection.close()
+    if (redisEnabled && this.redisConnection != null) {
+      this.redisConnection.close()
+    }
   }
 
   def hgetAllWithRetry(key: String, retainRemovableFields: Boolean = true): mutable.Map[String, AnyRef] = {
+    if (!redisEnabled) return mutable.Map[String, AnyRef]()
     try {
       convertToComplexDataTypes(hgetAll(key, retainRemovableFields))
     } catch {
@@ -73,7 +81,9 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
       mutable.Map[String, String]()
     }
   }
+
   def getWithRetry(key: String): Map[String, AnyRef] = {
+    if (!redisEnabled) return Map[String, AnyRef]()
     try {
       get(key)
     } catch {
@@ -83,7 +93,6 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
         this.redisConnection = redisConnect.getConnection(dbIndex)
         get(key)
     }
-
   }
 
   private def get(key: String): Map[String, AnyRef] = {
@@ -103,16 +112,19 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
   }
 
   def getMultipleWithRetry(keys: List[String]): List[Map[String, AnyRef]] = {
+    if (!redisEnabled) return keys.map(_ => Map[String, AnyRef]())
     for (key <- keys) yield {
       getWithRetry(key)
     }
   }
 
   def isExists(key: String): Boolean = {
+    if (!redisEnabled) return false
     redisConnection.exists(key)
   }
 
   def hmSet(key: String, value: util.Map[String, String]): Unit = {
+    if (!redisEnabled) { logger.debug("Redis disabled, skip hmSet: {}", key); return }
     try {
       redisConnection.hmset(key, value)
     } catch {
@@ -134,6 +146,7 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
    * @param value
    */
   def createListWithRetry(key: String, value: List[String]): Unit = {
+    if (!redisEnabled) { logger.debug("Redis disabled, skip createList: {}", key); return }
     try {
       redisConnection.del(key)
       redisConnection.sadd(key, value.map(_.asInstanceOf[String]): _*)
@@ -156,6 +169,7 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
    * @param value
    */
   def addListWithRetry(key: String, value: List[String]): Unit = {
+    if (!redisEnabled) { logger.debug("Redis disabled, skip addList: {}", key); return }
     try {
       redisConnection.sadd(key, value.map(_.asInstanceOf[String]): _*)
     } catch {
@@ -171,6 +185,7 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
   }
 
   def setWithRetry(key: String, value: String): Unit = {
+    if (!redisEnabled) { logger.debug("Redis disabled, skip set: {}", key); return }
     try {
       set(key, value);
     } catch {
@@ -183,14 +198,17 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
   }
 
   def set(key: String, value: String): Unit = {
+    if (!redisEnabled) return
     redisConnection.set(key, value)
   }
 
   def sMembers(key: String): util.Set[String] = {
+    if (!redisEnabled) return new util.HashSet[String]()
     redisConnection.smembers(key)
   }
 
   def getKeyMembers(key: String): util.Set[String] = {
+    if (!redisEnabled) return new util.HashSet[String]()
     try {
       sMembers(key)
     } catch {
@@ -203,14 +221,17 @@ class DataCache(val config: BaseJobConfig, val redisConnect: RedisConnect, val d
   }
 
   def del(key: String): Unit = {
+    if (!redisEnabled) { logger.info("Redis disabled, skip DEL: {}", key); return }
     this.redisConnection.del(key)
   }
 
   def hdel(key: String, fieldSeq: Seq[String]): Unit = {
+    if (!redisEnabled) return
     this.redisConnection.hdel(key, fieldSeq: _*)
   }
 
   def hdelWithRetry(key: String, fieldSeq: Seq[String]): Unit = {
+    if (!redisEnabled) return
     try {
       hdel(key, fieldSeq)
     } catch {

@@ -2,18 +2,13 @@ package org.sunbird.job.certgen.functions
 
 import com.datastax.driver.core.querybuilder.{QueryBuilder, Update}
 import com.datastax.driver.core.{Row, TypeTokens}
-import com.google.gson.reflect.TypeToken
 import kong.unirest.UnirestException
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.slf4j.LoggerFactory
-import org.sunbird.incredible.pojos.ob.CertificateExtension
 import org.sunbird.incredible.processor.CertModel
-import org.sunbird.incredible.processor.store.StorageService
-import org.sunbird.incredible.processor.views.SvgGenerator
-import org.sunbird.incredible.{CertificateConfig, CertificateGenerator, JsonKeys, ScalaModuleJsonUtils}
+import org.sunbird.incredible.{CertificateConfig, ScalaModuleJsonUtils}
 import org.sunbird.job.certgen.domain._
 import org.sunbird.job.certgen.exceptions.ServerException
 import org.sunbird.job.certgen.task.CertificateGeneratorConfig
@@ -21,21 +16,17 @@ import org.sunbird.job.exception.InvalidEventException
 import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HttpUtil, ScalaJsonUtil}
 import org.sunbird.job.{BaseProcessKeyedFunction, Metrics}
 
-import java.io.{File, IOException}
-import java.lang.reflect.Type
 import java.text.SimpleDateFormat
 import java.util
 import java.util.stream.Collectors
-import java.util.{Base64, Date}
+import java.util.Date
 import scala.collection.JavaConverters._
 
-class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, storageService: StorageService, @transient var cassandraUtil: CassandraUtil = null)
+class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil: HttpUtil, @transient var cassandraUtil: CassandraUtil = null)
   extends BaseProcessKeyedFunction[String, Event, String](config) {
 
 
   private[this] val logger = LoggerFactory.getLogger(classOf[CertificateGeneratorFunction])
-  val mapType: Type = new TypeToken[java.util.Map[String, AnyRef]]() {}.getType
-  val directory: String = "certificates/"
   val formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
   implicit val certificateConfig: CertificateConfig = CertificateConfig(basePath = config.basePath, encryptionServiceUrl = config.encServiceUrl, contextUrl = config.CONTEXT, issuerUrl = config.ISSUER_URL,
     evidenceUrl = config.EVIDENCE_URL, signatoryExtension = config.SIGNATORY_EXTENSION)
@@ -66,12 +57,9 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     metrics.incCounter(config.totalEventsCount)
     try {
       val certValidator = new CertValidator()
-      logger.info("Certificate generator | is rc integration enabled: " + config.enableRcCertificate)
       certValidator.validateGenerateCertRequest(event, config.enableSuppressException)
       if(certValidator.isNotIssued(event)(config, metrics, cassandraUtil)) {
-        if(config.enableRcCertificate) generateCertificateUsingRC(event, context)(metrics)
-        else generateCertificate(event, context)(metrics)
-
+        generateCertificateUsingRC(event, context)(metrics)
       } else {
         metrics.incCounter(config.skippedEventCount)
         logger.info(s"Certificate already issued for: ${event.eData.getOrElse("userId", "")} ${event.related}")
@@ -81,41 +69,6 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         metrics.incCounter(config.failedEventCount)
         throw new InvalidEventException(e.getMessage, Map("partition" -> event.partition, "offset" -> event.offset), e)
     }
-  }
-
-  @throws[Exception]
-  def generateCertificate(event: Event, context: KeyedProcessFunction[String, Event, String]#Context)(implicit metrics: Metrics): Unit = {
-    val certModelList: List[CertModel] = new CertMapper(certificateConfig).mapReqToCertModel(event)
-    val certificateGenerator = new CertificateGenerator
-    certModelList.foreach(certModel => {
-      var uuid: String = null
-      try {
-        val certificateExtension: CertificateExtension = certificateGenerator.getCertificateExtension(certModel)
-        uuid = certificateGenerator.getUUID(certificateExtension)
-        val qrMap = certificateGenerator.generateQrCode(uuid, directory, certificateConfig.basePath)
-        val encodedQrCode: String = encodeQrCode(qrMap.qrFile)
-        val printUri = SvgGenerator.generate(certificateExtension, encodedQrCode, event.svgTemplate)
-        certificateExtension.printUri = Option(printUri)
-        val jsonUrl = uploadJson(certificateExtension, directory.concat(uuid).concat(".json"), event.tag.concat("/"))
-        //adding certificate to registry
-        val addReq = Map[String, AnyRef](JsonKeys.REQUEST -> {Map[String, AnyRef](
-          JsonKeys.ID -> uuid, JsonKeys.JSON_URL -> certificateConfig.basePath.concat(jsonUrl),
-          JsonKeys.JSON_DATA -> certificateExtension, JsonKeys.ACCESS_CODE -> qrMap.accessCode,
-          JsonKeys.RECIPIENT_NAME -> certModel.recipientName, JsonKeys.RECIPIENT_ID -> certModel.identifier,
-          config.RELATED -> event.related
-        ) ++ {if (event.oldId.nonEmpty) Map[String, AnyRef](config.OLD_ID -> event.oldId) else Map[String, AnyRef]()}})
-        addCertToRegistry(event, addReq, context)(metrics)
-        //cert-registry end
-        val related = event.related
-        val userEnrollmentData = UserEnrollmentData(related.getOrElse(config.BATCH_ID, "").asInstanceOf[String], certModel.identifier,
-          related.getOrElse(config.COURSE_ID, "").asInstanceOf[String], event.courseName, event.templateId,
-          Certificate(uuid, event.name, qrMap.accessCode, formatter.format(new Date()), "", ""))
-        updateUserEnrollmentTable(event, userEnrollmentData, context)
-        metrics.incCounter(config.successEventCount)
-      } finally {
-        cleanUp(uuid, directory)
-      }
-    })
   }
 
   @throws[Exception]
@@ -169,34 +122,6 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
 
   def deleteEsRecord(id: String): Unit = {
     esUtil.deleteDocument(id)
-  }
-
-  @throws[ServerException]
-  def addCertToRegistry(certReq: Event, request: Map[String, AnyRef], context: KeyedProcessFunction[String, Event, String]#Context)(implicit metrics: Metrics): Unit = {
-    logger.info("adding certificate to the registry")
-    val httpRequest = ScalaModuleJsonUtils.serialize(request)
-    val httpResponse = httpUtil.post(config.certRegistryBaseUrl + config.addCertRegApi, httpRequest)
-    if (httpResponse.status == 200) {
-      logger.info("certificate added successfully to the registry " + httpResponse.body)
-    } else {
-      logger.error("certificate addition to registry failed: " + httpResponse.status + " :: " + httpResponse.body)
-      throw ServerException("ERR_API_CALL", "Something Went Wrong While Making API Call | Status is: " + httpResponse.status + " :: " + httpResponse.body)
-    }
-  }
-
-  @throws[IOException]
-  private def encodeQrCode(file: File): String = {
-    val fileContent = FileUtils.readFileToByteArray(file)
-    file.delete
-    Base64.getEncoder.encodeToString(fileContent)
-  }
-
-  @throws[IOException]
-  private def uploadJson(certificateExtension: CertificateExtension, fileName: String, cloudPath: String): String = {
-    logger.info("uploadJson: uploading json file started {}", fileName)
-    val file = new File(fileName)
-    ScalaModuleJsonUtils.writeToJsonFile(file, certificateExtension)
-    storageService.uploadFile(cloudPath, file)
   }
 
   def generateRequest(event: Event, certModel: CertModel, reIssue: Boolean):  Map[String, AnyRef] = {
@@ -267,21 +192,6 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
     config.badCharList.split(",").foldLeft(request)((curReq, removeChar) => StringUtils.remove(curReq, removeChar))
   }
 
-  private def cleanUp(fileName: String, path: String): Unit = {
-    try {
-      val directory = new File(path)
-      val files: Array[File] = directory.listFiles
-      if (files != null && files.length > 0)
-        files.foreach(file => {
-          if (file.getName.startsWith(fileName)) file.delete
-        })
-      logger.info("cleanUp completed")
-    } catch {
-      case ex: Exception =>
-        logger.error(ex.getMessage, ex)
-    }
-  }
-
   def updateUserEnrollmentTable(event: Event, certMetaData: UserEnrollmentData, context: KeyedProcessFunction[String, Event, String]#Context)(implicit metrics: Metrics): Unit = {
     logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: event:: ", event)
     logger.info("CertificateGeneratorFunction:: updateUserEnrollmentTable:: certMetaData:: ", certMetaData)
@@ -302,8 +212,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
           config.token -> certMetaData.certificate.token,
         ) ++ {if(certMetaData.certificate.lastIssuedOn.nonEmpty) Map[String, String](config.lastIssuedOn -> certMetaData.certificate.lastIssuedOn)
         else Map[String, String]()}
-          ++ {if(config.enableRcCertificate) Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type`->certMetaData.certificate.`type`)
-        else Map[String, String]()}
+          ++ Map[String, String](config.templateUrl -> certMetaData.certificate.templateUrl, config.`type` -> certMetaData.certificate.`type`)
         ))
 
         val query = getUpdateIssuedCertQuery(updatedCerts, certMetaData.userId, certMetaData.courseId, certMetaData.batchId, config)

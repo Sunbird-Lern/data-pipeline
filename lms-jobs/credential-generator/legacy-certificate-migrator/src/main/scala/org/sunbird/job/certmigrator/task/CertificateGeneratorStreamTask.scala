@@ -7,7 +7,8 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.sunbird.job.certmigrator.domain.Event
 import org.sunbird.job.certmigrator.functions.CertificateGeneratorFunction
 import org.sunbird.job.connector.FlinkKafkaConnector
@@ -15,18 +16,27 @@ import org.sunbird.job.util.{FlinkUtil, HttpUtil}
 
 class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaConnector: FlinkKafkaConnector, httpUtil: HttpUtil) {
 
+  implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+  implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
+  implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
+
   def process(): Unit = {
     implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(config)
-    implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
-    implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
-    implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
-
     val source = kafkaConnector.kafkaJobRequestSource[Event](config.kafkaInputTopic)
-
-    val processStreamTask = env.addSource(source)
-      .name(config.certificateGeneratorConsumer)
+    val inputStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), config.certificateGeneratorConsumer)
       .uid(config.certificateGeneratorConsumer).setParallelism(config.kafkaConsumerParallelism)
       .rebalance
+    buildGraph(inputStream)
+    env.execute(config.jobName)
+  }
+
+  def processForTest(env: StreamExecutionEnvironment, inputStream: DataStream[Event]): Unit = {
+    buildGraph(inputStream)
+    env.execute(config.jobName)
+  }
+
+  private def buildGraph(inputStream: DataStream[Event]): Unit = {
+    val processStreamTask = inputStream
       .keyBy(new CertificateGeneratorKeySelector)
       .process(new CertificateGeneratorFunction(config, httpUtil))
       .name("legacy-certificate-migrator")
@@ -34,11 +44,9 @@ class CertificateGeneratorStreamTask(config: CertificateGeneratorConfig, kafkaCo
       .setParallelism(config.parallelism)
 
     processStreamTask.getSideOutput(config.auditEventOutputTag)
-      .addSink(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
+      .sinkTo(kafkaConnector.kafkaStringSink(config.kafkaAuditEventTopic))
       .name(config.certificateGeneratorAuditProducer)
       .uid(config.certificateGeneratorAuditProducer)
-
-    env.execute(config.jobName)
   }
 
 }

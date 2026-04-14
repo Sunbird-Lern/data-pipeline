@@ -23,7 +23,6 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val kafkaAuditEventTopic: String = config.getString("kafka.output.audit.topic")
 
   val enableSuppressException: Boolean = if(config.hasPath("enable.suppress.exception")) config.getBoolean("enable.suppress.exception") else false
-  val enableRcCertificate: Boolean = if(config.hasPath("enable.rc.certificate")) config.getBoolean("enable.rc.certificate") else false
 
 
   // Producers
@@ -66,13 +65,9 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
 
   // Consumers
   val certificateGeneratorConsumer = "certificate"
+  val notificationConsumer = "notification-consumer"
 
   // env vars
-  val storageType: String = config.getString("cert_cloud_storage_type")
-  val containerName: String = config.getString("cert_container_name")
-  val storageSecret: String = config.getString("cert_cloud_storage_secret")
-  val storageEndpoint: String = config.getString("cert_cloud_storage_endpoint")
-  val storageKey: String = config.getString("cert_cloud_storage_key")
   val domainUrl: String = config.getString("cert_domain_url")
   val encServiceUrl: String = config.getString("service.enc.basePath")
   val certRegistryBaseUrl: String = config.getString("service.certreg.basePath")
@@ -160,4 +155,35 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val contentCloudStorageContainer = config.getString("content_cloud_storage_container")
   val cnameUrl = config.getString("cloud_storage_cname_url")
   val baseUrl = if(cnameUrl.isEmpty) cloudStoreBasePath else cnameUrl
+
+  // Pre-processor Configs
+  val collectionCacheStore: Int = if (redisEnabled) config.getInt("redis.database.collectionCache.id") else if (config.hasPath("redis.database.collectionCache.id")) config.getInt("redis.database.collectionCache.id") else 0
+  val contentCacheStore: Int = if (redisEnabled) config.getInt("redis.database.contentCache.id") else if (config.hasPath("redis.database.contentCache.id")) config.getInt("redis.database.contentCache.id") else 5
+  override val metaRedisHost: String = if (config.hasPath("redis-meta.host")) config.getString("redis-meta.host") else "localhost"
+  override val metaRedisPort: Int = if (config.hasPath("redis-meta.port")) config.getInt("redis-meta.port") else 6379
+  val generateCertificateProducer = "generate-certificate-sink"
+  val generateCertificateParallelism:Int = config.getInt("task.generate_certificate.parallelism")
+  val generateCertificateOutputTagName = "generate-certificate-request"
+  val generateCertificateOutputTag: OutputTag[String] = OutputTag[String](generateCertificateOutputTagName)
+  val courseTable: String = config.getString("lms-cassandra.course_batch.table")
+  val assessmentTable: String = config.getString("lms-cassandra.assessment_aggregator.table")
+  val userActivityAggTable: String = config.getString("lms-cassandra.user_activity_agg.table")
+  val contentBasePath = config.getString("service.content.basePath")
+  val userReadApi = config.getString("user_read_api")
+  val contentReadApi = config.getString("content_read_api")
+  val cacheHitCount = "cache-hit-cout"
+  val issueCertificate = "issue-certificate"
+  val certTemplates = "cert_templates"
+  val criteria: String = "criteria"
+  val enrollment: String = "enrollment"
+  val assessment: String = "assessment"
+  val users: String = "users"
+  val status: String = "status"
+  val user: String= "user"
+  val defaultHeaders = Map[String, String] ("Content-Type" -> "application/json")
+  val completedOn: String = "completedon"
+  val signatoryList: String = "signatoryList"
+  val certBasePath: String = config.getString("cert_domain_url") + "/certs"
+  val assessmentContentTypes = if(config.hasPath("assessment.metrics.supported.contenttype")) config.getStringList("assessment.metrics.supported.contenttype") else util.Arrays.asList("SelfAssess")
+  val userAccBlockedErrCode = "UOS_USRRED0006"
 }

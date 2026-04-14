@@ -4,6 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.cassandraunit.CQLDataLoader
 import org.cassandraunit.dataset.cql.FileCQLDataSet
@@ -14,7 +15,7 @@ import org.mockito.Mockito.{doNothing, when}
 import org.sunbird.job.connector.FlinkKafkaConnector
 import org.sunbird.job.ownershiptransfer.domain.Event
 import org.sunbird.job.ownershiptransfer.task.{UserOwnershipTransferConfig, UserOwnershipTransferStreamTask}
-import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, HTTPResponse, HttpUtil}
+import org.sunbird.job.util.{CassandraUtil, ElasticSearchUtil, FlinkUtil, HTTPResponse, HttpUtil}
 import org.sunbird.spec.{BaseMetricsReporter, BaseTestSpec}
 
 
@@ -161,10 +162,10 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
   def testCassandraUtil(cassandraUtil: CassandraUtil): Unit = {
     cassandraUtil.reconnect()
   }
-  def initialize() {
-    when(mockKafkaUtil.kafkaEventSource[Event](jobConfig.inputTopic))
-      .thenReturn(new UserOwnershipTransferEventSource)
-    when(mockKafkaUtil.kafkaStringSink(jobConfig.inputTopic)).thenReturn(new GenerateUserOwnershipTransferSink)
+  def createTestStream(env: StreamExecutionEnvironment): org.apache.flink.streaming.api.scala.DataStream[Event] = {
+    implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
+    env.addSource(new UserOwnershipTransferEventSource).name(jobConfig.userOwnershipTransferConsumer)
+      .uid(jobConfig.userOwnershipTransferConsumer).setParallelism(jobConfig.userOwnershipTransferParallelism).rebalance
   }
 
   //"UserOwnershipTransferStreamTaskProcessor "
@@ -179,8 +180,9 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
     when(mockHttpUtil.get(jobConfig.userOrgServiceBasePath + jobConfig.userReadApi +"/fca2925f-1eee-4654-9177-fece3fd6afc9?identifier,rootOrgId")).thenReturn(HTTPResponse(200, """{"id": "api.user.read.4cd4c690-eab6-4938-855a-447c7b1b8ea9","ver": "v5","ts": "2023-09-05 14:07:47:872+0000","params": {"resmsgid": "1281c745-830c-421c-8245-dd5b2b795842","msgid": "1281c745-830c-421c-8245-dd5b2b795842","err": null,"status": "SUCCESS","errmsg": null},"responseCode": "OK","result": {"response": {"identifier": "fca2925f-1eee-4654-9177-fece3fd6afc9","rootOrgId": "01309282781705830427"}}}"""))
     when(mockHttpUtil.post(jobConfig.lmsServiceBasePath + jobConfig.batchSearchApi, createdByRequestBody)).thenReturn(HTTPResponse(200, createdBySearchResponse))
     when(mockHttpUtil.post(jobConfig.lmsServiceBasePath + jobConfig.batchSearchApi, mentorRequestBody)).thenReturn(HTTPResponse(200, mentorSearchResponse))
-    initialize()
-    new UserOwnershipTransferStreamTask(jobConfig, mockHttpUtil, mockKafkaUtil).process()
+    implicit val env: StreamExecutionEnvironment = FlinkUtil.getExecutionContext(jobConfig)
+    val inputStream = createTestStream(env)
+    new UserOwnershipTransferStreamTask(jobConfig, mockHttpUtil, mockKafkaUtil).processForTest(env, inputStream)
     BaseMetricsReporter.gaugeMetrics(s"${jobConfig.jobName}.${jobConfig.totalEventsCount}").getValue() should be(1)
   }
 

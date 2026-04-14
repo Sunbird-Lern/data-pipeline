@@ -237,7 +237,7 @@ jobs:
         with:
           name: Test Results
           path: |
-            lms-jobs/*/target/surefire-reports/*.xml
+            lms-jobs/credential-generator/*/target/surefire-reports/*.xml
           reporter: java-junit
           fail-on-error: false
           only-summary: false

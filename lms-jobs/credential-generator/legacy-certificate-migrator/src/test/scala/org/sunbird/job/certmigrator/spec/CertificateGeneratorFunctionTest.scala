@@ -11,8 +11,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, when}
 import org.sunbird.incredible.processor.CertModel
-import org.sunbird.incredible.processor.store.StorageService
-import org.sunbird.incredible.{CertificateConfig, JsonKeys, ScalaModuleJsonUtils, StorageParams}
+import org.sunbird.incredible.{CertificateConfig, JsonKeys, ScalaModuleJsonUtils}
 import org.sunbird.job.Metrics
 import org.sunbird.job.certmigrator.domain._
 import org.sunbird.job.certmigrator.exceptions.ServerException
