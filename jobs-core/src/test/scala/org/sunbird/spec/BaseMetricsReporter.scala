@@ -15,7 +15,7 @@ class BaseMetricsReporter extends MetricReporter {
   override def notifyOfAddedMetric(metric: Metric, metricName: String, group: MetricGroup): Unit = {
     metric match {
       case gauge: Gauge[_] => {
-        val gaugeKey = group.getScopeComponents.toSeq.drop(6).mkString(".") + "." + metricName
+        val gaugeKey = group.getScopeComponents.last + "." + metricName
         BaseMetricsReporter.gaugeMetrics(gaugeKey) = gauge.asInstanceOf[Gauge[Long]]
       }
       case _ => // Do Nothing
