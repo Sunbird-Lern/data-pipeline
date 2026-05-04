@@ -5,16 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpHost
 import org.apache.http.client.config.RequestConfig
-import org.elasticsearch.action.admin.indices.alias.Alias
-import org.elasticsearch.action.bulk.BulkRequest
-import org.elasticsearch.action.delete.DeleteRequest
-import org.elasticsearch.action.get.GetRequest
-import org.elasticsearch.action.index.IndexRequest
-import org.elasticsearch.action.update.UpdateRequest
-import org.elasticsearch.client.indices.{CreateIndexRequest, CreateIndexResponse}
-import org.elasticsearch.client.{Request, RequestOptions, Response, RestClient, RestClientBuilder, RestHighLevelClient}
-import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.common.xcontent.XContentType;
+import org.opensearch.action.admin.indices.alias.Alias
+import org.opensearch.action.bulk.BulkRequest
+import org.opensearch.action.delete.DeleteRequest
+import org.opensearch.action.get.GetRequest
+import org.opensearch.action.index.IndexRequest
+import org.opensearch.action.update.UpdateRequest
+import org.opensearch.client.indices.{CreateIndexRequest, CreateIndexResponse}
+import org.opensearch.client.{Request, RequestOptions, Response, RestClient, RestClientBuilder, RestHighLevelClient}
+import org.opensearch.common.settings.Settings
+import org.opensearch.common.xcontent.XContentType
 import org.slf4j.LoggerFactory
 
 import java.io.IOException
@@ -138,7 +138,7 @@ class ElasticSearchUtil(connectionInfo: String, indexName: String, batchSize: In
           request.add(new IndexRequest(indexName).id(key).source(updatedDoc))
           if (count % batchSize == 0 || (count % batchSize < batchSize && count == jsonObjects.size)) {
             val bulkResponse = esClient.bulk(request, RequestOptions.DEFAULT)
-            if (bulkResponse.hasFailures) logger.info("ElasticSearchUtil:: bulkIndexWithIndexId:: Failures in Elasticsearch bulkIndex : " + bulkResponse.buildFailureMessage)
+            if (bulkResponse.hasFailures) logger.info("ElasticSearchUtil:: bulkIndexWithIndexId:: Failures in OpenSearch bulkIndex : " + bulkResponse.buildFailureMessage)
           }
         }
       }

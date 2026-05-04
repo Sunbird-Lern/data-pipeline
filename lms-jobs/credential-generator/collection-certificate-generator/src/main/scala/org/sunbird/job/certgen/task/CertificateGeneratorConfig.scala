@@ -35,7 +35,6 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   //ES configuration
   val esConnection: String = config.getString("es.basePath")
   val certIndex: String = "certs"
-  val certIndexType: String = "_doc"
 
 
   // Cassandra Configurations
