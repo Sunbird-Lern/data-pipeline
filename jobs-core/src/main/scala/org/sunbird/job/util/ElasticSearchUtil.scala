@@ -127,7 +127,7 @@ class ElasticSearchUtil(connectionInfo: String, indexName: String, batchSize: In
     if (isIndexExists(indexName)) {
       if (jsonObjects.nonEmpty) {
         var count = 0
-        val request = new BulkRequest
+        var request = new BulkRequest
         for (key <- jsonObjects.keySet) {
           count += 1
           val document = ScalaJsonUtil.serialize(jsonObjects(key).asInstanceOf[Map[String, AnyRef]])
@@ -139,6 +139,7 @@ class ElasticSearchUtil(connectionInfo: String, indexName: String, batchSize: In
           if (count % batchSize == 0 || (count % batchSize < batchSize && count == jsonObjects.size)) {
             val bulkResponse = esClient.bulk(request, RequestOptions.DEFAULT)
             if (bulkResponse.hasFailures) logger.info("ElasticSearchUtil:: bulkIndexWithIndexId:: Failures in OpenSearch bulkIndex : " + bulkResponse.buildFailureMessage)
+            request = new BulkRequest
           }
         }
       }
