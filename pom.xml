@@ -31,7 +31,7 @@
 		<!-- maven specific properties -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<scala.version>2.12</scala.version>
-		<scala.maj.version>2.12.11</scala.maj.version>
+		<scala.maj.version>2.12.19</scala.maj.version>
 		<flink.version>1.18.1</flink.version>
 		<kafka.version>3.7.1</kafka.version>
 		<jackson-jaxrs.version>1.9.13</jackson-jaxrs.version>

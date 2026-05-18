@@ -113,6 +113,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
+                        <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
                                 <descriptor>src/main/assembly/src.xml</descriptor>
                             </descriptors>
