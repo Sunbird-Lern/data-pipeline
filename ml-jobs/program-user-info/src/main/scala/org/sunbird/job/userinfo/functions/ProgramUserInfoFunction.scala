@@ -96,7 +96,7 @@ class ProgramUserInfoFunction(config: ProgramUserInfoConfig,
         userTypeData.put("type", Option(f.get("type")).map(_.toString).filter(_.nonEmpty).map(_.toLowerCase).orNull)
         val subType = Option(f.get("subType")).map(_.toString).filter(_.nonEmpty).map(_.toUpperCase).orNull
         if (subType != null && !subTypeSet.contains(subType)) {
-          if (subTypeBuilder.length() > 0) {
+          if (subTypeBuilder.length > 0) {
             subTypeBuilder.append(",")
           }
           subTypeBuilder.append(subType)
