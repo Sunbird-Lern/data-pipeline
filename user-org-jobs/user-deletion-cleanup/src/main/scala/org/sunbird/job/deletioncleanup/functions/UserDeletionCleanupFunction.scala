@@ -47,7 +47,6 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
   }
 
   override def processElement(event: Event, context: ProcessFunction[Event, Event]#Context, metrics: Metrics): Unit = {
-    logger.info(s"${event}")
     val entryLog = s"Entry Log:UserDeletionCleanup, Message:Context ${event.context}"
     logger.info(entryLog)
     metrics.incCounter(config.totalEventsCount)
@@ -95,8 +94,10 @@ class UserDeletionCleanupFunction(config: UserDeletionCleanupConfig, httpUtil: H
             val key: String = config.userStoreKeyPrefix + event.userId
             logger.info(s"UserDeletionCleanupFunction:processElement: Clearing user cache with key: $key")
             dataCache.del(key)
-            logger.info(s"UserDeletionCleanupFunction:processElement: User cache with $key cleared")
-            deletionStatus = deletionStatus + ("redisCache" -> true)
+            // Only report redisCache deletion as done when Redis is actually enabled.
+            // DataCache.del is a no-op when redis.enabled=false (the default), so hardcoding
+            // `true` here produced a false compliance-audit trail claiming the cache was purged.
+            deletionStatus = deletionStatus + ("redisCache" -> config.redisEnabled)
 
             // remove user entries from externalId table
             val dbUserExternalIds: List[Map[String, String]] = getUserExternalIds(event.userId)(config, cassandraUtil)
