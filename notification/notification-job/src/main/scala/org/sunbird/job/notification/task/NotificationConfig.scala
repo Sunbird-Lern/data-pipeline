@@ -4,7 +4,7 @@ import org.sunbird.job.BaseJobConfig
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.streaming.api.scala.OutputTag
+import org.apache.flink.util.OutputTag
 import org.sunbird.job.notification.domain.NotificationMessage
 
 class NotificationConfig(override val config: Config) extends BaseJobConfig(config, "notification-trigger") {
@@ -38,6 +38,6 @@ class NotificationConfig(override val config: Config) extends BaseJobConfig(conf
     
     //val notificationFailedOutputTag: OutputTag[NotificationMessage] = OutputTag[NotificationMessage]("notification-failed")
     val notificationFailedOutputTagName = "notification-failed-events"
-    val notificationFailedOutputTag: OutputTag[String] = OutputTag[String](notificationFailedOutputTagName)
+    val notificationFailedOutputTag: OutputTag[String] = new OutputTag[String](notificationFailedOutputTagName, stringTypeInfo)
     
 }

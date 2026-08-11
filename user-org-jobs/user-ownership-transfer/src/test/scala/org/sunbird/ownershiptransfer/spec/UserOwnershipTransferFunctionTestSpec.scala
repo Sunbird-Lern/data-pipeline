@@ -4,7 +4,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.datastream.DataStream
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.cassandraunit.CQLDataLoader
 import org.cassandraunit.dataset.cql.FileCQLDataSet
@@ -162,7 +163,7 @@ class UserOwnershipTransferFunctionTestSpec extends BaseTestSpec {
   def testCassandraUtil(cassandraUtil: CassandraUtil): Unit = {
     cassandraUtil.reconnect()
   }
-  def createTestStream(env: StreamExecutionEnvironment): org.apache.flink.streaming.api.scala.DataStream[Event] = {
+  def createTestStream(env: StreamExecutionEnvironment): DataStream[Event] = {
     implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     env.addSource(new UserOwnershipTransferEventSource).name(jobConfig.userOwnershipTransferConsumer)
       .uid(jobConfig.userOwnershipTransferConsumer).setParallelism(jobConfig.userOwnershipTransferParallelism).rebalance
