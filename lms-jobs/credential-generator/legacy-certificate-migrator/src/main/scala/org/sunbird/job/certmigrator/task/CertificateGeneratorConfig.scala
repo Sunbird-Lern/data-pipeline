@@ -3,7 +3,7 @@ package org.sunbird.job.certmigrator.task
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.util.OutputTag
+import org.apache.flink.streaming.api.scala.OutputTag
 import org.sunbird.job.BaseJobConfig
 
 import java.util
@@ -103,7 +103,7 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
 
   // Tags
   val auditEventOutputTagName = "audit-events"
-  val auditEventOutputTag: OutputTag[String] = new OutputTag[String](auditEventOutputTagName, stringTypeInfo)
+  val auditEventOutputTag: OutputTag[String] = OutputTag[String](auditEventOutputTagName)
 
   //UserFeed constants
   val cloudStoreBasePath = config.getString("cloud_storage_base_url")

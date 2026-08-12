@@ -4,7 +4,7 @@ import java.util
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.util.OutputTag
+import org.apache.flink.streaming.api.scala.OutputTag
 import org.sunbird.job.BaseJobConfig
 import org.sunbird.job.domain.reader.JobRequest
 
@@ -12,11 +12,10 @@ class BaseProcessTestConfig(override val config: Config) extends BaseJobConfig(c
   private val serialVersionUID = -2349318979085017498L
   implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]] = TypeExtractor.getForClass(classOf[util.Map[String, AnyRef]])
   implicit val jobReqTypeInfo: TypeInformation[TestJobRequest] = TypeExtractor.getForClass(classOf[TestJobRequest])
-  implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
 
-  val mapOutputTag: OutputTag[util.Map[String, AnyRef]] = new OutputTag[util.Map[String, AnyRef]]("test-map-stream-tag", mapTypeInfo)
-  val stringOutputTag: OutputTag[String] = new OutputTag[String]("test-string-stream-tag", stringTypeInfo)
-  val jobRequestOutputTag: OutputTag[TestJobRequest] = new OutputTag[TestJobRequest]("test-job-request-stream-tag", jobReqTypeInfo)
+  val mapOutputTag: OutputTag[util.Map[String, AnyRef]] = OutputTag[util.Map[String, AnyRef]]("test-map-stream-tag")
+  val stringOutputTag: OutputTag[String] = OutputTag[String]("test-string-stream-tag")
+  val jobRequestOutputTag: OutputTag[TestJobRequest] = OutputTag[TestJobRequest]("test-job-request-stream-tag")
 
   val kafkaMapInputTopic: String = config.getString("kafka.map.input.topic")
   val kafkaMapOutputTopic: String = config.getString("kafka.map.output.topic")

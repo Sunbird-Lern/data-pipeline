@@ -7,8 +7,7 @@ import de.flapdoodle.embed.mongo.{MongodExecutable, MongodProcess, MongodStarter
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
-import org.apache.flink.streaming.api.datastream.DataStream
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.mockito.Mockito
 import org.mockito.Mockito.when
@@ -59,7 +58,7 @@ class TransferOwnershipFunctionTestSpec extends BaseTestSpec {
     flinkCluster.after()
   }
 
-  def createTestStream(env: StreamExecutionEnvironment): DataStream[Event] = {
+  def createTestStream(env: StreamExecutionEnvironment): org.apache.flink.streaming.api.scala.DataStream[Event] = {
     implicit val eventTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
     env.addSource(new TransferOwnershipEventSource).name(jobConfig.mlTransferOwnershipConsumer)
       .uid(jobConfig.mlTransferOwnershipConsumer).setParallelism(jobConfig.mlTransferOwnershipParallelism).rebalance

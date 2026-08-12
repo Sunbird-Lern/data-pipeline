@@ -3,14 +3,13 @@ package org.sunbird.job.deletioncleanup.task
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.util.OutputTag
+import org.apache.flink.streaming.api.scala.OutputTag
 import org.sunbird.job.BaseJobConfig
 import org.sunbird.job.deletioncleanup.domain.Event
 
 class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConfig(config, "UserDeletionCleanupConfig") {
 
   implicit val mapTypeInfo: TypeInformation[Event] = TypeExtractor.getForClass(classOf[Event])
-  implicit val stringTypeInfo: TypeInformation[String] = TypeExtractor.getForClass(classOf[String])
 
   // Kafka Topics Configuration
   val inputTopic: String = config.getString("kafka.input.topic")
@@ -24,7 +23,7 @@ class UserDeletionCleanupConfig(override val config: Config) extends BaseJobConf
   val totalEventsCount ="total-delete-events-count"
 
   val auditEventOutputTagName = "audit-events"
-  val auditEventOutputTag: OutputTag[String] = new OutputTag[String](auditEventOutputTagName, stringTypeInfo)
+  val auditEventOutputTag: OutputTag[String] = OutputTag[String](auditEventOutputTagName)
 
   val dbHost: String = config.getString("lms-cassandra.host")
   val dbPort: Int = config.getInt("lms-cassandra.port")
