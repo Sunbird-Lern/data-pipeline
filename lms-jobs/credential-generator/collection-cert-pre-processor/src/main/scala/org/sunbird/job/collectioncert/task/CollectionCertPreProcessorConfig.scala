@@ -3,7 +3,7 @@ package org.sunbird.job.collectioncert.task
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.streaming.api.scala.OutputTag
+import org.apache.flink.util.OutputTag
 import org.sunbird.job.BaseJobConfig
 
 import java.util
@@ -29,9 +29,9 @@ class CollectionCertPreProcessorConfig(override val config: Config) extends Base
     
     //Tags
     val generateCertificateOutputTagName = "generate-certificate-request"
-    val generateCertificateOutputTag: OutputTag[String] = OutputTag[String](generateCertificateOutputTagName)
+    val generateCertificateOutputTag: OutputTag[String] = new OutputTag[String](generateCertificateOutputTagName, stringTypeInfo)
     val failedEventOutputTagName = "failed-events"
-    val failedEventOutputTag: OutputTag[String] = OutputTag[String](failedEventOutputTagName)
+    val failedEventOutputTag: OutputTag[String] = new OutputTag[String](failedEventOutputTagName, stringTypeInfo)
     val kafkaFailedTopic: String = config.getString("kafka.output.failed.topic")
 
     //Cassandra configfailedEventOutputTag

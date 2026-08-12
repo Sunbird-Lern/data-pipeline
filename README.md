@@ -134,15 +134,15 @@ If no profile is specified, the default build targets Azure.
 
 > Use this option to run the job the same way it runs in production.
 
-1. Download and extract Flink 1.18.1:
+1. Download and extract Flink 1.20.5:
    ```shell
-   wget https://dlcdn.apache.org/flink/flink-1.18.1/flink-1.18.1-bin-scala_2.12.tgz
-   tar xzf flink-1.18.1-bin-scala_2.12.tgz
+   wget https://dlcdn.apache.org/flink/flink-1.20.5/flink-1.20.5-bin-scala_2.12.tgz
+   tar xzf flink-1.20.5-bin-scala_2.12.tgz
    ```
 
 2. Start the Flink cluster:
    ```shell
-   cd flink-1.18.1
+   cd flink-1.20.5
    ./bin/start-cluster.sh
    ```
    Verify: open http://localhost:8081 — you should see the Flink dashboard with 1 TaskManager.
@@ -185,11 +185,11 @@ If no profile is specified, the default build targets Azure.
    </dependency>
    ```
 
-   Comment out the `provided` scope on `flink-streaming-scala`:
+   Comment out the `provided` scope on `flink-streaming-java`:
    ```xml
    <dependency>
      <groupId>org.apache.flink</groupId>
-     <artifactId>flink-streaming-scala_${scala.version}</artifactId>
+     <artifactId>flink-streaming-java</artifactId>
      <version>${flink.version}</version>
      <!-- <scope>provided</scope> -->
    </dependency>

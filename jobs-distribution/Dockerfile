@@ -1,4 +1,4 @@
-FROM flink:1.18.1-scala_2.12-java11 AS base
+FROM flink:1.20.5-scala_2.12-java11 AS base
 
 USER root
 RUN apt-get update && apt-get dist-upgrade -y && \
@@ -6,10 +6,10 @@ RUN apt-get update && apt-get dist-upgrade -y && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN rm -f /opt/flink/lib/log4j-*.jar && \
-    curl -fsSL https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar -o /opt/flink/lib/log4j-core-2.17.1.jar && \
-    curl -fsSL https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.17.1/log4j-api-2.17.1.jar -o /opt/flink/lib/log4j-api-2.17.1.jar && \
-    curl -fsSL https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-slf4j-impl/2.17.1/log4j-slf4j-impl-2.17.1.jar -o /opt/flink/lib/log4j-slf4j-impl-2.17.1.jar && \
-    curl -fsSL https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-1.2-api/2.17.1/log4j-1.2-api-2.17.1.jar -o /opt/flink/lib/log4j-1.2-api-2.17.1.jar
+    curl -fsSL https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.24.3/log4j-core-2.24.3.jar -o /opt/flink/lib/log4j-core-2.24.3.jar && \
+    curl -fsSL https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.24.3/log4j-api-2.24.3.jar -o /opt/flink/lib/log4j-api-2.24.3.jar && \
+    curl -fsSL https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-slf4j-impl/2.24.3/log4j-slf4j-impl-2.24.3.jar -o /opt/flink/lib/log4j-slf4j-impl-2.24.3.jar && \
+    curl -fsSL https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-1.2-api/2.24.3/log4j-1.2-api-2.24.3.jar -o /opt/flink/lib/log4j-1.2-api-2.24.3.jar
 
 COPY target/jobs-distribution-1.0.tar.gz /tmp
 USER flink
@@ -25,7 +25,7 @@ ENV cloud_storage_auth_type=OIDC
 FROM base AS azure
 ENV cloud_storage_type=azure
 RUN mkdir -p $FLINK_HOME/plugins/azure-fs-hadoop && \
-    cp $FLINK_HOME/opt/flink-azure-fs-hadoop-1.18.1.jar $FLINK_HOME/plugins/azure-fs-hadoop/
+    cp $FLINK_HOME/opt/flink-azure-fs-hadoop-1.20.5.jar $FLINK_HOME/plugins/azure-fs-hadoop/
 COPY target/azure-plugin/ $FLINK_HOME/plugins/azure-fs-hadoop/
 USER flink
 
@@ -34,12 +34,12 @@ FROM base AS gcloud
 ENV cloud_storage_type=gcloud
 COPY lib/gcs-connector-hadoop2-2.2.0.jar $FLINK_HOME/lib/
 RUN mkdir -p $FLINK_HOME/plugins/gs-fs-hadoop && \
-    cp $FLINK_HOME/opt/flink-gs-fs-hadoop-1.18.1.jar $FLINK_HOME/plugins/gs-fs-hadoop/
+    cp $FLINK_HOME/opt/flink-gs-fs-hadoop-1.20.5.jar $FLINK_HOME/plugins/gs-fs-hadoop/
 USER flink
 
 # ── AWS ────────────────────────────────────────────────────────────────────
 FROM base AS aws
 ENV cloud_storage_type=aws
 RUN mkdir -p $FLINK_HOME/plugins/s3-fs-presto && \
-    cp $FLINK_HOME/opt/flink-s3-fs-presto-1.18.1.jar $FLINK_HOME/plugins/s3-fs-presto/
+    cp $FLINK_HOME/opt/flink-s3-fs-presto-1.20.5.jar $FLINK_HOME/plugins/s3-fs-presto/
 USER flink

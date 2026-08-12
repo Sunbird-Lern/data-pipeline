@@ -5,7 +5,7 @@ import java.util
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.streaming.api.scala.OutputTag
+import org.apache.flink.util.OutputTag
 import org.sunbird.job.BaseJobConfig
 import org.sunbird.job.certgen.functions.{NotificationMetaData, UserFeedMetaData}
 
@@ -140,9 +140,9 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
 
   // Tags
   val auditEventOutputTagName = "audit-events"
-  val auditEventOutputTag: OutputTag[String] = OutputTag[String](auditEventOutputTagName)
-  val notifierOutputTag: OutputTag[NotificationMetaData] = OutputTag[NotificationMetaData]("notifier")
-  val userFeedOutputTag: OutputTag[UserFeedMetaData] = OutputTag[UserFeedMetaData]("user-feed")
+  val auditEventOutputTag: OutputTag[String] = new OutputTag[String](auditEventOutputTagName, stringTypeInfo)
+  val notifierOutputTag: OutputTag[NotificationMetaData] = new OutputTag[NotificationMetaData]("notifier", notificationMetaTypeInfo)
+  val userFeedOutputTag: OutputTag[UserFeedMetaData] = new OutputTag[UserFeedMetaData]("user-feed", userFeeMetaTypeInfo)
   
   //UserFeed constants
   val priority: String = "priority"
@@ -163,7 +163,7 @@ class CertificateGeneratorConfig(override val config: Config) extends BaseJobCon
   val generateCertificateProducer = "generate-certificate-sink"
   val generateCertificateParallelism:Int = config.getInt("task.generate_certificate.parallelism")
   val generateCertificateOutputTagName = "generate-certificate-request"
-  val generateCertificateOutputTag: OutputTag[String] = OutputTag[String](generateCertificateOutputTagName)
+  val generateCertificateOutputTag: OutputTag[String] = new OutputTag[String](generateCertificateOutputTagName, stringTypeInfo)
   val courseTable: String = config.getString("lms-cassandra.course_batch.table")
   val assessmentTable: String = config.getString("lms-cassandra.assessment_aggregator.table")
   val userActivityAggTable: String = config.getString("lms-cassandra.user_activity_agg.table")
