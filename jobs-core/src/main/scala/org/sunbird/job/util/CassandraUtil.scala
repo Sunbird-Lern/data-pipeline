@@ -5,14 +5,17 @@ import com.datastax.driver.core.exceptions.DriverException
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy
 import com.datastax.driver.core.querybuilder.{Delete, QueryBuilder}
 import org.slf4j.LoggerFactory
+import org.sunbird.job.BaseJobConfig
 
 import java.util
 
-class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
+class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean, config: BaseJobConfig = null) {
 
   private[this] val logger = LoggerFactory.getLogger("CassandraUtil")
 
-  var cluster = {
+  // Single place that builds a Cluster, so the constructor and reconnect() both get credentials and TLS.
+  // config is optional: without it no credentials or TLS are added (the previous behaviour).
+  private def newCluster(): Cluster = {
     val cb = Cluster.builder()
       .addContactPoint(host)
       .withPort(port)
@@ -22,8 +25,11 @@ class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
     if(isMultiDCEnabled) {
       cb.withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().build())
     }
+    if (config != null) CassandraSecurity.configure(cb, config)
     cb.build()
   }
+
+  var cluster = newCluster()
   var session = cluster.connect()
 
   def findOne(query: String): Row = {
@@ -58,8 +64,9 @@ class CassandraUtil(host: String, port: Int, isMultiDCEnabled: Boolean) {
 
   def reconnect(): Unit = {
     this.session.close()
-    val cluster: Cluster = Cluster.builder.addContactPoint(host).withPort(port).build
-    this.session = cluster.connect
+    this.cluster.close()
+    this.cluster = newCluster()
+    this.session = this.cluster.connect
   }
 
   def close(): Unit = {
