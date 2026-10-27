@@ -26,7 +26,7 @@ class UserOwnershipTransferFunction(config: UserOwnershipTransferConfig, httpUti
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
-    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
+    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled, config)
     if(esUtil==null)
       esUtil = new ElasticSearchUtil(config.esConnection, config.searchIndex)
   }

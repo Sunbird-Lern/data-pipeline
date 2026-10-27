@@ -37,7 +37,7 @@ class ProgramUserInfoFunction(config: ProgramUserInfoConfig,
 
   override def open(parameters: Configuration): Unit = {
     super.open(parameters)
-    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled)
+    cassandraUtil = new CassandraUtil(config.dbHost, config.dbPort, config.isMultiDCEnabled, config)
   }
 
   override def close(): Unit = {
