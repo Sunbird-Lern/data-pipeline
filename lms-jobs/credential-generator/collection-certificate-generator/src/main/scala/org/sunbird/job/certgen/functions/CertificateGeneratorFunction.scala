@@ -174,7 +174,7 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
         val searchUri = config.rcBaseUrl + "/" + "PublicKey" + "/search"
         val httpResponse = httpUtil.post(searchUri, req)
         if(httpResponse.status == 200) {
-          val resp = ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](httpResponse.body)
+          val resp = readSearchResults(httpResponse.body)
           id = resp.head.getOrElse("osid", null).asInstanceOf[String]
         }
         httpResponse.status
@@ -186,6 +186,21 @@ class CertificateGeneratorFunction(config: CertificateGeneratorConfig, httpUtil:
       throw ServerException("ERR_API_CALL", "Something Went Wrong While Making API Call:  " + api +  " | Status is: " + status)
     }
     id
+  }
+
+
+  /**
+   * Sunbird RC changed the shape of a search response between the 0.0.x line and
+   * 2.x: the older registry answers with a bare array of entities, the newer one
+   * wraps them as {"totalCount": n, "data": [...]}. Accept either, so the job runs
+   * against both and the registry can be upgraded without a flag day.
+   */
+  def readSearchResults(body: String): List[Map[String, AnyRef]] = {
+    val trimmed = body.trim
+    if (trimmed.startsWith("[")) ScalaJsonUtil.deserialize[List[Map[String, AnyRef]]](trimmed)
+    else ScalaJsonUtil.deserialize[Map[String, AnyRef]](trimmed)
+      .getOrElse("data", List[Map[String, AnyRef]]())
+      .asInstanceOf[List[Map[String, AnyRef]]]
   }
 
   private def removeBadChars(request: String): String = {

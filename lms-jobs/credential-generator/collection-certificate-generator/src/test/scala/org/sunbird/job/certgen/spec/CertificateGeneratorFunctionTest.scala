@@ -237,4 +237,24 @@ class CertificateGeneratorFunctionTest extends BaseTestSpec {
     val id: String = new CertificateGeneratorFunction(jobConfig, httpUtil, mockCassandraUtil).callCertificateRc(jobConfig.rcSearchApi, null,  req)
     assert(id != null)
   }*/
+
+  "Certificate rc search api call for publicKey" should " read Sunbird RC 2.x envelope responses" in {
+    val req = Map("filters" -> Map("alg" -> Map("eq" -> "RSA")))
+    // Sunbird RC 2.x answers {"totalCount": n, "data": [...]} where 0.0.x answered [...]
+    when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/PublicKey/search", ScalaModuleJsonUtils.serialize(req)))
+      .thenReturn(HTTPResponse(200, """{"totalCount":1,"data":[{"osid":"1-25a8c96b-b254-4720-bbc9-29b37c3c2bec","value":"keyvalue","alg":"RSA"}]}"""))
+    val id: String = new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil)
+      .callCertificateRc(jobConfig.rcSearchApi, null, req)
+    assert(id == "1-25a8c96b-b254-4720-bbc9-29b37c3c2bec")
+  }
+
+  "Certificate rc search api call for publicKey" should " still read Sunbird RC 0.0.x array responses" in {
+    val req = Map("filters" -> Map("alg" -> Map("eq" -> "RSA2")))
+    when(mockHttpUtil.post(jobConfig.rcBaseUrl + "/PublicKey/search", ScalaModuleJsonUtils.serialize(req)))
+      .thenReturn(HTTPResponse(200, """[{"osid":"1-aa8c96b1-b254-4720-bbc9-29b37c3c2bec","value":"keyvalue","alg":"RSA2"}]"""))
+    val id: String = new CertificateGeneratorFunction(jobConfig, mockHttpUtil, mockCassandraUtil)
+      .callCertificateRc(jobConfig.rcSearchApi, null, req)
+    assert(id == "1-aa8c96b1-b254-4720-bbc9-29b37c3c2bec")
+  }
+
 }
